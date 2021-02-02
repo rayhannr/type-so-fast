@@ -1,15 +1,21 @@
-import React, { useEffect } from 'react'
-import { words, shuffleWord } from './constants/words'
+import React, { useEffect, useState } from 'react'
+import { indonesianWords, shuffleWord } from './constants/words'
 import './tailwind.css'
 
+import WordContainer from './components/WordContainer'
+
 const App: React.FC = () => {
+  const [words, setWords] = useState<string[]>([])
   useEffect(() => {
-    const word = shuffleWord(words, 300)
-    console.log(word)
+    const shuffledWords = shuffleWord(indonesianWords, 300)
+    setWords(shuffledWords)
   }, [])
 
   return (
-    <p className="text-gray-900 font-bold">Kont</p>
+    <div className="font-inter">
+      <WordContainer words={words} />
+      <p>hehe</p>
+    </div>
   )
 }
 
