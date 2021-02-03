@@ -5,6 +5,8 @@ import './tailwind.css'
 import WordContainer from './components/WordContainer'
 import Input from './components/Input'
 import Result from './components/Result'
+import Timer from './components/Timer'
+import RestartButton from './components/RestartButton'
 
 const App: React.FC = () => {
   const [words, setWords] = useState<string[]>([])
@@ -20,13 +22,14 @@ const App: React.FC = () => {
 
   const [timer, setTimer] = useState<number>(60)
 
+  const numberOfWords: number = useMemo(() => 400, [])
   const currentWord: string = useMemo(() => words[0], [words])
   const totalKeyStrokes: number = useMemo(() => correctKeystroke + wrongKeystroke, [correctKeystroke, wrongKeystroke])
 
   useEffect(() => {
-    const shuffledWords = shuffleWord(indonesianWords, 350)
+    const shuffledWords: string[] = shuffleWord(indonesianWords, numberOfWords)
     setWords(shuffledWords)
-  }, [])
+  }, [numberOfWords])
 
   const timerHandler = () => {
     let timesLeft: number = timer
@@ -39,10 +42,6 @@ const App: React.FC = () => {
       }
     }, 1000)
   }
-
-  useEffect(() => {
-    console.log(isInputCorrect)
-  }, [isInputCorrect])
 
   const inputHandler = (inputText: string) => {
     setWordInput(inputText)
@@ -60,7 +59,7 @@ const App: React.FC = () => {
       }
 
       if (inputText.endsWith(' ')) {
-        const inputWord = inputText.slice(0, -1)
+        const inputWord: string = inputText.slice(0, -1)
         if (inputWord === currentWord) {
           setCorrectWords(prev => prev + 1)
         } else {
@@ -91,24 +90,43 @@ const App: React.FC = () => {
     }
   }
 
+  const restartHandler = () => {
+    setWords(shuffleWord(indonesianWords, numberOfWords))
+    setWordInput('')
+    setIsInputCorrect(true)
+    
+    setCorrectKeystroke(0)
+    setWrongKeystroke(0)
+    setCorrection(0)
+
+    setCorrectWords(0)
+    setWrongWords(0)
+    setTimer(60)
+  }
+
   return (
     <div className="font-inter p-8 md:p-14 lg:p-16">
-      <WordContainer words={words} isInputCorrect={wordInput.length === 0 || isInputCorrect} />
+      <WordContainer words={words} isInputCorrect={isInputCorrect || wordInput.length === 0} />
 
-      <div className="flex flex-row items-center justify-center">
-        <Input value={wordInput} onChange={inputHandler} onKeyUp={keyUpHandler} />
-        <div>
-          <span>{Math.floor(timer / 60)}:{(timer % 60).toString().padStart(2, '0')}</span>
-        </div>
+      <div className="flex flex-row items-center justify-center mt-8">
+        <Input 
+          value={wordInput}
+          disabled={timer === 0} 
+          onChange={inputHandler} 
+          onKeyUp={keyUpHandler} />
+        <Timer timer={timer} />
+        <RestartButton onClick={restartHandler} />
       </div>
 
-      <Result
-        wpm={Math.round(correctKeystroke / 5)}
-        correctKeystroke={correctKeystroke}
-        wrongKeystroke={wrongKeystroke}
-        accuracy={(correctKeystroke * 100 / (totalKeyStrokes + correction)).toFixed(2)}
-        correctWords={correctWords}
-        wrongWords={wrongWords} />
+      {!timer &&
+        <Result
+          wpm={Math.round(correctKeystroke / 5)}
+          correctKeystroke={correctKeystroke}
+          wrongKeystroke={wrongKeystroke}
+          accuracy={(correctKeystroke * 100 / (totalKeyStrokes + correction)).toFixed(2)}
+          correctWords={correctWords}
+          wrongWords={wrongWords} />
+      }
     </div>
   )
 }

@@ -26,7 +26,7 @@ const Result: React.FC<Props> = props => (
                 <span>Accuracy</span>
                 <span className="font-bold">{props.accuracy}%</span>
             </div>
-            <div className="result-list">
+            <div className="bg-gray-100 result-list">
                 <span>Correct words</span>
                 <span className="font-bold text-blue-600">{props.correctWords}</span>
             </div>
