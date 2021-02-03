@@ -11,28 +11,28 @@ interface Props {
 
 const Result: React.FC<Props> = props => (
     <div className="mx-auto mt-8 w-64 sm:w-72 md:w-80 lg:w-96 rounded-lg bg-white border border-solid border-gray-200">
-        <p className="bg-blue-500 text-gray-100 text-center font-semibold text-lg py-2 rounded-t-lg">Result</p>
+        <p className="bg-blue-600 text-gray-100 text-center font-semibold text-lg py-3 rounded-t-lg">Result</p>
         <div>
-            <div className="py-4 border-b border-dashed border-gray-200">
-                <p className="text-center text-4xl font-bold text-blue-400">{props.wpm} WPM</p>
+            <div className="py-5 border-b border-solid border-gray-200">
+                <p className="text-center text-4xl font-bold text-blue-600">{props.wpm} WPM</p>
                 <p className="text-xs text-gray-500 text-center">(words per minute)</p>
                 <p className="text-xs text-gray-500 text-center">5 correct keystrokes = 1 WPM</p>
             </div>
-            <div>
+            <div className="bg-gray-100 result-list">
                 <span>Keystrokes</span>
-                <span>({props.correctKeystroke} | {props.wrongKeystroke}) <span>{props.correctKeystroke + props.wrongKeystroke}</span></span>
+                <span>(<span className="text-blue-600">{props.correctKeystroke}</span> | <span className="text-red-400">{props.wrongKeystroke}</span>) <span>{props.correctKeystroke + props.wrongKeystroke}</span></span>
             </div>
-            <div>
+            <div className="result-list">
                 <span>Accuracy</span>
-                <span>{props.accuracy}%</span>
+                <span className="font-bold">{props.accuracy}%</span>
             </div>
-            <div>
+            <div className="result-list">
                 <span>Correct words</span>
-                <span>{props.correctWords}</span>
+                <span className="font-bold text-blue-600">{props.correctWords}</span>
             </div>
-            <div>
+            <div className="result-list">
                 <span>Wrong words</span>
-                <span>{props.wrongWords}</span>
+                <span className="font-bold text-red-400">{props.wrongWords}</span>
             </div>
         </div>
     </div>

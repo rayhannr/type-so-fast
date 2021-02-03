@@ -8,7 +8,7 @@ interface Props {
 
 const Input: React.FC<Props> = props => {
     return (
-        <div className="w-64 sm:w-72 md:w-80 lg:w-96 mx-auto mt-8">
+        <div className="w-64 sm:w-72 md:w-80 lg:w-96 mt-8">
             <input
                 className="w-full border border-solid border-blue-400 p-3 rounded-md focus:outline-none focus:ring-1"
                 type="text"

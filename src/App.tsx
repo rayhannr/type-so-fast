@@ -18,13 +18,13 @@ const App: React.FC = () => {
   const [correctWords, setCorrectWords] = useState<number>(0)
   const [wrongWords, setWrongWords] = useState<number>(0)
 
-  const [timer, setTimer] = useState<number>(5)
+  const [timer, setTimer] = useState<number>(60)
 
   const currentWord: string = useMemo(() => words[0], [words])
   const totalKeyStrokes: number = useMemo(() => correctKeystroke + wrongKeystroke, [correctKeystroke, wrongKeystroke])
 
   useEffect(() => {
-    const shuffledWords = shuffleWord(indonesianWords, 10)
+    const shuffledWords = shuffleWord(indonesianWords, 350)
     setWords(shuffledWords)
   }, [])
 
@@ -34,15 +34,15 @@ const App: React.FC = () => {
       timesLeft -= 1
       setTimer(prevTimer => prevTimer - 1)
 
-      if(timesLeft <= 0){
+      if (timesLeft <= 0) {
         clearInterval(interval)
       }
     }, 1000)
   }
 
   useEffect(() => {
-    console.log(timer)
-  }, [timer])
+    console.log(isInputCorrect)
+  }, [isInputCorrect])
 
   const inputHandler = (inputText: string) => {
     setWordInput(inputText)
@@ -52,7 +52,8 @@ const App: React.FC = () => {
     }
 
     if (inputText.trim().length > 0) {
-      if (currentWord && inputText !== currentWord.slice(0, inputText.length)) {
+      //in if check the inputtext should be trimmed since when checking happens, it might contains space at the end
+      if (currentWord && inputText.trim() !== currentWord.slice(0, inputText.length)) {
         setIsInputCorrect(false)
       } else {
         setIsInputCorrect(true)
@@ -73,7 +74,7 @@ const App: React.FC = () => {
 
   const keyUpHandler = (key: string) => {
     //start timer when user first enter key
-    if(totalKeyStrokes === 0){
+    if (totalKeyStrokes === 0) {
       timerHandler()
     }
 
@@ -85,7 +86,7 @@ const App: React.FC = () => {
       }
     }
 
-    if(key === 'Backspace'){
+    if (key === 'Backspace') {
       setCorrection(prev => prev + 1)
     }
   }
@@ -93,8 +94,15 @@ const App: React.FC = () => {
   return (
     <div className="font-inter p-8 md:p-14 lg:p-16">
       <WordContainer words={words} isInputCorrect={wordInput.length === 0 || isInputCorrect} />
-      <Input value={wordInput} onChange={inputHandler} onKeyUp={keyUpHandler} />
-      <Result 
+
+      <div className="flex flex-row items-center justify-center">
+        <Input value={wordInput} onChange={inputHandler} onKeyUp={keyUpHandler} />
+        <div>
+          <span>{Math.floor(timer / 60)}:{(timer % 60).toString().padStart(2, '0')}</span>
+        </div>
+      </div>
+
+      <Result
         wpm={Math.round(correctKeystroke / 5)}
         correctKeystroke={correctKeystroke}
         wrongKeystroke={wrongKeystroke}
