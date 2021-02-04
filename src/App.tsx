@@ -8,6 +8,7 @@ import Input from './components/Input'
 import Result from './components/Result'
 import Timer from './components/Timer'
 import RestartButton from './components/RestartButton'
+import Records from './components/Records'
 
 const App: React.FC = () => {
   const [words, setWords] = useState<string[]>([])
@@ -20,6 +21,7 @@ const App: React.FC = () => {
 
   const [correctWords, setCorrectWords] = useState<number>(0)
   const [wrongWords, setWrongWords] = useState<number>(0)
+  const [records, setRecords] = useState<number[]>([])
 
   const [timer, setTimer] = useState<number>(60)
 
@@ -31,6 +33,32 @@ const App: React.FC = () => {
     const shuffledWords: string[] = shuffleWord(indonesianWords, numberOfWords)
     setWords(shuffledWords)
   }, [numberOfWords])
+
+  useEffect(() => {
+    const userRecords = localStorage.getItem('bestRecords')
+    const records = userRecords ? JSON.parse(userRecords) : [] as number[]
+    setRecords(records)
+  }, [])
+
+  useEffect(() => {
+    if (timer === 0) {
+      const userRecords = localStorage.getItem('bestRecords')
+      let records = userRecords ? JSON.parse(userRecords) : [] as number[]
+
+      const userResult = Math.round(correctKeystroke / 5)
+      if (userResult > 0) {
+        let newRecords = records.concat(userResult)
+        newRecords.sort((a: number, b: number) => b - a)
+
+        if (newRecords.length > 3) {
+          newRecords = newRecords.slice(0, -1)
+        }
+
+        localStorage.setItem('bestRecords', JSON.stringify(newRecords))
+        setRecords(newRecords)
+      }
+    }
+  }, [timer, correctKeystroke])
 
   const timerHandler = () => {
     let timesLeft: number = timer
@@ -95,7 +123,7 @@ const App: React.FC = () => {
     setWords(shuffleWord(indonesianWords, numberOfWords))
     setWordInput('')
     setIsInputCorrect(true)
-    
+
     setCorrectKeystroke(0)
     setWrongKeystroke(0)
     setCorrection(0)
@@ -105,19 +133,25 @@ const App: React.FC = () => {
     setTimer(60)
   }
 
+
+
   return (
     <div className="font-inter p-8 md:p-14 lg:p-16">
       <Heading />
       <WordContainer words={words} isInputCorrect={isInputCorrect || wordInput.length === 0} />
 
-      <div className="flex flex-row items-center justify-center mt-8">
-        <Input 
-          value={wordInput}
-          disabled={timer === 0} 
-          onChange={inputHandler} 
-          onKeyUp={keyUpHandler} />
-        <Timer timer={timer} />
-        <RestartButton onClick={restartHandler} />
+      <div className="lg:flex lg:flex-row lg:justify-between lg:items-start lg:max-w-4xl lg:mx-auto mt-8">
+
+        <div className="flex flex-row items-center justify-center">
+          <Input
+            value={wordInput}
+            disabled={timer === 0}
+            onChange={inputHandler}
+            onKeyUp={keyUpHandler} />
+          <Timer timer={timer} />
+          <RestartButton onClick={restartHandler} />
+        </div>
+        <Records records={records} />
       </div>
 
       {!timer &&
