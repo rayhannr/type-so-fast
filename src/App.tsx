@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react'
+import React, { useEffect, useState, useMemo, useRef } from 'react'
 import { indonesianWords, shuffleWord } from './constants/words'
 import './tailwind.css'
 
@@ -23,11 +23,13 @@ const App: React.FC = () => {
   const [wrongWords, setWrongWords] = useState<number>(0)
   const [records, setRecords] = useState<number[]>([])
 
-  const [timer, setTimer] = useState<number>(60)
+  const [timer, setTimer] = useState<number>(5)
 
   const numberOfWords: number = useMemo(() => 400, [])
   const currentWord: string = useMemo(() => words[0], [words])
   const totalKeyStrokes: number = useMemo(() => correctKeystroke + wrongKeystroke, [correctKeystroke, wrongKeystroke])
+
+  const intervalRef = useRef<any>(null)
 
   useEffect(() => {
     const shuffledWords: string[] = shuffleWord(indonesianWords, numberOfWords)
@@ -62,12 +64,12 @@ const App: React.FC = () => {
 
   const timerHandler = () => {
     let timesLeft: number = timer
-    const interval = setInterval(() => {
+    intervalRef.current = setInterval(() => {
       timesLeft -= 1
       setTimer(prevTimer => prevTimer - 1)
 
       if (timesLeft <= 0) {
-        clearInterval(interval)
+        clearInterval(intervalRef.current)
       }
     }, 1000)
   }
@@ -120,6 +122,7 @@ const App: React.FC = () => {
   }
 
   const restartHandler = () => {
+    clearInterval(intervalRef.current)
     setWords(shuffleWord(indonesianWords, numberOfWords))
     setWordInput('')
     setIsInputCorrect(true)
@@ -130,17 +133,17 @@ const App: React.FC = () => {
 
     setCorrectWords(0)
     setWrongWords(0)
-    setTimer(60)
+    setTimer(5)
   }
 
 
 
   return (
-    <div className="font-inter p-8 md:p-14 lg:p-16">
+    <div className="font-inter p-8 pt-16 md:p-14 md:pt-20 lg:p-16 lg:pt-24">
       <Heading />
       <WordContainer words={words} isInputCorrect={isInputCorrect || wordInput.length === 0} />
 
-      <div className="lg:flex lg:flex-row lg:justify-between lg:items-start lg:max-w-4xl lg:mx-auto mt-8">
+      <div className="lg:flex lg:flex-row lg:justify-between lg:items-start lg:max-w-4xl lg:mx-auto mt-6 md:mt-8">
 
         <div className="flex flex-row items-center justify-center">
           <Input
