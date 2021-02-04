@@ -23,7 +23,7 @@ const App: React.FC = () => {
   const [wrongWords, setWrongWords] = useState<number>(0)
   const [records, setRecords] = useState<number[]>([])
 
-  const [timer, setTimer] = useState<number>(5)
+  const [timer, setTimer] = useState<number>(60)
 
   const numberOfWords: number = useMemo(() => 400, [])
   const currentWord: string = useMemo(() => words[0], [words])
@@ -133,10 +133,8 @@ const App: React.FC = () => {
 
     setCorrectWords(0)
     setWrongWords(0)
-    setTimer(5)
+    setTimer(60)
   }
-
-
 
   return (
     <div className="font-inter p-8 pt-16 md:p-14 md:pt-20 lg:p-16 lg:pt-24">
