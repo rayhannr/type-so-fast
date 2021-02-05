@@ -10,7 +10,7 @@ interface Props {
 }
 
 const Result: React.FC<Props> = props => (
-    <div className="mx-auto mt-8 w-64 sm:w-72 md:w-80 lg:w-96 rounded-lg bg-white border border-solid border-gray-200">
+    <div className="mx-auto lg:mx-0 mt-8 lg:mt-0 w-64 sm:w-72 rounded-lg bg-white border border-solid border-gray-200">
         <p className="bg-blue-600 text-gray-100 text-center font-semibold text-lg py-3 rounded-t-lg">Result</p>
         <div>
             <div className="py-5 border-b border-solid border-gray-200">

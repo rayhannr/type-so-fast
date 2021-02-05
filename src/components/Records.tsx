@@ -15,6 +15,7 @@ const Records: React.FC<Props> = props => {
         firstRecord = secondRecord = thirdRecord = <></>
         
         const maxRecord: number = props.records[0]
+        const midRecord: number = props.records[1]
         const maxHeight: number = 96
 
         props.records.forEach((record, index) => {
@@ -26,12 +27,13 @@ const Records: React.FC<Props> = props => {
                     break
                 case 1:
                     secondRecord = (
-                        <Podium record={record} height={(record * 0.9 / maxRecord) * maxHeight} color="bg-blue-300" />
+                        <Podium record={record} height={record === maxRecord ? maxHeight : (record * 0.9 / maxRecord) * maxHeight} color="bg-blue-300" />
                     )
                     break
                 case 2:
+                    const param = record === midRecord ? 0.9 : 0.8
                     thirdRecord = (
-                        <Podium record={record} height={(record * 0.8 / maxRecord) * maxHeight} color="bg-blue-200" />
+                        <Podium record={record} height={record === maxRecord ? maxHeight : (record * param / maxRecord) * maxHeight} color="bg-blue-200" />
                     )
                     break
             }
