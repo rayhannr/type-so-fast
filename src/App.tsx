@@ -136,6 +136,14 @@ const App: React.FC = () => {
     setTimer(60)
   }
 
+  const clearRecords = () => {
+    const bestRecords = localStorage.getItem('bestRecords')
+    if (bestRecords) {
+        localStorage.removeItem('bestRecords')
+        setRecords([])
+    }
+}
+
   return (
     <>
       <a href="https://github.com/rayhannr/type-so-fast" target="_blank" rel="noreferrer" className="absolute font-inter flex flex-row items-center" style={{ top: 20, right: 20 }}>
@@ -159,7 +167,7 @@ const App: React.FC = () => {
                 <Timer timer={timer} />
                 <RestartButton onClick={restartHandler} />
               </div>
-              <Records records={records} />
+              <Records records={records} clearRecords={clearRecords} />
             </div>
           </div>
 
