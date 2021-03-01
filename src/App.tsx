@@ -103,12 +103,12 @@ const App: React.FC = () => {
   }
 
   const keyUpHandler = (key: string) => {
-    //start timer when user first enter key
-    if (totalKeyStrokes === 0) {
-      timerHandler()
-    }
-
     if (key.length === 1 && key !== " ") {
+      if (totalKeyStrokes === 0) { //start timer when user first enter key
+        timerHandler()
+      }
+
+
       if (isInputCorrect) {
         setCorrectKeystroke(prev => prev + 1)
       } else {
@@ -139,10 +139,10 @@ const App: React.FC = () => {
   const clearRecords = () => {
     const bestRecords = localStorage.getItem('bestRecords')
     if (bestRecords) {
-        localStorage.removeItem('bestRecords')
-        setRecords([])
+      localStorage.removeItem('bestRecords')
+      setRecords([])
     }
-}
+  }
 
   return (
     <>
