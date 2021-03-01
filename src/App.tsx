@@ -13,6 +13,7 @@ import Records from './components/Records'
 const App: React.FC = () => {
   const [words, setWords] = useState<string[]>([])
   const [wordInput, setWordInput] = useState<string>('')
+  const [key, setKey] = useState<string>('')
   const [isInputCorrect, setIsInputCorrect] = useState<boolean>(true)
 
   const [correctKeystroke, setCorrectKeystroke] = useState<number>(0)
@@ -103,11 +104,11 @@ const App: React.FC = () => {
   }
 
   const keyUpHandler = (key: string) => {
+    setKey(key)
     if (key.length === 1 && key !== " ") {
       if (totalKeyStrokes === 0) { //start timer when user first enter key
         timerHandler()
       }
-
 
       if (isInputCorrect) {
         setCorrectKeystroke(prev => prev + 1)
@@ -169,6 +170,8 @@ const App: React.FC = () => {
               </div>
               <Records records={records} clearRecords={clearRecords} />
             </div>
+            <p>{totalKeyStrokes}</p>
+            <p>{key}</p>
           </div>
 
           {timer === 0 &&
