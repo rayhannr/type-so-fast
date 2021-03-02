@@ -156,7 +156,7 @@ const App: React.FC = () => {
         <div className="lg:flex lg:flex-row lg:justify-center lg:items-start">
 
           {isMobile ? <p className="text-justify text-sm lg:hidden">
-            In order to work properly, this site needs to detect what key is entered by the user to start the timer and calculate the keystrokes. <br /><br />However, the key detection doesn't work on mobile device at the moment. So, please consider using your PC or laptop when accessing this site.
+            In order to work properly, this site needs to detect what key (alphabetic letters, numbers, Backspace, etc.) you enter to start the timer and calculate the keystrokes. <br /><br />However, the key detection doesn't work on mobile device at the moment. So, please consider using your PC or laptop when you access this site.
               </p>
             :
             <div className="md:max-w-4xl lg:max-w-2xl xl:max-w-3xl lg:mr-8">
