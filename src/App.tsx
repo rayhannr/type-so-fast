@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react'
 import { indonesianWords, shuffleWord } from './constants/words'
+import useDeviceDetect from './hooks/useDeviceDetect'
 import './tailwind.css'
 
 import Heading from './components/Heading'
@@ -29,6 +30,7 @@ const App: React.FC = () => {
   const currentWord: string = useMemo(() => words[0], [words])
   const totalKeyStrokes: number = useMemo(() => correctKeystroke + wrongKeystroke, [correctKeystroke, wrongKeystroke])
 
+  const { isMobile } = useDeviceDetect()
   const intervalRef = useRef<any>(null)
 
   useEffect(() => {
@@ -153,22 +155,26 @@ const App: React.FC = () => {
         <Heading />
         <div className="lg:flex lg:flex-row lg:justify-center lg:items-start">
 
-          <div className="md:max-w-4xl lg:max-w-2xl xl:max-w-3xl mr-8">
-            <WordContainer words={words} isInputCorrect={isInputCorrect || wordInput.length === 0} />
-
-            <div className="lg:flex lg:flex-row lg:justify-between lg:items-start mt-6 md:mt-8">
-              <div className="flex flex-row items-center justify-center">
-                <Input
-                  value={wordInput}
-                  disabled={timer === 0}
-                  onChange={inputHandler}
-                  onKeyUp={keyUpHandler} />
-                <Timer timer={timer} />
-                <RestartButton onClick={restartHandler} />
+          {isMobile ? <p className="text-justify text-sm lg:hidden">
+            In order to work properly, this site needs to detect what key is entered by the user to start the timer and calculate the keystrokes. <br /><br />However, the key detection doesn't work on mobile device at the moment. So, please consider using your PC or laptop when accessing this site.
+              </p>
+            :
+            <div className="md:max-w-4xl lg:max-w-2xl xl:max-w-3xl lg:mr-8">
+              <WordContainer words={words} isInputCorrect={isInputCorrect || wordInput.length === 0} />
+              <div className="lg:flex lg:flex-row lg:justify-between lg:items-start mt-6 md:mt-8">
+                <div className="flex flex-row items-center justify-center">
+                  <Input
+                    value={wordInput}
+                    disabled={timer === 0}
+                    onChange={inputHandler}
+                    onKeyUp={keyUpHandler} />
+                  <Timer timer={timer} />
+                  <RestartButton onClick={restartHandler} />
+                </div>
+                <Records records={records} clearRecords={clearRecords} />
               </div>
-              <Records records={records} clearRecords={clearRecords} />
             </div>
-          </div>
+          }
 
           {timer === 0 &&
             <Result
