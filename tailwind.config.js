@@ -1,10 +1,10 @@
-module.exports = {
-  purge: [],
-  darkMode: false, // or 'media' or 'class'
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
       fontFamily: {
-        'inter': [
+        inter: [
           'Inter',
           'system-ui',
           '-apple-system',
@@ -18,15 +18,13 @@ module.exports = {
           '"Apple Color Emoji"',
           '"Segoe UI Emoji"',
           '"Segoe UI Symbol"',
-          '"Noto Color Emoji"']
+          '"Noto Color Emoji"',
+        ],
       },
       lineHeight: {
-        '11': '3.5rem'
-      }
+        11: '3.5rem',
+      },
     },
-  },
-  variants: {
-    extend: {},
   },
   plugins: [],
 }

@@ -1,4 +1,10 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+@tailwind base;
+@tailwind components;
+.result-list {
+  @apply py-4 px-3 flex flex-row items-center justify-between text-gray-900 font-medium text-sm border-b border-solid border-gray-200;
+}
+@tailwind utilities;
 
 body {
   margin: 0;
