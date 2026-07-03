@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useMemo, useRef, ChangeEvent, FormEvent } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
+import type { ChangeEvent, FormEvent } from 'react'
 import { indonesianWords, shuffleWord } from './constants/words'
 
 import Heading from './components/Heading'
@@ -11,7 +12,7 @@ import Records from './components/Records'
 
 const numberOfWords = 400
 
-const App: React.FC = () => {
+const App = () => {
   const [words, setWords] = useState<string[]>([])
   const [wordInput, setWordInput] = useState<string>('')
   const [isInputCorrect, setIsInputCorrect] = useState<boolean>(true)
@@ -29,7 +30,7 @@ const App: React.FC = () => {
   const currentWord: string = useMemo(() => words[0], [words])
   const totalKeyStrokes: number = useMemo(() => correctKeystroke + wrongKeystroke, [correctKeystroke, wrongKeystroke])
 
-  const intervalRef = useRef<any>(null)
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
     const shuffledWords: string[] = shuffleWord(indonesianWords, numberOfWords)
@@ -68,7 +69,7 @@ const App: React.FC = () => {
       setTimer((prevTimer) => prevTimer - 1)
 
       if (timesLeft <= 0) {
-        clearInterval(intervalRef.current)
+        clearInterval(intervalRef.current!)
       }
     }, 1000)
   }
@@ -82,7 +83,6 @@ const App: React.FC = () => {
     }
 
     if (!inputText.trim().length) return
-    //in if check the inputtext should be trimmed since when checking happens, it might contains space at the end
     if (currentWord && inputText.trim() !== currentWord.slice(0, inputText.length)) {
       setIsInputCorrect(false)
     } else {
@@ -101,11 +101,10 @@ const App: React.FC = () => {
   }
 
   const inputHandler = (event: FormEvent<HTMLInputElement>) => {
-    // @ts-ignore
-    const currentKey = event.nativeEvent.data
+    const nativeEvent = event.nativeEvent as InputEvent
+    const currentKey = nativeEvent.data
     if (currentKey?.length === 1 && currentKey !== ' ') {
       if (totalKeyStrokes === 0) {
-        //start timer when user first enter key
         timerHandler()
       }
 
@@ -116,14 +115,13 @@ const App: React.FC = () => {
       }
     }
 
-    // @ts-ignore
-    if (event.nativeEvent.inputType === 'deleteContentBackward') {
+    if (nativeEvent.inputType === 'deleteContentBackward') {
       setCorrection((prev) => prev + 1)
     }
   }
 
   const restartHandler = () => {
-    clearInterval(intervalRef.current)
+    clearInterval(intervalRef.current!)
     setWords(shuffleWord(indonesianWords, numberOfWords))
     setWordInput('')
     setIsInputCorrect(true)

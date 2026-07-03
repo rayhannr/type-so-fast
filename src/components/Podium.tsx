@@ -1,15 +1,13 @@
-import React from 'react'
-
 interface Props {
   record: number
   height: number
   color: string
 }
 
-const Podium: React.FC<Props> = (props) => (
+const Podium = ({ record, height, color }: Props) => (
   <div>
-    <p className="text-xs px-2 text-gray-900 font-medium">{props.record} WPM</p>
-    <div className={`w-auto rounded-t-sm ${props.color}`} style={{ height: props.height }}></div>
+    <p className="text-xs px-2 text-gray-900 font-medium">{record} WPM</p>
+    <div className={`w-auto rounded-t-sm ${color}`} style={{ height }}></div>
   </div>
 )
 
