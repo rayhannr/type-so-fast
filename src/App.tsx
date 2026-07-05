@@ -1,54 +1,135 @@
-import { useEffect, useState, useMemo, useRef } from 'react'
+import { useEffect, useReducer, useState, useMemo, useRef } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
 import { indonesianWords, shuffleWord } from './constants/words'
 
-import Heading from './components/Heading'
-import WordContainer from './components/WordContainer'
-import Input from './components/Input'
-import Result from './components/Result'
-import Timer from './components/Timer'
-import RestartButton from './components/RestartButton'
-import Records from './components/Records'
+import { Heading } from './components/Heading'
+import { WordContainer } from './components/WordContainer'
+import { Input } from './components/Input'
+import { Result } from './components/Result'
+import { Timer } from './components/Timer'
+import { RestartButton } from './components/RestartButton'
+import { Records } from './components/Records'
+import { Leaderboard } from './components/Leaderboard'
+import { AchievementToast } from './components/AchievementToast'
+
+import { useAgsSession } from './lib/ags/useAgsSession'
+import { submitGameStats, getPersonalStats, type PersonalStats } from './lib/ags/statistics'
+import { getBestRecords, saveBestRecords } from './lib/ags/cloudsave'
+import { unlockPerfectionistIfEligible, diffNewlyUnlocked, type UnlockedAchievement } from './lib/ags/achievements'
 
 const numberOfWords = 400
 
-const App = () => {
-  const [words, setWords] = useState<string[]>([])
-  const [wordInput, setWordInput] = useState<string>('')
-  const [isInputCorrect, setIsInputCorrect] = useState<boolean>(true)
+interface GameState {
+  words: string[]
+  wordInput: string
+  isInputCorrect: boolean
+  correctKeystroke: number
+  wrongKeystroke: number
+  correction: number
+  correctWords: number
+  wrongWords: number
+  timer: number
+}
 
-  const [correctKeystroke, setCorrectKeystroke] = useState<number>(0)
-  const [wrongKeystroke, setWrongKeystroke] = useState<number>(0)
-  const [correction, setCorrection] = useState<number>(0)
+type GameAction =
+  | { type: 'SET_WORDS'; words: string[] }
+  | { type: 'INPUT_CHANGE'; value: string; currentWord: string }
+  | { type: 'KEYSTROKE'; correct: boolean }
+  | { type: 'BACKSPACE' }
+  | { type: 'TICK' }
+  | { type: 'RESTART'; words: string[] }
 
-  const [correctWords, setCorrectWords] = useState<number>(0)
-  const [wrongWords, setWrongWords] = useState<number>(0)
+const createInitialState = (words: string[]): GameState => ({
+  words,
+  wordInput: '',
+  isInputCorrect: true,
+  correctKeystroke: 0,
+  wrongKeystroke: 0,
+  correction: 0,
+  correctWords: 0,
+  wrongWords: 0,
+  timer: 60,
+})
+
+const gameReducer = (state: GameState, action: GameAction): GameState => {
+  switch (action.type) {
+    case 'SET_WORDS':
+      return { ...state, words: action.words }
+    case 'INPUT_CHANGE': {
+      const { value, currentWord } = action
+      const trimmed = value.trim()
+      const isInputCorrect = !trimmed.length || !currentWord || trimmed === currentWord.slice(0, value.length)
+
+      if (!value.endsWith(' ')) {
+        return { ...state, wordInput: value, isInputCorrect }
+      }
+
+      const inputWord = value.slice(0, -1)
+      return {
+        ...state,
+        wordInput: '',
+        isInputCorrect,
+        correctWords: inputWord === currentWord ? state.correctWords + 1 : state.correctWords,
+        wrongWords: inputWord === currentWord ? state.wrongWords : state.wrongWords + 1,
+        words: state.words.slice(1),
+      }
+    }
+    case 'KEYSTROKE':
+      return action.correct
+        ? { ...state, correctKeystroke: state.correctKeystroke + 1 }
+        : { ...state, wrongKeystroke: state.wrongKeystroke + 1 }
+    case 'BACKSPACE':
+      return { ...state, correction: state.correction + 1 }
+    case 'TICK':
+      return { ...state, timer: state.timer - 1 }
+    case 'RESTART':
+      return createInitialState(action.words)
+    default:
+      return state
+  }
+}
+
+export const App = () => {
+  const [state, dispatch] = useReducer(gameReducer, [], () => createInitialState([]))
   const [records, setRecords] = useState<number[]>([])
+  const [personalStats, setPersonalStats] = useState<PersonalStats | null>(null)
+  const [leaderboardRefreshKey, setLeaderboardRefreshKey] = useState(0)
+  const [newAchievement, setNewAchievement] = useState<UnlockedAchievement | null>(null)
 
-  const [timer, setTimer] = useState<number>(60)
+  const { userId, displayName, unlockedAchievements, setUnlockedAchievements } = useAgsSession()
 
-  const currentWord: string = useMemo(() => words[0], [words])
-  const totalKeyStrokes: number = useMemo(() => correctKeystroke + wrongKeystroke, [correctKeystroke, wrongKeystroke])
+  const currentWord: string = useMemo(() => state.words[0], [state.words])
+  const totalKeyStrokes: number = useMemo(
+    () => state.correctKeystroke + state.wrongKeystroke,
+    [state.correctKeystroke, state.wrongKeystroke]
+  )
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const hasStartedRef = useRef<boolean>(false)
+  const hasSavedRef = useRef<boolean>(false)
 
   useEffect(() => {
     const shuffledWords: string[] = shuffleWord(indonesianWords, numberOfWords)
-    setWords(shuffledWords)
+    dispatch({ type: 'SET_WORDS', words: shuffledWords })
   }, [])
 
   useEffect(() => {
-    const userRecords = localStorage.getItem('bestRecords')
-    const records = userRecords ? JSON.parse(userRecords) : ([] as number[])
-    setRecords(records)
-  }, [])
+    if (!userId) {
+      const userRecords = localStorage.getItem('bestRecords')
+      setRecords(userRecords ? JSON.parse(userRecords) : [])
+      return
+    }
+
+    getBestRecords(userId).then(setRecords)
+    getPersonalStats(userId).then(setPersonalStats).catch(() => {})
+  }, [userId])
 
   useEffect(() => {
-    if (timer > 0) return
-    const userRecords = localStorage.getItem('bestRecords')
-    let records = userRecords ? JSON.parse(userRecords) : ([] as number[])
+    if (state.timer > 0) return
+    if (hasSavedRef.current) return
+    hasSavedRef.current = true
 
-    const userResult = Math.round(correctKeystroke / 5)
+    const userResult = Math.round(state.correctKeystroke / 5)
     if (userResult <= 0) return
 
     let newRecords = records.concat(userResult)
@@ -60,13 +141,36 @@ const App = () => {
 
     localStorage.setItem('bestRecords', JSON.stringify(newRecords))
     setRecords(newRecords)
-  }, [timer, correctKeystroke])
+
+    if (!userId || !displayName) return
+
+    const accuracy = (state.correctKeystroke * 100) / (totalKeyStrokes + state.correction)
+
+    saveBestRecords(userId, newRecords).catch(() => {})
+
+    submitGameStats(userId, { wpm: userResult, wordsTyped: state.correctWords, displayName })
+      .then(() => {
+        setLeaderboardRefreshKey((prev) => prev + 1)
+        return getPersonalStats(userId)
+      })
+      .then(setPersonalStats)
+      .catch(() => {})
+
+    unlockPerfectionistIfEligible(userId, accuracy)
+      .then(() => diffNewlyUnlocked(userId, unlockedAchievements))
+      .then((newlyUnlocked) => {
+        if (newlyUnlocked.length === 0) return
+        setUnlockedAchievements(new Set([...unlockedAchievements, ...newlyUnlocked.map((a) => a.achievementCode)]))
+        setNewAchievement(newlyUnlocked[0])
+      })
+      .catch(() => {})
+  }, [state.timer, state.correctKeystroke])
 
   const timerHandler = () => {
-    let timesLeft: number = timer
+    let timesLeft: number = state.timer
     intervalRef.current = setInterval(() => {
       timesLeft -= 1
-      setTimer((prevTimer) => prevTimer - 1)
+      dispatch({ type: 'TICK' })
 
       if (timesLeft <= 0) {
         clearInterval(intervalRef.current!)
@@ -75,64 +179,31 @@ const App = () => {
   }
 
   const changeHandler = (event: ChangeEvent<HTMLInputElement>) => {
-    const inputText = event.target.value
-    setWordInput(inputText)
-
-    if (inputText.endsWith(' ')) {
-      setWordInput('')
-    }
-
-    if (!inputText.trim().length) return
-    if (currentWord && inputText.trim() !== currentWord.slice(0, inputText.length)) {
-      setIsInputCorrect(false)
-    } else {
-      setIsInputCorrect(true)
-    }
-
-    if (!inputText.endsWith(' ')) return
-    const inputWord: string = inputText.slice(0, -1)
-    if (inputWord === currentWord) {
-      setCorrectWords((prev) => prev + 1)
-    } else {
-      setWrongWords((prev) => prev + 1)
-    }
-
-    setWords((prevWords) => prevWords.slice(1))
+    dispatch({ type: 'INPUT_CHANGE', value: event.target.value, currentWord })
   }
 
   const inputHandler = (event: FormEvent<HTMLInputElement>) => {
     const nativeEvent = event.nativeEvent as InputEvent
     const currentKey = nativeEvent.data
     if (currentKey?.length === 1 && currentKey !== ' ') {
-      if (totalKeyStrokes === 0) {
+      if (!hasStartedRef.current) {
+        hasStartedRef.current = true
         timerHandler()
       }
 
-      if (isInputCorrect) {
-        setCorrectKeystroke((prev) => prev + 1)
-      } else {
-        setWrongKeystroke((prev) => prev + 1)
-      }
+      dispatch({ type: 'KEYSTROKE', correct: state.isInputCorrect })
     }
 
     if (nativeEvent.inputType === 'deleteContentBackward') {
-      setCorrection((prev) => prev + 1)
+      dispatch({ type: 'BACKSPACE' })
     }
   }
 
   const restartHandler = () => {
     clearInterval(intervalRef.current!)
-    setWords(shuffleWord(indonesianWords, numberOfWords))
-    setWordInput('')
-    setIsInputCorrect(true)
-
-    setCorrectKeystroke(0)
-    setWrongKeystroke(0)
-    setCorrection(0)
-
-    setCorrectWords(0)
-    setWrongWords(0)
-    setTimer(60)
+    hasStartedRef.current = false
+    hasSavedRef.current = false
+    dispatch({ type: 'RESTART', words: shuffleWord(indonesianWords, numberOfWords) })
   }
 
   const clearRecords = () => {
@@ -140,6 +211,9 @@ const App = () => {
     if (bestRecords) {
       localStorage.removeItem('bestRecords')
       setRecords([])
+    }
+    if (userId) {
+      saveBestRecords(userId, []).catch(() => {})
     }
   }
 
@@ -161,31 +235,34 @@ const App = () => {
         <Heading />
         <div className="lg:flex lg:flex-row lg:justify-center lg:items-start">
           <div className="md:max-w-4xl lg:max-w-2xl xl:max-w-3xl lg:mr-8">
-            <WordContainer words={words} isInputCorrect={isInputCorrect || wordInput.length === 0} />
+            <WordContainer words={state.words} isInputCorrect={state.isInputCorrect || state.wordInput.length === 0} />
             <div className="lg:flex lg:flex-row lg:justify-between lg:items-start mt-6 md:mt-8">
               <div className="flex flex-row items-center justify-center">
-                <Input value={wordInput} disabled={timer === 0} onChange={changeHandler} onInput={inputHandler} />
-                <Timer timer={timer} />
+                <Input value={state.wordInput} disabled={state.timer === 0} onChange={changeHandler} onInput={inputHandler} />
+                <Timer timer={state.timer} />
                 <RestartButton onClick={restartHandler} />
               </div>
               <Records records={records} clearRecords={clearRecords} />
             </div>
           </div>
 
-          {timer === 0 && (
-            <Result
-              wpm={Math.round(correctKeystroke / 5)}
-              correctKeystroke={correctKeystroke}
-              wrongKeystroke={wrongKeystroke}
-              accuracy={((correctKeystroke * 100) / (totalKeyStrokes + correction)).toFixed(2)}
-              correctWords={correctWords}
-              wrongWords={wrongWords}
-            />
+          {state.timer === 0 && (
+            <div>
+              <Result
+                wpm={Math.round(state.correctKeystroke / 5)}
+                correctKeystroke={state.correctKeystroke}
+                wrongKeystroke={state.wrongKeystroke}
+                accuracy={((state.correctKeystroke * 100) / (totalKeyStrokes + state.correction)).toFixed(2)}
+                correctWords={state.correctWords}
+                wrongWords={state.wrongWords}
+                personalStats={personalStats}
+              />
+              <Leaderboard refreshKey={leaderboardRefreshKey} currentUserId={userId} />
+            </div>
           )}
         </div>
       </div>
+      <AchievementToast achievement={newAchievement} onDismiss={() => setNewAchievement(null)} />
     </>
   )
 }
-
-export default App

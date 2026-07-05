@@ -10,7 +10,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@accelbyte/sdk": "^4.3.2",
+    "@accelbyte/sdk-achievement": "^5.3.5",
+    "@accelbyte/sdk-cloudsave": "^6.3.5",
+    "@accelbyte/sdk-iam": "^6.3.5",
+    "@accelbyte/sdk-leaderboard": "^5.3.5",
+    "@accelbyte/sdk-social": "^6.3.5",
     "@tailwindcss/vite": "4.3.2",
+    "axios": "^1.16.0",
     "react": "19.2.7",
     "react-dom": "19.2.7",
     "tailwindcss": "4.3.2"

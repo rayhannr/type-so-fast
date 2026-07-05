@@ -2,7 +2,7 @@ type Props = {
   onClick: () => void
 }
 
-const RestartButton = ({ onClick }: Props) => (
+export const RestartButton = ({ onClick }: Props) => (
   <div className="p-3 text-gray-100 bg-blue-600 ml-2 md:ml-3 rounded-lg cursor-pointer" onClick={onClick}>
     <svg className="w-6 h-6 text-gray-100" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
       <path
@@ -13,5 +13,3 @@ const RestartButton = ({ onClick }: Props) => (
     </svg>
   </div>
 )
-
-export default RestartButton

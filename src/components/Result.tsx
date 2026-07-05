@@ -1,3 +1,9 @@
+interface PersonalStats {
+  bestWpm: number
+  gamesPlayed: number
+  totalWordsTyped: number
+}
+
 interface Props {
   wpm: number
   correctKeystroke: number
@@ -5,9 +11,10 @@ interface Props {
   accuracy: string
   correctWords: number
   wrongWords: number
+  personalStats?: PersonalStats | null
 }
 
-const Result = ({ wpm, correctKeystroke, wrongKeystroke, accuracy, correctWords, wrongWords }: Props) => (
+export const Result = ({ wpm, correctKeystroke, wrongKeystroke, accuracy, correctWords, wrongWords, personalStats }: Props) => (
   <div className="mx-auto lg:mx-0 mt-8 lg:mt-0 w-64 sm:w-72 rounded-lg bg-white border border-solid border-gray-200">
     <p className="bg-blue-600 text-gray-100 text-center font-semibold text-lg py-3 rounded-t-lg">Result</p>
     <div>
@@ -36,8 +43,22 @@ const Result = ({ wpm, correctKeystroke, wrongKeystroke, accuracy, correctWords,
         <span>Wrong words</span>
         <span className="font-bold text-red-400">{wrongWords}</span>
       </div>
+      {personalStats && (
+        <>
+          <div className="bg-gray-100 result-list">
+            <span>Personal best</span>
+            <span className="font-bold text-blue-600">{personalStats.bestWpm} WPM</span>
+          </div>
+          <div className="result-list">
+            <span>Games played</span>
+            <span className="font-bold">{personalStats.gamesPlayed}</span>
+          </div>
+          <div className="bg-gray-100 result-list">
+            <span>Total words typed</span>
+            <span className="font-bold">{personalStats.totalWordsTyped}</span>
+          </div>
+        </>
+      )}
     </div>
   </div>
 )
-
-export default Result

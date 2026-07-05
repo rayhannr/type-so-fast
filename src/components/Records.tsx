@@ -1,11 +1,11 @@
-import Podium from './Podium'
+import { Podium } from './Podium'
 
 type Props = {
   records: number[]
   clearRecords: () => void
 }
 
-const Records = ({ records, clearRecords }: Props) => {
+export const Records = ({ records, clearRecords }: Props) => {
   let userRecords
   if (records.length === 0) {
     userRecords = <span className="text-sm text-gray-900 text-center">You have no records yet.</span>
@@ -69,5 +69,3 @@ const Records = ({ records, clearRecords }: Props) => {
     </div>
   )
 }
-
-export default Records

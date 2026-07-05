@@ -1,4 +1,4 @@
-const Heading = () => (
+export const Heading = () => (
   <>
     <h1 className="text-center bg-clip-text text-transparent bg-linear-to-r from-blue-300 to-blue-600 font-extrabold text-3xl md:text-4xl lg:text-6xl">
       TypeSoFast!
@@ -13,5 +13,3 @@ const Heading = () => (
     </h3>
   </>
 )
-
-export default Heading

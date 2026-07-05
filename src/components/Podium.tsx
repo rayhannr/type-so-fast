@@ -4,11 +4,9 @@ interface Props {
   color: string
 }
 
-const Podium = ({ record, height, color }: Props) => (
+export const Podium = ({ record, height, color }: Props) => (
   <div>
     <p className="text-xs px-2 text-gray-900 font-medium">{record} WPM</p>
     <div className={`w-auto rounded-t-sm ${color}`} style={{ height }}></div>
   </div>
 )
-
-export default Podium

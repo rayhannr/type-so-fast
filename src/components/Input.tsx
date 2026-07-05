@@ -1,6 +1,6 @@
 import type { HTMLProps } from 'react'
 
-const Input = (props: HTMLProps<HTMLInputElement>) => (
+export const Input = (props: HTMLProps<HTMLInputElement>) => (
   <div className="w-64 sm:w-72 xl:w-96">
     <input
       className={`w-full border border-solid ${
@@ -11,5 +11,3 @@ const Input = (props: HTMLProps<HTMLInputElement>) => (
     />
   </div>
 )
-
-export default Input
