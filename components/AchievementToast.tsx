@@ -18,9 +18,12 @@ export const AchievementToast = ({ achievement, onDismiss }: Props) => {
   if (!achievement) return null
 
   return (
-    <div className="fixed bottom-6 right-6 bg-blue-600 text-white rounded-lg shadow-lg px-5 py-3 font-inter" style={{ zIndex: 50 }}>
-      <p className="text-xs uppercase tracking-wide text-blue-200">Achievement unlocked</p>
-      <p className="font-semibold">{achievement.name}</p>
+    <div
+      className="fixed bottom-6 right-6 bg-surface border border-solid border-edge rounded-lg shadow-lg px-5 py-3 font-inter"
+      style={{ zIndex: 50 }}
+    >
+      <p className="text-xs uppercase tracking-wide text-accent">Achievement unlocked</p>
+      <p className="font-semibold text-active">{achievement.name}</p>
     </div>
   )
 }

@@ -1,13 +1,17 @@
 import type { HTMLProps } from 'react'
 
+// visually hidden but not zero-size: some browsers refuse to focus a 0x0 element,
+// which would silently prevent autoFocus/programmatic focus from ever working.
+// All typing feedback comes from the character display in WordContainer.
 export const Input = (props: HTMLProps<HTMLInputElement>) => (
-  <div className="w-64 sm:w-72 xl:w-96">
-    <input
-      className={`w-full border border-solid ${
-        props.disabled ? 'bg-gray-100 cursor-not-allowed border-gray-400' : 'bg-white cursor-text border-blue-400'
-      } text-gray-900 font-medium md:text-lg p-3 rounded-md focus:outline-none focus:ring-1`}
-      type="text"
-      {...props}
-    />
-  </div>
+  <input
+    className="absolute w-px h-px p-0 m-0 border-0 opacity-0 overflow-hidden pointer-events-none"
+    type="text"
+    autoCapitalize="off"
+    autoCorrect="off"
+    autoComplete="off"
+    spellCheck={false}
+    aria-label="Type the highlighted word"
+    {...props}
+  />
 )
