@@ -120,3 +120,30 @@ Add a small color picker (5–6 preset swatches + custom hex input) in a setting
 
 **T41 — Light / dark theme toggle** ✓ Done
 Add a theme toggle (sun/moon icon) in the top bar. Dark theme is default. Light theme uses `#ffffff` bg, `#646669` muted text, `#111111` active text, same amber accent. Implemented via a `data-theme` attribute on `<html>` with two CSS variable sets in `globals.css`. All color tokens (bg, text, surface, border) reference CSS variables so the swap is automatic. Persist choice in localStorage; respect `prefers-color-scheme` on first visit.
+
+---
+
+## Phase 13 — Progression & Character Animation
+
+**T42 — XP and level system**
+Award XP after each completed round (formula tied to WPM/accuracy/words typed, e.g. base XP + bonus for accuracy). Track `xp` and `level` in AGS CloudSave (fallback: localStorage). XP-to-next-level requirement escalates per level via a curve (e.g. quadratic or exponential growth) — pick your own formula and constants, not a flat per-level step. Do not treat any specific numbers as fixed targets; the only requirement is that early levels are cheap and later levels cost substantially more. New `LevelBadge`/XP bar component shown in the top bar and on the result screen; brief level-up animation when a level threshold is crossed.
+
+**T43 — Expanded achievement configs**
+Create a broader set of AGS achievements beyond simple level gates, using the stat-tied pattern from Phase 6/11 (`incremental: true` + `statCode`, or manual unlock where no stat fits):
+- Level milestones — `level-5`, `level-10`, `level-25`
+- Speed tiers — `speed-50`, `speed-75`, `speed-100` (supersedes/extends `speed-demon`, see T37)
+- Volume milestones — games played (`dedicated-typist`/`century-club` already exist), total words typed, total XP earned
+- Accuracy — perfect-game streaks (e.g. 3 or 10 perfect-accuracy games in a row, not just one-off `perfectionist`)
+- Consistency — daily/weekly streaks (`streak-7`, `streak-30`, depends on T33's streak tracking)
+- Session variety — playing each word mode (T27) at least once, trying every duration (T26)
+Add all new entries to `achievements-manifest.ts`.
+
+**T44 — Character background animation (replaces star-field)** ✓ Done
+Replace the `ParticleField` space-debris/star-warp visual (T21) with a Three.js animated pair of hands typing on a keyboard as the background (chosen over a running-person figure — no skeletal rig needed, and it's thematically tighter for a typing game). Implemented stronger than originally scoped: instead of WPM-scaled random taps, each real keystroke taps its actual QWERTY key with the nearest finger (space → thumb on spacebar, backspace → top-right key), so the animation mirrors the player's typing exactly and stays still when they aren't typing.
+
+---
+
+## Phase 14 — Data Layer
+
+**T45 — Adopt React Query via the AccelByte SDK's generated hooks**
+Each installed `@accelbyte/sdk-*` package already ships `@tanstack/react-query` as an optional peer dep plus pre-built hooks (e.g. `useUserAchievementsApi_GetAchievements_ByUserId`, `useUserAchievementsApi_UpdateUnlock_ByUserId_ByAchievementCodeMutation`, and equivalents in `sdk-leaderboard`/`sdk-social`/`sdk-cloudsave`) — don't hand-roll `useQuery`/`useMutation` wrappers around the current `axios`-based `lib/api.ts` calls. Install `@tanstack/react-query`, wrap the app in a `QueryClientProvider`, and replace the manual `useState`/`useEffect` fetch + `refreshKey` refetch pattern in `GameApp.tsx` with the SDK's generated hooks directly, using their built-in cache invalidation. Note: these calls currently go through our own `/api/*` Next.js routes (which hold the AGS access token server-side) rather than calling AGS directly from the client — check whether the generated hooks are meant to run client-side against AGS directly (would require rethinking the session/token model) or whether they're better suited to server-side usage in the route handlers before committing to an approach. Sets up the fetch layer for T43's achievement fetching-from-AGS-instead-of-manifest follow-up.

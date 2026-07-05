@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useReducer, useState, useMemo, useRef } from 'react'
-import type { ChangeEvent, FormEvent } from 'react'
+import type { ChangeEvent, InputEvent } from 'react'
 import { indonesianWords, shuffleWord } from '@/constants/words'
 
 import { Heading } from './Heading'
@@ -13,7 +13,8 @@ import { RestartButton } from './RestartButton'
 import { Leaderboard } from './Leaderboard'
 import { AchievementToast } from './AchievementToast'
 import { AchievementsTab } from './AchievementsTab'
-import { ParticleField } from './ParticleField'
+import { TypingHands } from './TypingHands'
+import type { Keystroke } from './TypingHands'
 import { TabNav } from './TabNav'
 import type { Tab } from './TabNav'
 import { ThemeToggle } from './ThemeToggle'
@@ -125,6 +126,7 @@ export const GameApp = () => {
   const hasStartedRef = useRef<boolean>(false)
   const hasSavedRef = useRef<boolean>(false)
   const inputRef = useRef<HTMLInputElement | null>(null)
+  const keystrokeRef = useRef<Keystroke>({ id: 0, char: '' })
 
   useEffect(() => {
     const shuffledWords: string[] = shuffleWord(indonesianWords, numberOfWords)
@@ -203,21 +205,25 @@ export const GameApp = () => {
     dispatch({ type: 'INPUT_CHANGE', value: event.target.value, currentWord })
   }
 
-  const inputHandler = (event: FormEvent<HTMLInputElement>) => {
-    // React's SyntheticEvent for onInput doesn't carry `data` itself — it must be
-    // read off the real native InputEvent, which does populate it.
-    const nativeEvent = event.nativeEvent as globalThis.InputEvent
-    const currentKey = nativeEvent.data
-    if (currentKey?.length === 1 && currentKey !== ' ') {
-      if (!hasStartedRef.current) {
-        hasStartedRef.current = true
-        timerHandler()
-      }
+  const inputHandler = (event: InputEvent<HTMLInputElement>) => {
+    // the InputEvent type declares `data` on the synthetic event, but at runtime
+    // React still only populates it on the underlying native event
+    const currentKey = event.nativeEvent.data
+    if (currentKey?.length === 1) {
+      keystrokeRef.current = { id: keystrokeRef.current.id + 1, char: currentKey }
 
-      dispatch({ type: 'KEYSTROKE', correct: state.isInputCorrect })
+      if (currentKey !== ' ') {
+        if (!hasStartedRef.current) {
+          hasStartedRef.current = true
+          timerHandler()
+        }
+
+        dispatch({ type: 'KEYSTROKE', correct: state.isInputCorrect })
+      }
     }
 
-    if (nativeEvent.inputType === 'deleteContentBackward') {
+    if (event.nativeEvent.inputType === 'deleteContentBackward') {
+      keystrokeRef.current = { id: keystrokeRef.current.id + 1, char: '\b' }
       dispatch({ type: 'BACKSPACE' })
     }
   }
@@ -247,7 +253,7 @@ export const GameApp = () => {
 
   return (
     <>
-      <ParticleField wpm={liveWpm} gameOver={isGameOver} />
+      <TypingHands keystrokeRef={keystrokeRef} gameOver={isGameOver} />
       <div className="relative font-inter min-h-screen max-w-5xl mx-auto px-6 md:px-10 pt-8 pb-16">
         <header className="flex flex-row items-center justify-between">
           <Heading />

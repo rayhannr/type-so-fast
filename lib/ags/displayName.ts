@@ -4,8 +4,9 @@ import { createSdk } from './sdk'
 
 const DISPLAY_NAME_KEY = 'displayName'
 
+const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 const generateDisplayName = () =>
-  `${fakerEN.word.adjective()} ${fakerEN.word.noun()}`
+  `${capitalize(fakerEN.word.adjective())} ${capitalize(fakerEN.word.noun())}`
 
 export const getOrCreateDisplayName = async (userId: string, accessToken: string, localNameHint?: string): Promise<string> => {
   const { PublicPlayerRecordApi } = Cloudsave
