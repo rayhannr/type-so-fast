@@ -19,7 +19,7 @@ export const AccuracyBreakdown = ({ wordStats }: Props) => {
 
   return (
     <div className="mt-8 w-full">
-      <p className="text-muted text-sm mb-1">word accuracy</p>
+      <p className="text-muted text-sm mb-1">Word Accuracy</p>
       <div className="max-h-40 overflow-y-auto flex flex-wrap gap-x-3 gap-y-1 text-sm leading-6">
         {wordStats.map((stat, index) => {
           const accuracy = stat.attempted > 0 ? stat.correct / stat.attempted : 0

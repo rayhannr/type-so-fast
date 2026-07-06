@@ -7,9 +7,9 @@ interface Props {
 
 export const AchievementsTab = ({ unlockedCodes, isLoggedIn }: Props) => (
   <div className="w-full max-w-2xl mx-auto mt-10">
-    <h2 className="text-muted text-sm mb-6 text-center">achievements</h2>
+    <h2 className="text-muted text-sm mb-6 text-center">Achievements</h2>
     {!isLoggedIn && (
-      <p className="text-center text-xs text-muted mb-6">offline — progress is tracked once the game connects</p>
+      <p className="text-center text-xs text-muted mb-6">Offline — progress is tracked once the game connects.</p>
     )}
     <ul className="flex flex-col gap-3">
       {achievementsManifest.map((achievement) => {
@@ -46,7 +46,7 @@ export const AchievementsTab = ({ unlockedCodes, isLoggedIn }: Props) => (
               <p className="text-xs text-muted">{achievement.description}</p>
             </div>
             <span className={`ml-auto text-xs ${unlocked ? 'text-accent' : 'text-muted'}`}>
-              {unlocked ? 'unlocked' : 'locked'}
+              {unlocked ? 'Unlocked' : 'Locked'}
             </span>
           </li>
         )

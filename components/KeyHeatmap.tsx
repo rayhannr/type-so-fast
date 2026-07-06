@@ -57,7 +57,7 @@ export const KeyHeatmap = ({ missMap }: Props) => {
 
   return (
     <div className="mt-8 w-full">
-      <p className="text-muted text-sm mb-1">key misses</p>
+      <p className="text-muted text-sm mb-1">Key Misses</p>
       <svg
         viewBox={`0 0 ${W} ${H}`}
         className="w-full h-auto block"
@@ -69,7 +69,7 @@ export const KeyHeatmap = ({ missMap }: Props) => {
         )}
         {renderKey(' ', (W - SPACE_W) / 2, PITCH * 4, SPACE_W)}
       </svg>
-      {Object.keys(missMap).length === 0 && <p className="text-xs text-muted mt-1">no misses this game — flawless</p>}
+      {Object.keys(missMap).length === 0 && <p className="text-xs text-muted mt-1">No misses this game — flawless.</p>}
     </div>
   )
 }

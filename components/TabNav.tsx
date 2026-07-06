@@ -2,6 +2,13 @@ export type Tab = 'type' | 'stats' | 'leaderboard' | 'achievements'
 
 const TABS: Tab[] = ['type', 'stats', 'leaderboard', 'achievements']
 
+const TAB_LABELS: Record<Tab, string> = {
+  type: 'Type',
+  stats: 'Stats',
+  leaderboard: 'Leaderboard',
+  achievements: 'Achievements',
+}
+
 interface Props {
   active: Tab
   onChange: (tab: Tab) => void
@@ -19,7 +26,7 @@ export const TabNav = ({ active, onChange }: Props) => (
           active === tab ? 'text-active border-accent' : 'text-muted border-transparent hover:text-active'
         }`}
       >
-        {tab}
+        {TAB_LABELS[tab]}
       </button>
     ))}
   </nav>

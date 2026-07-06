@@ -48,7 +48,7 @@ export const Leaderboard = ({ refreshKey, currentUserId }: Props) => {
 
   return (
     <div className="w-full max-w-2xl mx-auto mt-10">
-      <h2 className="text-muted text-sm mb-6 text-center">global leaderboard</h2>
+      <h2 className="text-muted text-sm mb-6 text-center">Global Leaderboard</h2>
 
       <div className="flex flex-col items-center gap-2 mb-8">
         <div className="flex flex-row justify-center gap-2" aria-label="Duration filter">
@@ -60,7 +60,7 @@ export const Leaderboard = ({ refreshKey, currentUserId }: Props) => {
               duration === 'all' ? 'text-accent bg-surface' : 'text-muted hover:text-active'
             }`}
           >
-            all
+            All
           </button>
           {DURATIONS.map((d) => (
             <button
@@ -91,7 +91,7 @@ export const Leaderboard = ({ refreshKey, currentUserId }: Props) => {
                     range === r ? 'text-accent bg-surface' : 'text-muted hover:text-active'
                   }`}
                 >
-                  {r === 'alltime' ? 'all-time' : 'this week'}
+                  {r === 'alltime' ? 'All-time' : 'This week'}
                 </button>
               ))}
             </div>
@@ -99,10 +99,10 @@ export const Leaderboard = ({ refreshKey, currentUserId }: Props) => {
         )}
       </div>
 
-      {status === 'loading' && <p className="text-center text-sm text-muted py-8">loading...</p>}
-      {status === 'error' && <p className="text-center text-sm text-muted py-8">couldn&apos;t load the leaderboard — try again later</p>}
+      {status === 'loading' && <p className="text-center text-sm text-muted py-8">Loading...</p>}
+      {status === 'error' && <p className="text-center text-sm text-muted py-8">Couldn&apos;t load the leaderboard — try again later.</p>}
       {status === 'ready' && entries.length === 0 && (
-        <p className="text-center text-sm text-muted py-8">no scores yet — be the first!</p>
+        <p className="text-center text-sm text-muted py-8">No scores yet — be the first!</p>
       )}
 
       {status === 'ready' && entries.length > 0 && (
@@ -114,8 +114,8 @@ export const Leaderboard = ({ refreshKey, currentUserId }: Props) => {
               <thead>
                 <tr className="text-muted text-left">
                   <th className="font-normal py-2 px-3 w-12">#</th>
-                  <th className="font-normal py-2 px-3">name</th>
-                  <th className="font-normal py-2 px-3 text-right">wpm</th>
+                  <th className="font-normal py-2 px-3">Name</th>
+                  <th className="font-normal py-2 px-3 text-right">WPM</th>
                 </tr>
               </thead>
               <tbody>
@@ -129,7 +129,7 @@ export const Leaderboard = ({ refreshKey, currentUserId }: Props) => {
                       <td className="py-2 px-3 text-muted">{entry.rank}</td>
                       <td className="py-2 px-3">
                         {entry.displayName}
-                        {isCurrentUser && <span className="text-muted font-normal text-xs ml-2">(you)</span>}
+                        {isCurrentUser && <span className="text-muted font-normal text-xs ml-2">(You)</span>}
                       </td>
                       <td className="py-2 px-3 text-right tabular-nums">{entry.wpm}</td>
                     </tr>

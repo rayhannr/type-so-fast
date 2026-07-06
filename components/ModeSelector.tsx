@@ -1,6 +1,13 @@
 import { WORD_MODES } from '@/lib/word-generators'
 import type { WordMode } from '@/lib/word-generators'
 
+const MODE_LABELS: Record<WordMode, string> = {
+  words: 'Words',
+  numbers: 'Numbers',
+  punctuation: 'Punctuation',
+  quotes: 'Quotes',
+}
+
 type Props = {
   active: WordMode
   disabled: boolean
@@ -20,7 +27,7 @@ export const ModeSelector = ({ active, disabled, onChange }: Props) => (
           active === mode ? 'text-accent bg-surface' : 'text-muted hover:text-active'
         }`}
       >
-        {mode}
+        {MODE_LABELS[mode]}
       </button>
     ))}
   </div>

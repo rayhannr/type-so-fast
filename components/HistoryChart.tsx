@@ -27,7 +27,7 @@ export const HistoryChart = ({ history }: Props) => {
   }, [history])
 
   if (history.length < 2) {
-    return <p className="text-sm text-muted">play at least two games to see your progress over time</p>
+    return <p className="text-sm text-muted">Play at least two games to see your progress over time.</p>
   }
 
   const x = (index: number) => M.left + (index / (history.length - 1)) * PLOT_W

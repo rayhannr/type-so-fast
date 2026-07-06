@@ -51,35 +51,35 @@ export const Result = ({
     <div className="relative text-center py-6">
       <WpmBurst wpm={wpm} />
       <p className="text-7xl md:text-8xl font-bold text-accent leading-none">{wpm}</p>
-      <p className="text-muted mt-1">wpm</p>
+      <p className="text-muted mt-1">WPM</p>
     </div>
 
     <div>
-      <StatRow label="accuracy">{accuracy}%</StatRow>
-      <StatRow label="keystrokes">
+      <StatRow label="Accuracy">{accuracy}%</StatRow>
+      <StatRow label="Keystrokes">
         <span className="text-correct">{correctKeystroke}</span>
         <span className="text-muted"> / </span>
         <span className="text-error">{wrongKeystroke}</span>
         <span className="text-muted"> / </span>
         {correctKeystroke + wrongKeystroke}
       </StatRow>
-      <StatRow label="correct words">
+      <StatRow label="Correct Words">
         <span className="text-correct">{correctWords}</span>
       </StatRow>
-      <StatRow label="wrong words">
+      <StatRow label="Wrong Words">
         <span className="text-error">{wrongWords}</span>
       </StatRow>
     </div>
 
     <div className="mt-6">
-      <p className="text-muted text-sm mb-1">personal bests</p>
+      <p className="text-muted text-sm mb-1">Personal Bests</p>
       {records.length === 0 ? (
-        <p className="text-active text-sm">no records yet</p>
+        <p className="text-active text-sm">No records yet</p>
       ) : (
         <div className="flex flex-row items-baseline gap-4">
           {records.map((record, index) => (
             <span key={index} className={index === 0 ? 'text-accent text-2xl font-bold' : 'text-active text-lg'}>
-              {record} <span className="text-muted text-xs font-normal">wpm</span>
+              {record} <span className="text-muted text-xs font-normal">WPM</span>
             </span>
           ))}
           <button
@@ -87,15 +87,15 @@ export const Result = ({
             onClick={clearRecords}
             className="ml-auto text-xs text-muted hover:text-error transition-colors cursor-pointer"
           >
-            clear
+            Clear
           </button>
         </div>
       )}
       {personalStats && (
         <div className="mt-3">
-          <StatRow label="all-time best">{personalStats.bestWpm} wpm</StatRow>
-          <StatRow label="games played">{personalStats.gamesPlayed}</StatRow>
-          <StatRow label="total words typed">{personalStats.totalWordsTyped}</StatRow>
+          <StatRow label="All-time Best">{personalStats.bestWpm} WPM</StatRow>
+          <StatRow label="Games Played">{personalStats.gamesPlayed}</StatRow>
+          <StatRow label="Total Words Typed">{personalStats.totalWordsTyped}</StatRow>
         </div>
       )}
     </div>

@@ -70,7 +70,7 @@ export const SpeedCurve = ({ samples }: Props) => {
 
   return (
     <div className="mt-8 w-full">
-      <p className="text-muted text-sm mb-1">speed curve</p>
+      <p className="text-muted text-sm mb-1">Speed Curve</p>
       <div className="relative">
         <svg
           viewBox={`0 0 ${W} ${H}`}
