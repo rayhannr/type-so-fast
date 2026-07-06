@@ -23,11 +23,25 @@ import { DurationSelector, DURATIONS } from './DurationSelector'
 import type { Duration } from './DurationSelector'
 import { ModeSelector } from './ModeSelector'
 import type { WpmSample } from './SpeedCurve'
+import { StatsTab } from './StatsTab'
+import type { WordStat } from './AccuracyBreakdown'
 
 import { useAgsSession } from '@/lib/ags/useAgsSession'
-import { apiGetStats, apiSubmitStats, apiGetRecords, apiSaveRecords, apiProcessAchievements } from '@/lib/api'
+import {
+  apiGetStats,
+  apiSubmitStats,
+  apiGetRecords,
+  apiSaveRecords,
+  apiProcessAchievements,
+  apiGetHistory,
+  apiSaveHistory,
+  apiGetStreak,
+  apiSaveStreak,
+} from '@/lib/api'
 import type { PersonalStats } from '@/lib/ags/statistics'
 import type { UnlockedAchievement } from '@/lib/ags/achievements'
+import { advanceStreak, HISTORY_LIMIT } from '@/lib/progress'
+import type { GameHistoryEntry, StreakData } from '@/lib/progress'
 
 const numberOfWords = 400
 
@@ -43,12 +57,14 @@ interface GameState {
   timer: number
   duration: number
   wpmSamples: WpmSample[]
+  missMap: Record<string, number>
+  wordStats: WordStat[]
 }
 
 type GameAction =
   | { type: 'SET_WORDS'; words: string[] }
   | { type: 'INPUT_CHANGE'; value: string; currentWord: string }
-  | { type: 'KEYSTROKE'; correct: boolean }
+  | { type: 'KEYSTROKE'; correct: boolean; missedChar?: string }
   | { type: 'BACKSPACE' }
   | { type: 'TICK' }
   | { type: 'RESTART'; words: string[]; duration: number }
@@ -65,6 +81,8 @@ const createInitialState = (words: string[], duration: number = 60): GameState =
   timer: duration,
   duration,
   wpmSamples: [],
+  missMap: {},
+  wordStats: [],
 })
 
 const gameReducer = (state: GameState, action: GameAction): GameState => {
@@ -81,6 +99,11 @@ const gameReducer = (state: GameState, action: GameAction): GameState => {
       }
 
       const inputWord = value.slice(0, -1)
+      const attempted = Math.max(inputWord.length, currentWord.length)
+      let correctChars = 0
+      for (let i = 0; i < Math.min(inputWord.length, currentWord.length); i++) {
+        if (inputWord[i] === currentWord[i]) correctChars++
+      }
       return {
         ...state,
         wordInput: '',
@@ -88,12 +111,16 @@ const gameReducer = (state: GameState, action: GameAction): GameState => {
         correctWords: inputWord === currentWord ? state.correctWords + 1 : state.correctWords,
         wrongWords: inputWord === currentWord ? state.wrongWords : state.wrongWords + 1,
         words: state.words.slice(1),
+        wordStats: state.wordStats.concat({ word: currentWord, correct: correctChars, attempted }),
       }
     }
-    case 'KEYSTROKE':
+    case 'KEYSTROKE': {
+      const missed = action.missedChar?.toLowerCase()
+      const missMap = missed ? { ...state.missMap, [missed]: (state.missMap[missed] ?? 0) + 1 } : state.missMap
       return action.correct
-        ? { ...state, correctKeystroke: state.correctKeystroke + 1 }
-        : { ...state, wrongKeystroke: state.wrongKeystroke + 1 }
+        ? { ...state, correctKeystroke: state.correctKeystroke + 1, missMap }
+        : { ...state, wrongKeystroke: state.wrongKeystroke + 1, missMap }
+    }
     case 'BACKSPACE':
       return { ...state, correction: state.correction + 1 }
     case 'TICK': {
@@ -116,6 +143,8 @@ export const GameApp = () => {
   const [state, dispatch] = useReducer(gameReducer, [], () => createInitialState([]))
   const [records, setRecords] = useState<number[]>([])
   const [personalStats, setPersonalStats] = useState<PersonalStats | null>(null)
+  const [history, setHistory] = useState<GameHistoryEntry[]>([])
+  const [streak, setStreak] = useState<StreakData | null>(null)
   const [leaderboardRefreshKey, setLeaderboardRefreshKey] = useState(0)
   const [newAchievement, setNewAchievement] = useState<UnlockedAchievement | null>(null)
   const [tab, setTab] = useState<Tab>('type')
@@ -163,11 +192,25 @@ export const GameApp = () => {
     if (!session) {
       const userRecords = localStorage.getItem('bestRecords')
       setRecords(userRecords ? JSON.parse(userRecords) : [])
+      const localHistory = localStorage.getItem('gameHistory')
+      setHistory(localHistory ? JSON.parse(localHistory) : [])
+      const localStreak = localStorage.getItem('dailyStreak')
+      setStreak(localStreak ? JSON.parse(localStreak) : null)
       return
     }
 
     apiGetRecords(session).then(setRecords).catch(() => {})
     apiGetStats(session).then(setPersonalStats).catch(() => {})
+    apiGetHistory(session)
+      .then((entries) => {
+        if (entries.length > 0) setHistory(entries)
+      })
+      .catch(() => {})
+    apiGetStreak(session)
+      .then((cloudStreak) => {
+        if (cloudStreak) setStreak(cloudStreak)
+      })
+      .catch(() => {})
   }, [session])
 
   useEffect(() => {
@@ -188,11 +231,21 @@ export const GameApp = () => {
     localStorage.setItem('bestRecords', JSON.stringify(newRecords))
     setRecords(newRecords)
 
+    const newHistory = history.concat({ wpm: userResult, timestamp: Date.now() }).slice(-HISTORY_LIMIT)
+    localStorage.setItem('gameHistory', JSON.stringify(newHistory))
+    setHistory(newHistory)
+
+    const newStreak = advanceStreak(streak, new Date())
+    localStorage.setItem('dailyStreak', JSON.stringify(newStreak))
+    setStreak(newStreak)
+
     if (!session || !displayName) return
 
     const accuracy = (state.correctKeystroke * 100) / (totalKeyStrokes + state.correction)
 
     apiSaveRecords(session, newRecords).catch(() => {})
+    apiSaveHistory(session, newHistory).catch(() => {})
+    apiSaveStreak(session, newStreak).catch(() => {})
 
     apiSubmitStats(session, { wpm: userResult, wordsTyped: state.correctWords, displayName, duration, mode })
       .then(() => {
@@ -202,7 +255,7 @@ export const GameApp = () => {
       .then(setPersonalStats)
       .catch(() => {})
 
-    apiProcessAchievements(session, accuracy, [...unlockedAchievements])
+    apiProcessAchievements(session, accuracy, [...unlockedAchievements], newStreak.currentStreak)
       .then((newlyUnlocked) => {
         if (newlyUnlocked.length === 0) return
         setUnlockedAchievements(new Set([...unlockedAchievements, ...newlyUnlocked.map((a) => a.achievementCode)]))
@@ -241,7 +294,14 @@ export const GameApp = () => {
           timerHandler()
         }
 
-        dispatch({ type: 'KEYSTROKE', correct: state.isInputCorrect })
+        // past the word's end the player should have pressed space, so the miss lands there
+        const position = state.wordInput.length
+        const expectedChar = currentWord && position < currentWord.length ? currentWord[position] : ' '
+        dispatch({
+          type: 'KEYSTROKE',
+          correct: state.isInputCorrect,
+          missedChar: currentKey === expectedChar ? undefined : expectedChar,
+        })
       }
     }
 
@@ -378,6 +438,8 @@ export const GameApp = () => {
                 records={records}
                 clearRecords={clearRecords}
                 samples={state.wpmSamples}
+                missMap={state.missMap}
+                wordStats={state.wordStats}
               />
               <div className="flex justify-center items-center gap-2 mt-8">
                 <span className="text-[10px] text-muted border border-solid border-edge rounded px-1 py-0.5">Tab</span>
@@ -385,6 +447,10 @@ export const GameApp = () => {
               </div>
             </div>
           ))}
+
+        {tab === 'stats' && (
+          <StatsTab personalStats={personalStats} history={history} streak={streak} isLoggedIn={!!session} />
+        )}
 
         {tab === 'leaderboard' && <Leaderboard refreshKey={leaderboardRefreshKey} currentUserId={session?.userId ?? null} />}
 

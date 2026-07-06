@@ -1,6 +1,6 @@
-export type Tab = 'type' | 'leaderboard' | 'achievements'
+export type Tab = 'type' | 'stats' | 'leaderboard' | 'achievements'
 
-const TABS: Tab[] = ['type', 'leaderboard', 'achievements']
+const TABS: Tab[] = ['type', 'stats', 'leaderboard', 'achievements']
 
 interface Props {
   active: Tab

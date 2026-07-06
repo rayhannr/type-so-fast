@@ -3,6 +3,17 @@ import { createSdk } from './sdk'
 
 export const ACHIEVEMENT_PERFECTIONIST = 'perfectionist'
 
+const STREAK_ACHIEVEMENTS: { code: string; days: number }[] = [
+  { code: 'streak-7', days: 7 },
+  { code: 'streak-30', days: 30 },
+  { code: 'streak-100', days: 100 },
+  { code: 'streak-250', days: 250 },
+  { code: 'streak-365', days: 365 },
+  { code: 'streak-500', days: 500 },
+  { code: 'streak-750', days: 750 },
+  { code: 'streak-1000', days: 1000 },
+]
+
 const UNLOCKED_STATUS = 2
 
 export interface UnlockedAchievement {
@@ -27,6 +38,24 @@ export const unlockPerfectionistIfEligible = async (userId: string, accessToken:
   const sdk = createSdk(accessToken)
   const userAchievementsApi = UserAchievementsApi(sdk)
   await userAchievementsApi.updateUnlock_ByUserId_ByAchievementCode(userId, ACHIEVEMENT_PERFECTIONIST)
+}
+
+export const unlockStreakAchievementsIfEligible = async (
+  userId: string,
+  accessToken: string,
+  streak: number
+): Promise<void> => {
+  const eligible = STREAK_ACHIEVEMENTS.filter((achievement) => streak >= achievement.days)
+  if (eligible.length === 0) return
+
+  const sdk = createSdk(accessToken)
+  const userAchievementsApi = UserAchievementsApi(sdk)
+  await Promise.all(
+    eligible.map((achievement) =>
+      // one milestone failing shouldn't block the others from unlocking
+      userAchievementsApi.updateUnlock_ByUserId_ByAchievementCode(userId, achievement.code).catch(() => {})
+    )
+  )
 }
 
 export const diffNewlyUnlocked = async (

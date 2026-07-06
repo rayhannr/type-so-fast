@@ -76,17 +76,17 @@ Leaderboard tab gets a mode filter (`words` / `numbers` / `punctuation` / `quote
 
 ## Phase 9 — Stats & Progress
 
-**T33 — Historical WPM chart**
-Store last 20 game results (wpm + timestamp) in AGS CloudSave (fallback: localStorage). New `HistoryChart` component renders a line graph of WPM over time, shown in a new `stats` tab alongside the existing personal stats.
+**T33 — Historical WPM chart** ✓ Done
+Store last 20 game results (wpm + timestamp) in AGS CloudSave (fallback: localStorage). New `HistoryChart` component renders a line graph of WPM over time, shown in a new `stats` tab alongside the existing personal stats. Implemented via `lib/progress.ts` (`GameHistoryEntry`, `HISTORY_LIMIT`), CloudSave key `gameHistory` + `/api/history` route, and `StatsTab`/`HistoryChart` components.
 
-**T34 — Key heatmap**
-Track per-character miss counts during each game in a `missMap: Record<string, number>` in the reducer. After game ends, render a keyboard layout SVG where each key is colored by miss frequency (cool → hot scale). Show in the result screen below the speed curve.
+**T34 — Key heatmap** ✓ Done
+Track per-character miss counts during each game in a `missMap: Record<string, number>` in the reducer. After game ends, render a keyboard layout SVG where each key is colored by miss frequency (cool → hot scale). Show in the result screen below the speed curve. Misses are attributed to the *expected* character (space when typing past a word's end) so the heatmap shows which keys the player should have hit; implemented in `KeyHeatmap.tsx`.
 
-**T35 — Accuracy breakdown**
-Track per-word accuracy (correct chars / total chars attempted) during the game. Show a scrollable word-by-word breakdown in the result screen: each word colored green/yellow/red based on accuracy, with miss count on hover.
+**T35 — Accuracy breakdown** ✓ Done
+Track per-word accuracy (correct chars / total chars attempted) during the game. Show a scrollable word-by-word breakdown in the result screen: each word colored green/yellow/red based on accuracy, with miss count on hover. Per-word stats are computed on word submit in the reducer's `INPUT_CHANGE` case (final typed word vs target, positional comparison); implemented in `AccuracyBreakdown.tsx`.
 
-**T36 — Daily streak**
-Track `lastPlayedDate` and `currentStreak` in AGS CloudSave. Increment streak when the user completes a game on a new calendar day; reset to 1 if a day was skipped. Display streak count in the stats tab with a flame icon. New AGS achievement triggers: 7-day and 30-day streaks.
+**T36 — Daily streak** ✓ Done
+Track `lastPlayedDate` and `currentStreak` in AGS CloudSave. Increment streak when the user completes a game on a new calendar day; reset to 1 if a day was skipped. Display streak count in the stats tab with a flame icon. New AGS achievement triggers: 7/30/100/250/365/500/750/1000-day streaks. Implemented via `advanceStreak` in `lib/progress.ts` (local calendar dates), CloudSave key `dailyStreak` + `/api/streak` route (localStorage fallback), and `unlockStreakAchievementsIfEligible` in `lib/ags/achievements.ts`; manifest entries added. All eight `streak-*` achievement configs (manual-unlock, no `statCode`, matching the `perfectionist` pattern) created directly in the AGS Admin Portal via the `ags` CLI (`ags achievement achievements create`) — no longer pending on T38.
 
 ---
 
@@ -105,8 +105,7 @@ Create new achievements in AGS Admin Portal:
 - `speed-50` — stat `best-wpm` ≥ 50
 - `speed-75` — stat `best-wpm` ≥ 75
 - `speed-100` — stat `best-wpm` ≥ 100 (replaces/extends existing `speed-demon`)
-- `streak-7` — manual trigger when 7-day streak reached
-- `streak-30` — manual trigger when 30-day streak reached
+- ~~`streak-7`/`streak-30`~~ — done, see T36 (all eight `streak-*` milestone configs created)
 
 **T39 — Achievement unlock logic for new achievements**
 Extend `apiProcessAchievements` in `lib/api.ts` and the POST `/api/achievements` route to handle: `first-game` (games played = 1), WPM tier milestones, and streak milestones. Update `achievements-manifest.ts` with all new entries.

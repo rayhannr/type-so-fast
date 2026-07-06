@@ -1,4 +1,9 @@
-import { diffNewlyUnlocked, getUnlockedAchievements, unlockPerfectionistIfEligible } from '@/lib/ags/achievements'
+import {
+  diffNewlyUnlocked,
+  getUnlockedAchievements,
+  unlockPerfectionistIfEligible,
+  unlockStreakAchievementsIfEligible,
+} from '@/lib/ags/achievements'
 
 function getAuth(request: Request): { userId: string; accessToken: string } | null {
   const auth = request.headers.get('Authorization')
@@ -25,8 +30,9 @@ export async function POST(request: Request) {
   if (!auth) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
   try {
-    const { accuracy, previousCodes } = await request.json()
+    const { accuracy, previousCodes, streak } = await request.json()
     await unlockPerfectionistIfEligible(auth.userId, auth.accessToken, accuracy)
+    await unlockStreakAchievementsIfEligible(auth.userId, auth.accessToken, streak ?? 0)
     const newlyUnlocked = await diffNewlyUnlocked(auth.userId, auth.accessToken, previousCodes ?? [])
     return Response.json(newlyUnlocked)
   } catch (err) {

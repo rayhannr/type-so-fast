@@ -1,6 +1,9 @@
 import { SpeedCurve } from './SpeedCurve'
 import type { WpmSample } from './SpeedCurve'
 import { WpmBurst } from './WpmBurst'
+import { KeyHeatmap } from './KeyHeatmap'
+import { AccuracyBreakdown } from './AccuracyBreakdown'
+import type { WordStat } from './AccuracyBreakdown'
 
 interface PersonalStats {
   bestWpm: number
@@ -19,6 +22,8 @@ interface Props {
   records: number[]
   clearRecords: () => void
   samples: WpmSample[]
+  missMap: Record<string, number>
+  wordStats: WordStat[]
 }
 
 const StatRow = ({ label, children }: { label: string; children: React.ReactNode }) => (
@@ -39,6 +44,8 @@ export const Result = ({
   records,
   clearRecords,
   samples,
+  missMap,
+  wordStats,
 }: Props) => (
   <div className="w-full max-w-md mx-auto">
     <div className="relative text-center py-6">
@@ -94,5 +101,7 @@ export const Result = ({
     </div>
 
     <SpeedCurve samples={samples} />
+    <KeyHeatmap missMap={missMap} />
+    <AccuracyBreakdown wordStats={wordStats} />
   </div>
 )
