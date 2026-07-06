@@ -1,14 +1,33 @@
 import { UserStatisticApi } from '@accelbyte/sdk-social'
 import { createSdk } from './sdk'
+import type { Duration } from '@/components/DurationSelector'
+import type { WordMode } from '@/lib/word-generators'
 
 export const STAT_BEST_WPM = 'best-wpm'
 export const STAT_GAMES_PLAYED = 'games-played'
 export const STAT_TOTAL_WORDS_TYPED = 'total-words-typed'
 
+export const STAT_BEST_WPM_BY_DURATION: Record<Duration, string> = {
+  15: 'best-wpm-15s',
+  30: 'best-wpm-30s',
+  60: 'best-wpm-60s',
+  120: 'best-wpm-120s',
+}
+
+// 'words' reuses the base best-wpm stat since it's the default mode
+export const STAT_BEST_WPM_BY_MODE: Record<WordMode, string> = {
+  words: 'best-wpm',
+  numbers: 'best-wpm-numbers',
+  punctuation: 'best-wpm-punctuation',
+  quotes: 'best-wpm-quotes',
+}
+
 export interface GameResultStats {
   wpm: number
   wordsTyped: number
   displayName: string
+  duration: Duration
+  mode: WordMode
 }
 
 export interface PersonalStats {
@@ -20,12 +39,23 @@ export interface PersonalStats {
 export const submitGameStats = async (userId: string, accessToken: string, result: GameResultStats): Promise<void> => {
   const statisticApi = UserStatisticApi(createSdk(accessToken))
 
+  const modeStatCode = STAT_BEST_WPM_BY_MODE[result.mode]
+  const durationStatCode = STAT_BEST_WPM_BY_DURATION[result.duration]
+
+  const updates = new Map<string, number>([
+    [STAT_BEST_WPM, result.wpm],
+    [durationStatCode, result.wpm],
+  ])
+  if (modeStatCode !== STAT_BEST_WPM) updates.set(modeStatCode, result.wpm)
+
   await Promise.all([
-    statisticApi.updateStatitemValue_ByUserId_ByStatCode_v2(userId, STAT_BEST_WPM, {
-      updateStrategy: 'MAX',
-      value: result.wpm,
-      additionalData: { displayName: result.displayName },
-    }),
+    ...[...updates].map(([statCode, value]) =>
+      statisticApi.updateStatitemValue_ByUserId_ByStatCode_v2(userId, statCode, {
+        updateStrategy: 'MAX',
+        value,
+        additionalData: { displayName: result.displayName },
+      })
+    ),
     statisticApi.updateStatitemValue_ByUserId_ByStatCode_v2(userId, STAT_GAMES_PLAYED, {
       updateStrategy: 'INCREMENT',
       value: 1,

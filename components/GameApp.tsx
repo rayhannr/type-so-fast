@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useReducer, useState, useMemo, useRef } from 'react'
-import type { ChangeEvent, InputEvent } from 'react'
-import { indonesianWords, shuffleWord } from '@/constants/words'
+import { useEffect, useReducer, useState, useMemo, useRef, useCallback } from 'react'
+import type { ChangeEvent, InputEvent, KeyboardEvent } from 'react'
+import { generateWords } from '@/lib/word-generators'
+import type { WordMode } from '@/lib/word-generators'
 
 import { Heading } from './Heading'
 import { WordContainer } from './WordContainer'
@@ -18,6 +19,9 @@ import type { Keystroke } from './TypingHands'
 import { TabNav } from './TabNav'
 import type { Tab } from './TabNav'
 import { ThemeToggle } from './ThemeToggle'
+import { DurationSelector, DURATIONS } from './DurationSelector'
+import type { Duration } from './DurationSelector'
+import { ModeSelector } from './ModeSelector'
 import type { WpmSample } from './SpeedCurve'
 
 import { useAgsSession } from '@/lib/ags/useAgsSession'
@@ -37,6 +41,7 @@ interface GameState {
   correctWords: number
   wrongWords: number
   timer: number
+  duration: number
   wpmSamples: WpmSample[]
 }
 
@@ -46,9 +51,9 @@ type GameAction =
   | { type: 'KEYSTROKE'; correct: boolean }
   | { type: 'BACKSPACE' }
   | { type: 'TICK' }
-  | { type: 'RESTART'; words: string[] }
+  | { type: 'RESTART'; words: string[]; duration: number }
 
-const createInitialState = (words: string[]): GameState => ({
+const createInitialState = (words: string[], duration: number = 60): GameState => ({
   words,
   wordInput: '',
   isInputCorrect: true,
@@ -57,7 +62,8 @@ const createInitialState = (words: string[]): GameState => ({
   correction: 0,
   correctWords: 0,
   wrongWords: 0,
-  timer: 60,
+  timer: duration,
+  duration,
   wpmSamples: [],
 })
 
@@ -92,7 +98,7 @@ const gameReducer = (state: GameState, action: GameAction): GameState => {
       return { ...state, correction: state.correction + 1 }
     case 'TICK': {
       const timer = state.timer - 1
-      const elapsed = 60 - timer
+      const elapsed = state.duration - timer
       const wpmSamples =
         elapsed % 5 === 0
           ? state.wpmSamples.concat({ elapsed, wpm: Math.round((state.correctKeystroke * 12) / elapsed) })
@@ -100,7 +106,7 @@ const gameReducer = (state: GameState, action: GameAction): GameState => {
       return { ...state, timer, wpmSamples }
     }
     case 'RESTART':
-      return createInitialState(action.words)
+      return createInitialState(action.words, action.duration)
     default:
       return state
   }
@@ -113,6 +119,10 @@ export const GameApp = () => {
   const [leaderboardRefreshKey, setLeaderboardRefreshKey] = useState(0)
   const [newAchievement, setNewAchievement] = useState<UnlockedAchievement | null>(null)
   const [tab, setTab] = useState<Tab>('type')
+  const [duration, setDuration] = useState<Duration>(60)
+  const [mode, setMode] = useState<WordMode>('words')
+  const [hasStarted, setHasStarted] = useState(false)
+  const [capsLockOn, setCapsLockOn] = useState(false)
 
   const { session, displayName, unlockedAchievements, setUnlockedAchievements } = useAgsSession()
 
@@ -129,8 +139,20 @@ export const GameApp = () => {
   const keystrokeRef = useRef<Keystroke>({ id: 0, char: '' })
 
   useEffect(() => {
-    const shuffledWords: string[] = shuffleWord(indonesianWords, numberOfWords)
-    dispatch({ type: 'SET_WORDS', words: shuffledWords })
+    const savedDuration = Number(localStorage.getItem('lastDuration'))
+    const initialDuration: Duration = (DURATIONS as readonly number[]).includes(savedDuration)
+      ? (savedDuration as Duration)
+      : 60
+    const savedMode = localStorage.getItem('lastMode')
+    const initialMode: WordMode = (['words', 'numbers', 'punctuation', 'quotes'] as WordMode[]).includes(
+      savedMode as WordMode
+    )
+      ? (savedMode as WordMode)
+      : 'words'
+
+    setDuration(initialDuration)
+    setMode(initialMode)
+    dispatch({ type: 'RESTART', words: generateWords(initialMode, numberOfWords), duration: initialDuration })
   }, [])
 
   useEffect(() => {
@@ -153,7 +175,7 @@ export const GameApp = () => {
     if (hasSavedRef.current) return
     hasSavedRef.current = true
 
-    const userResult = Math.round(state.correctKeystroke / 5)
+    const userResult = Math.round((state.correctKeystroke * 12) / state.duration)
     if (userResult <= 0) return
 
     let newRecords = records.concat(userResult)
@@ -172,7 +194,7 @@ export const GameApp = () => {
 
     apiSaveRecords(session, newRecords).catch(() => {})
 
-    apiSubmitStats(session, { wpm: userResult, wordsTyped: state.correctWords, displayName })
+    apiSubmitStats(session, { wpm: userResult, wordsTyped: state.correctWords, displayName, duration, mode })
       .then(() => {
         setLeaderboardRefreshKey((prev) => prev + 1)
         return apiGetStats(session)
@@ -215,6 +237,7 @@ export const GameApp = () => {
       if (currentKey !== ' ') {
         if (!hasStartedRef.current) {
           hasStartedRef.current = true
+          setHasStarted(true)
           timerHandler()
         }
 
@@ -228,13 +251,48 @@ export const GameApp = () => {
     }
   }
 
-  const restartHandler = () => {
+  const keyDownHandler = (event: KeyboardEvent<HTMLInputElement>) => {
+    setCapsLockOn(event.getModifierState('CapsLock'))
+  }
+
+  const restartHandler = useCallback(() => {
     clearInterval(intervalRef.current!)
     hasStartedRef.current = false
     hasSavedRef.current = false
-    dispatch({ type: 'RESTART', words: shuffleWord(indonesianWords, numberOfWords) })
+    setHasStarted(false)
+    dispatch({ type: 'RESTART', words: generateWords(mode, numberOfWords), duration })
     inputRef.current?.focus()
+  }, [mode, duration])
+
+  const changeDuration = (nextDuration: Duration) => {
+    if (hasStarted) return
+    setDuration(nextDuration)
+    localStorage.setItem('lastDuration', String(nextDuration))
+    clearInterval(intervalRef.current!)
+    hasStartedRef.current = false
+    hasSavedRef.current = false
+    dispatch({ type: 'RESTART', words: generateWords(mode, numberOfWords), duration: nextDuration })
   }
+
+  const changeMode = (nextMode: WordMode) => {
+    if (hasStarted) return
+    setMode(nextMode)
+    localStorage.setItem('lastMode', nextMode)
+    clearInterval(intervalRef.current!)
+    hasStartedRef.current = false
+    hasSavedRef.current = false
+    dispatch({ type: 'RESTART', words: generateWords(nextMode, numberOfWords), duration })
+  }
+
+  useEffect(() => {
+    const handleGlobalKeyDown = (event: globalThis.KeyboardEvent) => {
+      if (event.key !== 'Tab') return
+      event.preventDefault()
+      restartHandler()
+    }
+    window.addEventListener('keydown', handleGlobalKeyDown)
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown)
+  }, [restartHandler])
 
   const clearRecords = () => {
     const bestRecords = localStorage.getItem('bestRecords')
@@ -247,7 +305,7 @@ export const GameApp = () => {
     }
   }
 
-  const elapsed = 60 - state.timer
+  const elapsed = state.duration - state.timer
   const liveWpm = elapsed > 0 ? (state.correctKeystroke * 12) / elapsed : 0
   const isGameOver = state.timer === 0
 
@@ -278,9 +336,17 @@ export const GameApp = () => {
         {tab === 'type' &&
           (!isGameOver ? (
             <div className="max-w-3xl mx-auto mt-10 md:mt-14">
+              <div className="flex flex-col items-center gap-2 mb-6">
+                <DurationSelector active={duration} disabled={hasStarted} onChange={changeDuration} />
+                <ModeSelector active={mode} disabled={hasStarted} onChange={changeMode} />
+              </div>
               <div className="flex flex-row items-center justify-between mb-4">
                 <Timer timer={state.timer} />
-                <RestartButton onClick={restartHandler} />
+                <div className="flex flex-row items-center gap-2">
+                  {capsLockOn && <span className="text-xs text-error">Caps Lock is on</span>}
+                  <span className="text-[10px] text-muted border border-solid border-edge rounded px-1 py-0.5">Tab</span>
+                  <RestartButton onClick={restartHandler} />
+                </div>
               </div>
               <Input
                 ref={inputRef}
@@ -288,6 +354,7 @@ export const GameApp = () => {
                 disabled={isGameOver}
                 onChange={changeHandler}
                 onInput={inputHandler}
+                onKeyDown={keyDownHandler}
                 autoFocus
               />
               <WordContainer
@@ -301,7 +368,7 @@ export const GameApp = () => {
           ) : (
             <div className="mt-10">
               <Result
-                wpm={Math.round(state.correctKeystroke / 5)}
+                wpm={Math.round((state.correctKeystroke * 12) / state.duration)}
                 correctKeystroke={state.correctKeystroke}
                 wrongKeystroke={state.wrongKeystroke}
                 accuracy={((state.correctKeystroke * 100) / (totalKeyStrokes + state.correction)).toFixed(2)}
@@ -312,7 +379,8 @@ export const GameApp = () => {
                 clearRecords={clearRecords}
                 samples={state.wpmSamples}
               />
-              <div className="flex justify-center mt-8">
+              <div className="flex justify-center items-center gap-2 mt-8">
+                <span className="text-[10px] text-muted border border-solid border-edge rounded px-1 py-0.5">Tab</span>
                 <RestartButton onClick={restartHandler} />
               </div>
             </div>

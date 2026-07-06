@@ -1,7 +1,9 @@
 import axios from 'axios'
-import type { LeaderboardEntry } from './ags/leaderboard'
+import type { LeaderboardEntry, LeaderboardRange } from './ags/leaderboard'
 import type { PersonalStats, GameResultStats } from './ags/statistics'
 import type { UnlockedAchievement } from './ags/achievements'
+import type { Duration } from '@/components/DurationSelector'
+import type { WordMode } from '@/lib/word-generators'
 
 export interface AgsSession {
   userId: string
@@ -18,8 +20,19 @@ export const apiAuth = async (deviceId: string): Promise<AgsSession> => {
   return data
 }
 
-export const apiGetLeaderboard = async (limit = 10): Promise<LeaderboardEntry[]> => {
-  const { data } = await axios.get<LeaderboardEntry[]>('/api/leaderboard', { params: { limit } })
+interface LeaderboardFilters {
+  limit?: number
+  duration?: Duration | null
+  mode?: WordMode
+  range?: LeaderboardRange
+}
+
+export const apiGetLeaderboard = async ({ limit = 10, duration, mode, range }: LeaderboardFilters = {}): Promise<
+  LeaderboardEntry[]
+> => {
+  const { data } = await axios.get<LeaderboardEntry[]>('/api/leaderboard', {
+    params: { limit, duration: duration ?? undefined, mode, range },
+  })
   return data
 }
 
