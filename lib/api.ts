@@ -3,6 +3,7 @@ import type { LeaderboardEntry, LeaderboardRange } from './ags/leaderboard'
 import type { PersonalStats, GameResultStats } from './ags/statistics'
 import type { UnlockedAchievement } from './ags/achievements'
 import type { GameHistoryEntry, StreakData } from './progress'
+import type { UserSettings } from './ags/cloudsave'
 import type { Duration } from '@/components/DurationSelector'
 import type { WordMode } from '@/lib/word-generators'
 
@@ -90,6 +91,15 @@ export const apiProcessAchievements = async (
     { headers: authHeaders(session) }
   )
   return data
+}
+
+export const apiGetSettings = async (session: AgsSession): Promise<UserSettings> => {
+  const { data } = await axios.get<UserSettings>('/api/settings', { headers: authHeaders(session) })
+  return data
+}
+
+export const apiSaveSettings = async (session: AgsSession, settings: UserSettings): Promise<void> => {
+  await axios.put('/api/settings', { settings }, { headers: authHeaders(session) })
 }
 
 export const apiGetDisplayName = async (session: AgsSession, localName?: string): Promise<string> => {

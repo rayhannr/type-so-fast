@@ -19,6 +19,8 @@ import type { Keystroke } from './TypingHands'
 import { TabNav } from './TabNav'
 import type { Tab } from './TabNav'
 import { ThemeToggle } from './ThemeToggle'
+import { SoundToggle } from './SoundToggle'
+import { AccentPicker } from './AccentPicker'
 import { DurationSelector, DURATIONS } from './DurationSelector'
 import type { Duration } from './DurationSelector'
 import { ModeSelector } from './ModeSelector'
@@ -41,6 +43,7 @@ import {
 import type { PersonalStats } from '@/lib/ags/statistics'
 import type { UnlockedAchievement } from '@/lib/ags/achievements'
 import { advanceStreak, HISTORY_LIMIT } from '@/lib/progress'
+import { playKeyClick, playErrorBuzz, playWordChime, playFanfare } from '@/lib/sounds'
 import type { GameHistoryEntry, StreakData } from '@/lib/progress'
 
 const numberOfWords = 400
@@ -218,6 +221,8 @@ export const GameApp = () => {
     if (hasSavedRef.current) return
     hasSavedRef.current = true
 
+    playFanfare()
+
     const userResult = Math.round((state.correctKeystroke * 12) / state.duration)
     if (userResult <= 0) return
 
@@ -247,7 +252,15 @@ export const GameApp = () => {
     apiSaveHistory(session, newHistory).catch(() => {})
     apiSaveStreak(session, newStreak).catch(() => {})
 
-    apiSubmitStats(session, { wpm: userResult, wordsTyped: state.correctWords, displayName, duration, mode })
+    const statsSubmitted = apiSubmitStats(session, {
+      wpm: userResult,
+      wordsTyped: state.correctWords,
+      displayName,
+      duration,
+      mode,
+    })
+
+    statsSubmitted
       .then(() => {
         setLeaderboardRefreshKey((prev) => prev + 1)
         return apiGetStats(session)
@@ -255,7 +268,11 @@ export const GameApp = () => {
       .then(setPersonalStats)
       .catch(() => {})
 
-    apiProcessAchievements(session, accuracy, [...unlockedAchievements], newStreak.currentStreak)
+    // stat-tied achievements (first-game, speed tiers, volume milestones) unlock
+    // server-side when stats land, so diff them only after the submission settles
+    statsSubmitted
+      .catch(() => {})
+      .then(() => apiProcessAchievements(session, accuracy, [...unlockedAchievements], newStreak.currentStreak))
       .then((newlyUnlocked) => {
         if (newlyUnlocked.length === 0) return
         setUnlockedAchievements(new Set([...unlockedAchievements, ...newlyUnlocked.map((a) => a.achievementCode)]))
@@ -277,7 +294,9 @@ export const GameApp = () => {
   }
 
   const changeHandler = (event: ChangeEvent<HTMLInputElement>) => {
-    dispatch({ type: 'INPUT_CHANGE', value: event.target.value, currentWord })
+    const value = event.target.value
+    if (value.endsWith(' ') && value.slice(0, -1) === currentWord) playWordChime()
+    dispatch({ type: 'INPUT_CHANGE', value, currentWord })
   }
 
   const inputHandler = (event: InputEvent<HTMLInputElement>) => {
@@ -293,6 +312,9 @@ export const GameApp = () => {
           setHasStarted(true)
           timerHandler()
         }
+
+        if (state.isInputCorrect) playKeyClick()
+        else playErrorBuzz()
 
         // past the word's end the player should have pressed space, so the miss lands there
         const position = state.wordInput.length
@@ -376,6 +398,8 @@ export const GameApp = () => {
         <header className="flex flex-row items-center justify-between">
           <Heading />
           <div className="flex flex-row items-center gap-3">
+            <AccentPicker session={session} />
+            <SoundToggle />
             <ThemeToggle />
             <a
               href="https://github.com/rayhannr/type-so-fast"
@@ -440,6 +464,8 @@ export const GameApp = () => {
                 samples={state.wpmSamples}
                 missMap={state.missMap}
                 wordStats={state.wordStats}
+                duration={state.duration}
+                displayName={displayName}
               />
               <div className="flex justify-center items-center gap-2 mt-8">
                 <span className="text-[10px] text-muted border border-solid border-edge rounded px-1 py-0.5">Tab</span>

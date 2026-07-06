@@ -13,6 +13,8 @@ export const achievementsManifest: AchievementManifestEntry[] = [
   { code: 'century-club', name: 'Century Club', description: 'Play 100 games' },
   { code: 'first-game', name: 'First Game', description: 'Play your first game' },
   { code: 'warm-up-wpm', name: 'Warm Up', description: 'Reach 10 WPM in a single game' },
+  { code: 'speed-50', name: 'Half Century', description: 'Reach 50 WPM in a single game' },
+  { code: 'speed-75', name: 'Fast Fingers', description: 'Reach 75 WPM in a single game' },
   { code: 'streak-7', name: 'Week Warrior', description: 'Play at least one game a day for 7 days in a row' },
   { code: 'streak-30', name: 'Monthly Master', description: 'Play at least one game a day for 30 days in a row' },
   { code: 'streak-100', name: 'Centurion', description: 'Play at least one game a day for 100 days in a row' },

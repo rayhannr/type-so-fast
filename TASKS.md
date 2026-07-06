@@ -92,33 +92,33 @@ Track `lastPlayedDate` and `currentStreak` in AGS CloudSave. Increment streak wh
 
 ## Phase 10 — Social
 
-**T37 — Shareable result card**
-After game ends, a "Share" button generates an OG-style result card (canvas-rendered): username, WPM, accuracy, duration, date. `canvas.toBlob` → download as PNG or copy to clipboard. No external service required.
+**T37 — Shareable result card** ✓ Done
+After game ends, a "Share" button generates an OG-style result card (canvas-rendered): username, WPM, accuracy, duration, date. `canvas.toBlob` → download as PNG or copy to clipboard. No external service required. Implemented in `ShareCard.tsx` (1200×630 dark card, respects the custom `--accent` from T41); rendered below the result stats with Download PNG / Copy image buttons.
 
 ---
 
 ## Phase 11 — More Achievements
 
-**T38 — Additional AGS achievement configs**
+**T38 — Additional AGS achievement configs** ✓ Done
 Create new achievements in AGS Admin Portal:
-- `first-game` — manual trigger on first completed game
-- `speed-50` — stat `best-wpm` ≥ 50
-- `speed-75` — stat `best-wpm` ≥ 75
-- `speed-100` — stat `best-wpm` ≥ 100 (replaces/extends existing `speed-demon`)
+- `first-game` — already existed (stat-tied to `games-played` ≥ 1, not manual)
+- `speed-50` — created via `ags` CLI: "Half Century", stat `best-wpm` ≥ 50, incremental
+- `speed-75` — created via `ags` CLI: "Fast Fingers", stat `best-wpm` ≥ 75, incremental
+- `speed-100` — not created; existing `speed-demon` already is `best-wpm` ≥ 100, so a separate config would duplicate it
 - ~~`streak-7`/`streak-30`~~ — done, see T36 (all eight `streak-*` milestone configs created)
 
-**T39 — Achievement unlock logic for new achievements**
-Extend `apiProcessAchievements` in `lib/api.ts` and the POST `/api/achievements` route to handle: `first-game` (games played = 1), WPM tier milestones, and streak milestones. Update `achievements-manifest.ts` with all new entries.
+**T39 — Achievement unlock logic for new achievements** ✓ Done
+All new achievements are stat-tied, so AGS unlocks them server-side when stats land — no client unlock calls needed. Added `speed-50`/`speed-75` to `achievements-manifest.ts`, and fixed a race in `GameApp.tsx`: `apiProcessAchievements` now runs after `apiSubmitStats` settles (previously parallel), so stat-tied unlocks are diffed and toasted in the same game they happen. Streak milestones were already handled manually in the POST `/api/achievements` route (T36).
 
 ---
 
 ## Phase 12 — Polish
 
-**T40 — Sound effects**
-Add optional audio feedback: subtle mechanical click on correct keystroke, harsh buzz on error, chime on word completion, fanfare on game end. Sounds off by default; toggle stored in localStorage. Use the Web Audio API to generate sounds procedurally (no audio file assets needed).
+**T40 — Sound effects** ✓ Done
+Add optional audio feedback: subtle mechanical click on correct keystroke, harsh buzz on error, chime on word completion, fanfare on game end. Sounds off by default; toggle stored in localStorage. Use the Web Audio API to generate sounds procedurally (no audio file assets needed). Implemented in `lib/sounds.ts` (lazy AudioContext, module-level enabled flag) + `SoundToggle.tsx` speaker button in the top bar; wired into `GameApp.tsx` keystroke/word/game-end paths.
 
-**T41 — Custom accent color**
-Add a small color picker (5–6 preset swatches + custom hex input) in a settings popover. Selected color overrides the amber `#e2b714` accent — applied to caret, active tab underline, correct characters, and chart curve via a CSS custom property (`--accent`). Persist choice in AGS CloudSave (fallback: localStorage).
+**T41 — Custom accent color** ✓ Done
+Add a small color picker (5–6 preset swatches + custom hex input) in a settings popover. Selected color overrides the amber `#e2b714` accent — applied to caret, active tab underline, correct characters, and chart curve via a CSS custom property (`--accent`). Persist choice in AGS CloudSave (fallback: localStorage). Implemented in `AccentPicker.tsx` (6 swatches + hex input, inline `--accent` override on `<html>`), CloudSave key `settings` + `/api/settings` route (`UserSettings` in `lib/ags/cloudsave.ts`). Note: CloudSave records need no admin config — they're created on the app's first write, same as `bestRecords`/`gameHistory`/`dailyStreak` (the `ags` CLI 0.3.0 can't seed record bodies; spec gap).
 
 **T42 — Light / dark theme toggle** ✓ Done
 Add a theme toggle (sun/moon icon) in the top bar. Dark theme is default. Light theme uses `#ffffff` bg, `#646669` muted text, `#111111` active text, same amber accent. Implemented via a `data-theme` attribute on `<html>` with two CSS variable sets in `globals.css`. All color tokens (bg, text, surface, border) reference CSS variables so the swap is automatic. Persist choice in localStorage; respect `prefers-color-scheme` on first visit.

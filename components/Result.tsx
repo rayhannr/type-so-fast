@@ -4,6 +4,7 @@ import { WpmBurst } from './WpmBurst'
 import { KeyHeatmap } from './KeyHeatmap'
 import { AccuracyBreakdown } from './AccuracyBreakdown'
 import type { WordStat } from './AccuracyBreakdown'
+import { ShareCard } from './ShareCard'
 
 interface PersonalStats {
   bestWpm: number
@@ -24,6 +25,8 @@ interface Props {
   samples: WpmSample[]
   missMap: Record<string, number>
   wordStats: WordStat[]
+  duration: number
+  displayName: string | null
 }
 
 const StatRow = ({ label, children }: { label: string; children: React.ReactNode }) => (
@@ -46,6 +49,8 @@ export const Result = ({
   samples,
   missMap,
   wordStats,
+  duration,
+  displayName,
 }: Props) => (
   <div className="w-full max-w-md mx-auto">
     <div className="relative text-center py-6">
@@ -99,6 +104,8 @@ export const Result = ({
         </div>
       )}
     </div>
+
+    <ShareCard wpm={wpm} accuracy={accuracy} duration={duration} displayName={displayName} />
 
     <SpeedCurve samples={samples} />
     <KeyHeatmap missMap={missMap} />

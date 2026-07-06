@@ -5,6 +5,11 @@ import type { GameHistoryEntry, StreakData } from '@/lib/progress'
 const RECORDS_KEY = 'bestRecords'
 const HISTORY_KEY = 'gameHistory'
 const STREAK_KEY = 'dailyStreak'
+const SETTINGS_KEY = 'settings'
+
+export interface UserSettings {
+  accentColor?: string
+}
 
 export const getBestRecords = async (userId: string, accessToken: string): Promise<number[]> => {
   const { PublicPlayerRecordApi } = Cloudsave
@@ -59,4 +64,22 @@ export const saveStreak = async (userId: string, accessToken: string, streak: St
   const { PublicPlayerRecordApi } = Cloudsave
   const playerRecordApi = PublicPlayerRecordApi(createSdk(accessToken))
   await playerRecordApi.createRecord_ByUserId_ByKey(userId, STREAK_KEY, { ...streak })
+}
+
+export const getSettings = async (userId: string, accessToken: string): Promise<UserSettings> => {
+  const { PublicPlayerRecordApi } = Cloudsave
+  const playerRecordApi = PublicPlayerRecordApi(createSdk(accessToken))
+
+  try {
+    const { data } = await playerRecordApi.getRecord_ByUserId_ByKey(userId, SETTINGS_KEY)
+    return (data.value as UserSettings) ?? {}
+  } catch {
+    return {}
+  }
+}
+
+export const saveSettings = async (userId: string, accessToken: string, settings: UserSettings): Promise<void> => {
+  const { PublicPlayerRecordApi } = Cloudsave
+  const playerRecordApi = PublicPlayerRecordApi(createSdk(accessToken))
+  await playerRecordApi.createRecord_ByUserId_ByKey(userId, SETTINGS_KEY, { ...settings })
 }
