@@ -4,9 +4,11 @@ import type { Duration } from '@/components/DurationSelector'
 import type { WordMode } from '@/lib/word-generators'
 
 export const LEADERBOARD_CODE = 'wpm-alltime'
+export const XP_LEADERBOARD_CODE = 'xp-alltime'
 export const WEEKLY_CYCLE_ID = 'weekly'
 
 export type LeaderboardRange = 'alltime' | 'weekly'
+export type LeaderboardMetric = 'wpm' | 'xp'
 
 const DURATION_LEADERBOARD_CODE: Record<Duration, string> = {
   15: 'wpm-15s',
@@ -40,6 +42,8 @@ export interface LeaderboardEntry {
   displayName: string
   wpm: number
 }
+
+// leaderboard "point" is generic: wpm for the wpm boards, total XP for the xp board
 
 const mapEntries = (data: { additionalData: Record<string, unknown>; point: number; userId: string }[]): LeaderboardEntry[] =>
   data.map((entry, index) => ({

@@ -1,4 +1,4 @@
-export interface AchievementManifestEntry {
+interface AchievementManifestEntry {
   code: string
   name: string
   description: string
@@ -23,4 +23,15 @@ export const achievementsManifest: AchievementManifestEntry[] = [
   { code: 'streak-500', name: 'Unstoppable', description: 'Play at least one game a day for 500 days in a row' },
   { code: 'streak-750', name: 'Titan', description: 'Play at least one game a day for 750 days in a row' },
   { code: 'streak-1000', name: 'Legend', description: 'Play at least one game a day for 1000 days in a row' },
+  { code: 'level-5', name: 'Rising Star', description: 'Reach level 5' },
+  { code: 'level-10', name: 'Double Digits', description: 'Reach level 10' },
+  { code: 'level-25', name: 'Keyboard Veteran', description: 'Reach level 25' },
+  { code: 'words-1000', name: 'Wordsmith', description: 'Type 1,000 words in total' },
+  { code: 'words-10000', name: 'Word Machine', description: 'Type 10,000 words in total' },
+  { code: 'xp-5000', name: 'XP Grinder', description: 'Earn 5,000 XP in total' },
+  { code: 'xp-50000', name: 'XP Legend', description: 'Earn 50,000 XP in total' },
+  { code: 'perfect-3', name: 'Hat Trick', description: 'Finish 3 games in a row with 100% accuracy' },
+  { code: 'perfect-10', name: 'Flawless Ten', description: 'Finish 10 games in a row with 100% accuracy' },
+  { code: 'mode-explorer', name: 'Mode Explorer', description: 'Play every word mode at least once' },
+  { code: 'time-traveler', name: 'Time Traveler', description: 'Play every test duration at least once' },
 ]

@@ -1,8 +1,8 @@
 import axios from 'axios'
-import type { LeaderboardEntry, LeaderboardRange } from './ags/leaderboard'
+import type { LeaderboardEntry, LeaderboardMetric, LeaderboardRange } from './ags/leaderboard'
 import type { PersonalStats, GameResultStats } from './ags/statistics'
 import type { UnlockedAchievement } from './ags/achievements'
-import type { GameHistoryEntry, StreakData } from './progress'
+import type { GameHistoryEntry, ProgressionData, StreakData } from './progress'
 import type { UserSettings } from './ags/cloudsave'
 import type { Duration } from '@/components/DurationSelector'
 import type { WordMode } from '@/lib/word-generators'
@@ -27,13 +27,14 @@ interface LeaderboardFilters {
   duration?: Duration | null
   mode?: WordMode
   range?: LeaderboardRange
+  metric?: LeaderboardMetric
 }
 
-export const apiGetLeaderboard = async ({ limit = 10, duration, mode, range }: LeaderboardFilters = {}): Promise<
+export const apiGetLeaderboard = async ({ limit = 10, duration, mode, range, metric }: LeaderboardFilters = {}): Promise<
   LeaderboardEntry[]
 > => {
   const { data } = await axios.get<LeaderboardEntry[]>('/api/leaderboard', {
-    params: { limit, duration: duration ?? undefined, mode, range },
+    params: { limit, duration: duration ?? undefined, mode, range, metric },
   })
   return data
 }
@@ -74,22 +75,36 @@ export const apiSaveStreak = async (session: AgsSession, streak: StreakData): Pr
   await axios.put('/api/streak', { streak }, { headers: authHeaders(session) })
 }
 
+export const apiGetProgression = async (session: AgsSession): Promise<ProgressionData | null> => {
+  const { data } = await axios.get<ProgressionData | null>('/api/progression', { headers: authHeaders(session) })
+  return data
+}
+
+export const apiSaveProgression = async (session: AgsSession, progression: ProgressionData): Promise<void> => {
+  await axios.put('/api/progression', { progression }, { headers: authHeaders(session) })
+}
+
 export const apiGetAchievements = async (session: AgsSession): Promise<UnlockedAchievement[]> => {
   const { data } = await axios.get<UnlockedAchievement[]>('/api/achievements', { headers: authHeaders(session) })
   return data
 }
 
+interface AchievementContext {
+  accuracy: number
+  previousCodes: string[]
+  streak: number
+  perfectStreak: number
+  modesPlayed: string[]
+  durationsPlayed: number[]
+}
+
 export const apiProcessAchievements = async (
   session: AgsSession,
-  accuracy: number,
-  previousCodes: string[],
-  streak: number
+  context: AchievementContext
 ): Promise<UnlockedAchievement[]> => {
-  const { data } = await axios.post<UnlockedAchievement[]>(
-    '/api/achievements',
-    { accuracy, previousCodes, streak },
-    { headers: authHeaders(session) }
-  )
+  const { data } = await axios.post<UnlockedAchievement[]>('/api/achievements', context, {
+    headers: authHeaders(session),
+  })
   return data
 }
 

@@ -52,10 +52,10 @@ New `AchievementsTab` component + `lib/achievements-manifest.ts` hardcoded list 
 ## Phase 8 — Gameplay Depth
 
 **T26 — Multiple test durations** ✓ Done
-Add a 15s / 30s / 60s / 120s duration selector above the word container. Selected duration sets the initial timer value in the reducer. Persist last-used duration in localStorage. Implemented via `DurationSelector` + `duration`/`GameState.duration` wired through the reducer's `RESTART`/`TICK` cases; WPM math (`correctKeystroke * 12 / duration`) generalized off the old hardcoded 60s assumption. Per-duration AGS leaderboard codes deferred to T30 — `lib/ags/leaderboard.ts` untouched.
+Add a 15s / 30s / 60s / 120s duration selector above the word container. Selected duration sets the initial timer value in the reducer. Implemented via `DurationSelector` + `duration`/`GameState.duration` wired through the reducer's `RESTART`/`TICK` cases; WPM math (`correctKeystroke * 12 / duration`) generalized off the old hardcoded 60s assumption. Per-duration AGS leaderboard codes deferred to T30 — `lib/ags/leaderboard.ts` untouched. localStorage persistence of the last-used duration was later removed: the test always opens at the 60s default.
 
 **T27 — Word modes** ✓ Done
-Add a mode selector: `words` (current random Indonesian), `numbers` (digits and number words), `punctuation` (adds commas, periods, apostrophes to the word pool), `quotes` (fixed real sentences). Each mode has its own word/sentence generator. Persist last-used mode in localStorage. Implemented in `lib/word-generators.ts` (`generateWords`) + `constants/quotes.ts` + `ModeSelector` component.
+Add a mode selector: `words` (current random Indonesian), `numbers` (digits and number words), `punctuation` (adds commas, periods, apostrophes to the word pool), `quotes` (fixed real sentences). Each mode has its own word/sentence generator. Implemented in `lib/word-generators.ts` (`generateWords`) + `constants/quotes.ts` + `ModeSelector` component. localStorage persistence of the last-used mode was later removed: the test always opens in `words`.
 
 **T28 — Caps lock warning** ✓ Done
 Detect `CapsLock` state via `KeyboardEvent.getModifierState('CapsLock')` on keydown. Show a small inline warning near the input when caps lock is active. Dismiss automatically when caps lock is turned off. Wired via `onKeyDown` on the hidden `Input` in `GameApp.tsx`.

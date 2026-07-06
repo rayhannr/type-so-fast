@@ -8,7 +8,61 @@ export interface StreakData {
   currentStreak: number
 }
 
+export interface ProgressionData {
+  xp: number
+  perfectStreak: number
+  modesPlayed: string[]
+  durationsPlayed: number[]
+}
+
 export const HISTORY_LIMIT = 20
+
+const BASE_XP = 10
+const XP_PER_WORD = 2
+const XP_CURVE_FACTOR = 80
+
+const xpForGame = (wpm: number, accuracy: number, wordsTyped: number): number =>
+  BASE_XP + wordsTyped * XP_PER_WORD + Math.round(wpm * (accuracy / 100))
+
+// quadratic curve: level 2 costs 80 XP total, level 5 costs 1280, level 10 costs 6480
+const totalXpForLevel = (level: number): number => XP_CURVE_FACTOR * (level - 1) * (level - 1)
+
+export const levelFromXp = (xp: number): number => Math.floor(Math.sqrt(Math.max(0, xp) / XP_CURVE_FACTOR)) + 1
+
+export const levelProgress = (xp: number): { level: number; current: number; required: number } => {
+  const level = levelFromXp(xp)
+  const floor = totalXpForLevel(level)
+  return { level, current: xp - floor, required: totalXpForLevel(level + 1) - floor }
+}
+
+interface CompletedGame {
+  wpm: number
+  accuracy: number
+  wordsTyped: number
+  mode: string
+  duration: number
+}
+
+export const advanceProgression = (
+  previous: ProgressionData | null,
+  game: CompletedGame
+): { progression: ProgressionData; earnedXp: number; leveledUp: boolean } => {
+  const base = previous ?? { xp: 0, perfectStreak: 0, modesPlayed: [], durationsPlayed: [] }
+  const earnedXp = xpForGame(game.wpm, game.accuracy, game.wordsTyped)
+  const xp = base.xp + earnedXp
+  return {
+    progression: {
+      xp,
+      perfectStreak: game.accuracy >= 100 ? (base.perfectStreak ?? 0) + 1 : 0,
+      modesPlayed: (base.modesPlayed ?? []).includes(game.mode) ? base.modesPlayed : [...(base.modesPlayed ?? []), game.mode],
+      durationsPlayed: (base.durationsPlayed ?? []).includes(game.duration)
+        ? base.durationsPlayed
+        : [...(base.durationsPlayed ?? []), game.duration],
+    },
+    earnedXp,
+    leveledUp: levelFromXp(xp) > levelFromXp(base.xp),
+  }
+}
 
 // local calendar date, so a "day" matches what the player sees on their clock
 const toDateString = (date: Date): string => {

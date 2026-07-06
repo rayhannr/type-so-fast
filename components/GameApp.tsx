@@ -21,7 +21,7 @@ import type { Tab } from './TabNav'
 import { ThemeToggle } from './ThemeToggle'
 import { SoundToggle } from './SoundToggle'
 import { AccentPicker } from './AccentPicker'
-import { DurationSelector, DURATIONS } from './DurationSelector'
+import { DurationSelector } from './DurationSelector'
 import type { Duration } from './DurationSelector'
 import { ModeSelector } from './ModeSelector'
 import type { WpmSample } from './SpeedCurve'
@@ -39,12 +39,16 @@ import {
   apiSaveHistory,
   apiGetStreak,
   apiSaveStreak,
+  apiGetProgression,
+  apiSaveProgression,
 } from '@/lib/api'
 import type { PersonalStats } from '@/lib/ags/statistics'
 import type { UnlockedAchievement } from '@/lib/ags/achievements'
-import { advanceStreak, HISTORY_LIMIT } from '@/lib/progress'
+import { advanceStreak, advanceProgression, levelFromXp, HISTORY_LIMIT } from '@/lib/progress'
 import { playKeyClick, playErrorBuzz, playWordChime, playFanfare } from '@/lib/sounds'
-import type { GameHistoryEntry, StreakData } from '@/lib/progress'
+import type { GameHistoryEntry, ProgressionData, StreakData } from '@/lib/progress'
+import { LevelBadge } from './LevelBadge'
+import type { XpGain } from './Result'
 
 const numberOfWords = 400
 
@@ -148,6 +152,8 @@ export const GameApp = () => {
   const [personalStats, setPersonalStats] = useState<PersonalStats | null>(null)
   const [history, setHistory] = useState<GameHistoryEntry[]>([])
   const [streak, setStreak] = useState<StreakData | null>(null)
+  const [progression, setProgression] = useState<ProgressionData | null>(null)
+  const [xpGain, setXpGain] = useState<XpGain | null>(null)
   const [leaderboardRefreshKey, setLeaderboardRefreshKey] = useState(0)
   const [newAchievement, setNewAchievement] = useState<UnlockedAchievement | null>(null)
   const [tab, setTab] = useState<Tab>('type')
@@ -170,21 +176,9 @@ export const GameApp = () => {
   const inputRef = useRef<HTMLInputElement | null>(null)
   const keystrokeRef = useRef<Keystroke>({ id: 0, char: '' })
 
+  // words are generated client-side only (random), so the initial fill happens in an effect
   useEffect(() => {
-    const savedDuration = Number(localStorage.getItem('lastDuration'))
-    const initialDuration: Duration = (DURATIONS as readonly number[]).includes(savedDuration)
-      ? (savedDuration as Duration)
-      : 60
-    const savedMode = localStorage.getItem('lastMode')
-    const initialMode: WordMode = (['words', 'numbers', 'punctuation', 'quotes'] as WordMode[]).includes(
-      savedMode as WordMode
-    )
-      ? (savedMode as WordMode)
-      : 'words'
-
-    setDuration(initialDuration)
-    setMode(initialMode)
-    dispatch({ type: 'RESTART', words: generateWords(initialMode, numberOfWords), duration: initialDuration })
+    dispatch({ type: 'RESTART', words: generateWords('words', numberOfWords), duration: 60 })
   }, [])
 
   useEffect(() => {
@@ -199,6 +193,8 @@ export const GameApp = () => {
       setHistory(localHistory ? JSON.parse(localHistory) : [])
       const localStreak = localStorage.getItem('dailyStreak')
       setStreak(localStreak ? JSON.parse(localStreak) : null)
+      const localProgression = localStorage.getItem('progression')
+      setProgression(localProgression ? JSON.parse(localProgression) : null)
       return
     }
 
@@ -214,6 +210,11 @@ export const GameApp = () => {
         if (cloudStreak) setStreak(cloudStreak)
       })
       .catch(() => {})
+    apiGetProgression(session)
+      .then((cloudProgression) => {
+        if (cloudProgression) setProgression(cloudProgression)
+      })
+      .catch(() => {})
   }, [session])
 
   useEffect(() => {
@@ -224,14 +225,14 @@ export const GameApp = () => {
     playFanfare()
 
     const userResult = Math.round((state.correctKeystroke * 12) / state.duration)
-    if (userResult <= 0) return
+    if (userResult <= 0) {
+      setXpGain(null)
+      return
+    }
 
     let newRecords = records.concat(userResult)
     newRecords.sort((a: number, b: number) => b - a)
-
-    if (newRecords.length > 3) {
-      newRecords = newRecords.slice(0, -1)
-    }
+    newRecords = newRecords.slice(0, 5)
 
     localStorage.setItem('bestRecords', JSON.stringify(newRecords))
     setRecords(newRecords)
@@ -244,13 +245,29 @@ export const GameApp = () => {
     localStorage.setItem('dailyStreak', JSON.stringify(newStreak))
     setStreak(newStreak)
 
-    if (!session || !displayName) return
-
     const accuracy = (state.correctKeystroke * 100) / (totalKeyStrokes + state.correction)
+
+    const {
+      progression: newProgression,
+      earnedXp,
+      leveledUp,
+    } = advanceProgression(progression, {
+      wpm: userResult,
+      accuracy,
+      wordsTyped: state.correctWords,
+      mode,
+      duration,
+    })
+    localStorage.setItem('progression', JSON.stringify(newProgression))
+    setProgression(newProgression)
+    setXpGain({ earned: earnedXp, totalXp: newProgression.xp, leveledUp })
+
+    if (!session || !displayName) return
 
     apiSaveRecords(session, newRecords).catch(() => {})
     apiSaveHistory(session, newHistory).catch(() => {})
     apiSaveStreak(session, newStreak).catch(() => {})
+    apiSaveProgression(session, newProgression).catch(() => {})
 
     const statsSubmitted = apiSubmitStats(session, {
       wpm: userResult,
@@ -258,6 +275,8 @@ export const GameApp = () => {
       displayName,
       duration,
       mode,
+      xpEarned: earnedXp,
+      level: levelFromXp(newProgression.xp),
     })
 
     statsSubmitted
@@ -268,11 +287,20 @@ export const GameApp = () => {
       .then(setPersonalStats)
       .catch(() => {})
 
-    // stat-tied achievements (first-game, speed tiers, volume milestones) unlock
+    // stat-tied achievements (first-game, speed tiers, level/volume milestones) unlock
     // server-side when stats land, so diff them only after the submission settles
     statsSubmitted
       .catch(() => {})
-      .then(() => apiProcessAchievements(session, accuracy, [...unlockedAchievements], newStreak.currentStreak))
+      .then(() =>
+        apiProcessAchievements(session, {
+          accuracy,
+          previousCodes: [...unlockedAchievements],
+          streak: newStreak.currentStreak,
+          perfectStreak: newProgression.perfectStreak,
+          modesPlayed: newProgression.modesPlayed,
+          durationsPlayed: newProgression.durationsPlayed,
+        })
+      )
       .then((newlyUnlocked) => {
         if (newlyUnlocked.length === 0) return
         setUnlockedAchievements(new Set([...unlockedAchievements, ...newlyUnlocked.map((a) => a.achievementCode)]))
@@ -349,7 +377,6 @@ export const GameApp = () => {
   const changeDuration = (nextDuration: Duration) => {
     if (hasStarted) return
     setDuration(nextDuration)
-    localStorage.setItem('lastDuration', String(nextDuration))
     clearInterval(intervalRef.current!)
     hasStartedRef.current = false
     hasSavedRef.current = false
@@ -359,7 +386,6 @@ export const GameApp = () => {
   const changeMode = (nextMode: WordMode) => {
     if (hasStarted) return
     setMode(nextMode)
-    localStorage.setItem('lastMode', nextMode)
     clearInterval(intervalRef.current!)
     hasStartedRef.current = false
     hasSavedRef.current = false
@@ -398,6 +424,7 @@ export const GameApp = () => {
         <header className="flex flex-row items-center justify-between">
           <Heading />
           <div className="flex flex-row items-center gap-3">
+            <LevelBadge xp={progression?.xp ?? 0} />
             <AccentPicker session={session} />
             <SoundToggle />
             <ThemeToggle />
@@ -466,6 +493,7 @@ export const GameApp = () => {
                 wordStats={state.wordStats}
                 duration={state.duration}
                 displayName={displayName}
+                xpGain={xpGain}
               />
               <div className="flex justify-center items-center gap-2 mt-8">
                 <span className="text-[10px] text-muted border border-solid border-edge rounded px-1 py-0.5">Tab</span>

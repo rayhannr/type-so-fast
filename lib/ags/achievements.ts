@@ -1,7 +1,16 @@
 import { UserAchievementsApi } from '@accelbyte/sdk-achievement'
 import { createSdk } from './sdk'
+import { WORD_MODES } from '@/lib/word-generators'
+import { DURATIONS } from '@/components/DurationSelector'
 
-export const ACHIEVEMENT_PERFECTIONIST = 'perfectionist'
+const ACHIEVEMENT_PERFECTIONIST = 'perfectionist'
+const ACHIEVEMENT_MODE_EXPLORER = 'mode-explorer'
+const ACHIEVEMENT_TIME_TRAVELER = 'time-traveler'
+
+const PERFECT_STREAK_ACHIEVEMENTS: { code: string; games: number }[] = [
+  { code: 'perfect-3', games: 3 },
+  { code: 'perfect-10', games: 10 },
+]
 
 const STREAK_ACHIEVEMENTS: { code: string; days: number }[] = [
   { code: 'streak-7', days: 7 },
@@ -55,6 +64,41 @@ export const unlockStreakAchievementsIfEligible = async (
       // one milestone failing shouldn't block the others from unlocking
       userAchievementsApi.updateUnlock_ByUserId_ByAchievementCode(userId, achievement.code).catch(() => {})
     )
+  )
+}
+
+export const unlockPerfectStreakIfEligible = async (
+  userId: string,
+  accessToken: string,
+  perfectStreak: number
+): Promise<void> => {
+  const eligible = PERFECT_STREAK_ACHIEVEMENTS.filter((achievement) => perfectStreak >= achievement.games)
+  if (eligible.length === 0) return
+
+  const sdk = createSdk(accessToken)
+  const userAchievementsApi = UserAchievementsApi(sdk)
+  await Promise.all(
+    eligible.map((achievement) =>
+      userAchievementsApi.updateUnlock_ByUserId_ByAchievementCode(userId, achievement.code).catch(() => {})
+    )
+  )
+}
+
+export const unlockVarietyIfEligible = async (
+  userId: string,
+  accessToken: string,
+  modesPlayed: string[],
+  durationsPlayed: number[]
+): Promise<void> => {
+  const eligible: string[] = []
+  if (WORD_MODES.every((mode) => modesPlayed.includes(mode))) eligible.push(ACHIEVEMENT_MODE_EXPLORER)
+  if (DURATIONS.every((duration) => durationsPlayed.includes(duration))) eligible.push(ACHIEVEMENT_TIME_TRAVELER)
+  if (eligible.length === 0) return
+
+  const sdk = createSdk(accessToken)
+  const userAchievementsApi = UserAchievementsApi(sdk)
+  await Promise.all(
+    eligible.map((code) => userAchievementsApi.updateUnlock_ByUserId_ByAchievementCode(userId, code).catch(() => {}))
   )
 }
 

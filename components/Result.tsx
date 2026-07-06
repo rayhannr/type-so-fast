@@ -5,6 +5,14 @@ import { KeyHeatmap } from './KeyHeatmap'
 import { AccuracyBreakdown } from './AccuracyBreakdown'
 import type { WordStat } from './AccuracyBreakdown'
 import { ShareCard } from './ShareCard'
+import { LevelBadge } from './LevelBadge'
+import { levelFromXp } from '@/lib/progress'
+
+export interface XpGain {
+  earned: number
+  totalXp: number
+  leveledUp: boolean
+}
 
 interface PersonalStats {
   bestWpm: number
@@ -27,6 +35,7 @@ interface Props {
   wordStats: WordStat[]
   duration: number
   displayName: string | null
+  xpGain: XpGain | null
 }
 
 const StatRow = ({ label, children }: { label: string; children: React.ReactNode }) => (
@@ -51,6 +60,7 @@ export const Result = ({
   wordStats,
   duration,
   displayName,
+  xpGain,
 }: Props) => (
   <div className="w-full max-w-md mx-auto">
     <div className="relative text-center py-6">
@@ -58,6 +68,16 @@ export const Result = ({
       <p className="text-7xl md:text-8xl font-bold text-accent leading-none">{wpm}</p>
       <p className="text-muted mt-1">WPM</p>
     </div>
+
+    {xpGain && (
+      <div className="flex flex-col items-center gap-2 mb-6">
+        {xpGain.leveledUp && (
+          <p className="level-up text-accent font-bold text-lg">Level Up! You reached level {levelFromXp(xpGain.totalXp)}</p>
+        )}
+        <p className="text-active text-sm">+{xpGain.earned} XP</p>
+        <LevelBadge xp={xpGain.totalXp} size="lg" />
+      </div>
+    )}
 
     <div>
       <StatRow label="Accuracy">{accuracy}%</StatRow>
@@ -81,8 +101,8 @@ export const Result = ({
       {records.length === 0 ? (
         <p className="text-active text-sm">No records yet</p>
       ) : (
-        <div className="flex flex-row items-baseline gap-4">
-          {records.map((record, index) => (
+        <div className="flex flex-row flex-wrap items-baseline gap-x-4 gap-y-1">
+          {records.slice(0, 5).map((record, index) => (
             <span key={index} className={index === 0 ? 'text-accent text-2xl font-bold' : 'text-active text-lg'}>
               {record} <span className="text-muted text-xs font-normal">WPM</span>
             </span>

@@ -3,6 +3,7 @@ import {
   getDurationLeaderboardCode,
   getModeLeaderboardCode,
   LEADERBOARD_CODE,
+  XP_LEADERBOARD_CODE,
   WEEKLY_CYCLE_ID,
 } from '@/lib/ags/leaderboard'
 import type { LeaderboardRange } from '@/lib/ags/leaderboard'
@@ -15,6 +16,13 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const limit = Number(searchParams.get('limit') ?? '10')
+
+    const metricParam = searchParams.get('metric')
+
+    if (metricParam === 'xp') {
+      const entries = await getTopLeaderboard(limit, XP_LEADERBOARD_CODE)
+      return Response.json(entries)
+    }
 
     const durationParam = Number(searchParams.get('duration'))
     const modeParam = searchParams.get('mode')

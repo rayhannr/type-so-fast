@@ -14,7 +14,7 @@ const getDeviceId = (): string => {
   return id
 }
 
-export interface AgsSessionState {
+interface AgsSessionState {
   session: AgsSession | null
   displayName: string | null
   isReady: boolean

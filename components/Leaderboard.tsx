@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { apiGetLeaderboard } from '@/lib/api'
-import type { LeaderboardEntry, LeaderboardRange } from '@/lib/ags/leaderboard'
+import type { LeaderboardEntry, LeaderboardMetric, LeaderboardRange } from '@/lib/ags/leaderboard'
 import { DURATIONS } from './DurationSelector'
 import type { Duration } from './DurationSelector'
 import { ModeSelector } from './ModeSelector'
@@ -15,10 +15,12 @@ interface Props {
 }
 
 const RANGES: LeaderboardRange[] = ['alltime', 'weekly']
+const METRICS: LeaderboardMetric[] = ['wpm', 'xp']
 
 export const Leaderboard = ({ refreshKey, currentUserId }: Props) => {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([])
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
+  const [metric, setMetric] = useState<LeaderboardMetric>('wpm')
   const [duration, setDuration] = useState<Duration | 'all'>('all')
   const [mode, setMode] = useState<WordMode>('words')
   const [range, setRange] = useState<LeaderboardRange>('alltime')
@@ -27,7 +29,13 @@ export const Leaderboard = ({ refreshKey, currentUserId }: Props) => {
     let cancelled = false
 
     setStatus('loading')
-    apiGetLeaderboard({ limit: 10, duration: duration === 'all' ? null : duration, mode, range })
+    apiGetLeaderboard({
+      limit: 10,
+      metric,
+      duration: metric === 'xp' || duration === 'all' ? null : duration,
+      mode,
+      range,
+    })
       .then((data) => {
         if (cancelled) return
         setEntries(data)
@@ -41,7 +49,7 @@ export const Leaderboard = ({ refreshKey, currentUserId }: Props) => {
     return () => {
       cancelled = true
     }
-  }, [refreshKey, duration, mode, range])
+  }, [refreshKey, metric, duration, mode, range])
 
   const top3 = entries.slice(0, 3)
   const rest = entries.slice(3)
@@ -51,50 +59,70 @@ export const Leaderboard = ({ refreshKey, currentUserId }: Props) => {
       <h2 className="text-muted text-sm mb-6 text-center">Global Leaderboard</h2>
 
       <div className="flex flex-col items-center gap-2 mb-8">
-        <div className="flex flex-row justify-center gap-2" aria-label="Duration filter">
-          <button
-            type="button"
-            onClick={() => setDuration('all')}
-            aria-current={duration === 'all' ? 'true' : undefined}
-            className={`px-2.5 py-1 text-xs rounded-md transition-colors cursor-pointer ${
-              duration === 'all' ? 'text-accent bg-surface' : 'text-muted hover:text-active'
-            }`}
-          >
-            All
-          </button>
-          {DURATIONS.map((d) => (
+        <div className="flex flex-row justify-center gap-2" aria-label="Metric filter">
+          {METRICS.map((m) => (
             <button
-              key={d}
+              key={m}
               type="button"
-              onClick={() => setDuration(d)}
-              aria-current={duration === d ? 'true' : undefined}
+              onClick={() => setMetric(m)}
+              aria-current={metric === m ? 'true' : undefined}
               className={`px-2.5 py-1 text-xs rounded-md transition-colors cursor-pointer ${
-                duration === d ? 'text-accent bg-surface' : 'text-muted hover:text-active'
+                metric === m ? 'text-accent bg-surface' : 'text-muted hover:text-active'
               }`}
             >
-              {d}s
+              {m === 'wpm' ? 'WPM' : 'XP'}
             </button>
           ))}
         </div>
 
-        {duration === 'all' && (
+        {metric === 'wpm' && (
           <>
-            <ModeSelector active={mode} disabled={false} onChange={setMode} />
-            <div className="flex flex-row justify-center gap-2" aria-label="Time range filter">
-              {RANGES.map((r) => (
+            <div className="flex flex-row justify-center gap-2" aria-label="Duration filter">
+              <button
+                type="button"
+                onClick={() => setDuration('all')}
+                aria-current={duration === 'all' ? 'true' : undefined}
+                className={`px-2.5 py-1 text-xs rounded-md transition-colors cursor-pointer ${
+                  duration === 'all' ? 'text-accent bg-surface' : 'text-muted hover:text-active'
+                }`}
+              >
+                All
+              </button>
+              {DURATIONS.map((d) => (
                 <button
-                  key={r}
+                  key={d}
                   type="button"
-                  onClick={() => setRange(r)}
-                  aria-current={range === r ? 'true' : undefined}
+                  onClick={() => setDuration(d)}
+                  aria-current={duration === d ? 'true' : undefined}
                   className={`px-2.5 py-1 text-xs rounded-md transition-colors cursor-pointer ${
-                    range === r ? 'text-accent bg-surface' : 'text-muted hover:text-active'
+                    duration === d ? 'text-accent bg-surface' : 'text-muted hover:text-active'
                   }`}
                 >
-                  {r === 'alltime' ? 'All-time' : 'This week'}
+                  {d}s
                 </button>
               ))}
             </div>
+
+            {duration === 'all' && (
+              <>
+                <ModeSelector active={mode} disabled={false} onChange={setMode} />
+                <div className="flex flex-row justify-center gap-2" aria-label="Time range filter">
+                  {RANGES.map((r) => (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => setRange(r)}
+                      aria-current={range === r ? 'true' : undefined}
+                      className={`px-2.5 py-1 text-xs rounded-md transition-colors cursor-pointer ${
+                        range === r ? 'text-accent bg-surface' : 'text-muted hover:text-active'
+                      }`}
+                    >
+                      {r === 'alltime' ? 'All-time' : 'This week'}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
           </>
         )}
       </div>
@@ -115,7 +143,7 @@ export const Leaderboard = ({ refreshKey, currentUserId }: Props) => {
                 <tr className="text-muted text-left">
                   <th className="font-normal py-2 px-3 w-12">#</th>
                   <th className="font-normal py-2 px-3">Name</th>
-                  <th className="font-normal py-2 px-3 text-right">WPM</th>
+                  <th className="font-normal py-2 px-3 text-right">{metric === 'xp' ? 'XP' : 'WPM'}</th>
                 </tr>
               </thead>
               <tbody>
