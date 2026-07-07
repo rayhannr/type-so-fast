@@ -5,7 +5,6 @@ const MODE_LABELS: Record<WordMode, string> = {
   words: 'Words',
   numbers: 'Numbers',
   punctuation: 'Punctuation',
-  quotes: 'Quotes',
 }
 
 type Props = {

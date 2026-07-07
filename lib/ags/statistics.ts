@@ -21,7 +21,6 @@ const STAT_BEST_WPM_BY_MODE: Record<WordMode, string> = {
   words: 'best-wpm',
   numbers: 'best-wpm-numbers',
   punctuation: 'best-wpm-punctuation',
-  quotes: 'best-wpm-quotes',
 }
 
 export interface GameResultStats {

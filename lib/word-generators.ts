@@ -1,9 +1,8 @@
 import { indonesianWords, shuffleWord } from '@/constants/words'
-import { indonesianQuotes } from '@/constants/quotes'
 
-export type WordMode = 'words' | 'numbers' | 'punctuation' | 'quotes'
+export type WordMode = 'words' | 'numbers' | 'punctuation'
 
-export const WORD_MODES: WordMode[] = ['words', 'numbers', 'punctuation', 'quotes']
+export const WORD_MODES: WordMode[] = ['words', 'numbers', 'punctuation']
 
 const numberWords = ['nol', 'satu', 'dua', 'tiga', 'empat', 'lima', 'enam', 'tujuh', 'delapan', 'sembilan', 'sepuluh']
 
@@ -43,10 +42,6 @@ export const generateWords = (mode: WordMode, count: number): string[] => {
       return Array.from({ length: count }, randomNumberToken)
     case 'punctuation':
       return withPunctuation(shuffleWord(indonesianWords, count))
-    case 'quotes': {
-      const quote = indonesianQuotes[Math.floor(Math.random() * indonesianQuotes.length)]
-      return quote.split(' ').filter(Boolean)
-    }
     case 'words':
     default:
       return shuffleWord(indonesianWords, count)

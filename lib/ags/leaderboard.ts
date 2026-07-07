@@ -22,13 +22,11 @@ const MODE_LEADERBOARD_CODE: Record<LeaderboardRange, Record<WordMode, string>> 
     words: 'wpm-alltime',
     numbers: 'wpm-alltime-numbers',
     punctuation: 'wpm-alltime-punctuation',
-    quotes: 'wpm-alltime-quotes',
   },
   weekly: {
     words: 'wpm-weekly-words',
     numbers: 'wpm-weekly-numbers',
     punctuation: 'wpm-weekly-punctuation',
-    quotes: 'wpm-weekly-quotes',
   },
 }
 
