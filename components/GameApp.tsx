@@ -24,155 +24,44 @@ import { AccentPicker } from './AccentPicker'
 import { DurationSelector } from './DurationSelector'
 import type { Duration } from './DurationSelector'
 import { ModeSelector } from './ModeSelector'
-import type { WpmSample } from './SpeedCurve'
 import { StatsTab } from './StatsTab'
-import type { WordStat } from './AccuracyBreakdown'
 
 import { useAgsSession } from '@/lib/ags/useAgsSession'
-import {
-  apiGetStats,
-  apiSubmitStats,
-  apiGetRecords,
-  apiSaveRecords,
-  apiProcessAchievements,
-  apiGetHistory,
-  apiSaveHistory,
-  apiGetStreak,
-  apiSaveStreak,
-  apiGetProgression,
-  apiSaveProgression,
-} from '@/lib/api'
-import type { PersonalStats } from '@/lib/ags/statistics'
-import type { UnlockedAchievement } from '@/lib/ags/achievements'
-import { advanceStreak, advanceProgression, levelFromXp, HISTORY_LIMIT } from '@/lib/progress'
-import { playKeyClick, playErrorBuzz, playWordChime, playFanfare } from '@/lib/sounds'
-import type { GameHistoryEntry, ProgressionData, StreakData } from '@/lib/progress'
+import { useProgressionQuery } from '@/lib/queries'
+import { useGameEndSync } from '@/lib/useGameEndSync'
+import { playKeyClick, playErrorBuzz, playWordChime } from '@/lib/sounds'
+import { gameReducer, createInitialState } from '@/lib/gameReducer'
 import { LevelBadge } from './LevelBadge'
-import type { XpGain } from './Result'
 
 const numberOfWords = 400
 
-interface GameState {
-  words: string[]
-  wordInput: string
-  isInputCorrect: boolean
-  correctKeystroke: number
-  wrongKeystroke: number
-  correction: number
-  correctWords: number
-  wrongWords: number
-  timer: number
-  duration: number
-  wpmSamples: WpmSample[]
-  missMap: Record<string, number>
-  wordStats: WordStat[]
-}
-
-type GameAction =
-  | { type: 'SET_WORDS'; words: string[] }
-  | { type: 'INPUT_CHANGE'; value: string; currentWord: string }
-  | { type: 'KEYSTROKE'; correct: boolean; missedChar?: string }
-  | { type: 'BACKSPACE' }
-  | { type: 'TICK' }
-  | { type: 'RESTART'; words: string[]; duration: number }
-
-const createInitialState = (words: string[], duration: number = 60): GameState => ({
-  words,
-  wordInput: '',
-  isInputCorrect: true,
-  correctKeystroke: 0,
-  wrongKeystroke: 0,
-  correction: 0,
-  correctWords: 0,
-  wrongWords: 0,
-  timer: duration,
-  duration,
-  wpmSamples: [],
-  missMap: {},
-  wordStats: [],
-})
-
-const gameReducer = (state: GameState, action: GameAction): GameState => {
-  switch (action.type) {
-    case 'SET_WORDS':
-      return { ...state, words: action.words }
-    case 'INPUT_CHANGE': {
-      const { value, currentWord } = action
-      const trimmed = value.trim()
-      const isInputCorrect = !trimmed.length || !currentWord || trimmed === currentWord.slice(0, value.length)
-
-      if (!value.endsWith(' ')) {
-        return { ...state, wordInput: value, isInputCorrect }
-      }
-
-      const inputWord = value.slice(0, -1)
-      const attempted = Math.max(inputWord.length, currentWord.length)
-      let correctChars = 0
-      for (let i = 0; i < Math.min(inputWord.length, currentWord.length); i++) {
-        if (inputWord[i] === currentWord[i]) correctChars++
-      }
-      return {
-        ...state,
-        wordInput: '',
-        isInputCorrect,
-        correctWords: inputWord === currentWord ? state.correctWords + 1 : state.correctWords,
-        wrongWords: inputWord === currentWord ? state.wrongWords : state.wrongWords + 1,
-        words: state.words.slice(1),
-        wordStats: state.wordStats.concat({ word: currentWord, correct: correctChars, attempted }),
-      }
-    }
-    case 'KEYSTROKE': {
-      const missed = action.missedChar?.toLowerCase()
-      const missMap = missed ? { ...state.missMap, [missed]: (state.missMap[missed] ?? 0) + 1 } : state.missMap
-      return action.correct
-        ? { ...state, correctKeystroke: state.correctKeystroke + 1, missMap }
-        : { ...state, wrongKeystroke: state.wrongKeystroke + 1, missMap }
-    }
-    case 'BACKSPACE':
-      return { ...state, correction: state.correction + 1 }
-    case 'TICK': {
-      const timer = state.timer - 1
-      const elapsed = state.duration - timer
-      const wpmSamples =
-        elapsed % 5 === 0
-          ? state.wpmSamples.concat({ elapsed, wpm: Math.round((state.correctKeystroke * 12) / elapsed) })
-          : state.wpmSamples
-      return { ...state, timer, wpmSamples }
-    }
-    case 'RESTART':
-      return createInitialState(action.words, action.duration)
-    default:
-      return state
-  }
-}
-
 export const GameApp = () => {
   const [state, dispatch] = useReducer(gameReducer, [], () => createInitialState([]))
-  const [records, setRecords] = useState<number[]>([])
-  const [personalStats, setPersonalStats] = useState<PersonalStats | null>(null)
-  const [history, setHistory] = useState<GameHistoryEntry[]>([])
-  const [streak, setStreak] = useState<StreakData | null>(null)
-  const [progression, setProgression] = useState<ProgressionData | null>(null)
-  const [xpGain, setXpGain] = useState<XpGain | null>(null)
-  const [leaderboardRefreshKey, setLeaderboardRefreshKey] = useState(0)
-  const [newAchievement, setNewAchievement] = useState<UnlockedAchievement | null>(null)
   const [tab, setTab] = useState<Tab>('type')
   const [duration, setDuration] = useState<Duration>(60)
   const [mode, setMode] = useState<WordMode>('words')
   const [hasStarted, setHasStarted] = useState(false)
   const [capsLockOn, setCapsLockOn] = useState(false)
 
-  const { session, displayName, unlockedAchievements, setUnlockedAchievements } = useAgsSession()
+  const { session, displayName, unlockedAchievements } = useAgsSession()
+  const progression = useProgressionQuery(session)
+
+  const { xpGain, newAchievement, dismissAchievement } = useGameEndSync({
+    timer: state.timer,
+    correctKeystroke: state.correctKeystroke,
+    wrongKeystroke: state.wrongKeystroke,
+    correction: state.correction,
+    correctWords: state.correctWords,
+    duration,
+    mode,
+    session,
+    displayName,
+  })
 
   const currentWord: string = useMemo(() => state.words[0], [state.words])
-  const totalKeyStrokes: number = useMemo(
-    () => state.correctKeystroke + state.wrongKeystroke,
-    [state.correctKeystroke, state.wrongKeystroke]
-  )
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const hasStartedRef = useRef<boolean>(false)
-  const hasSavedRef = useRef<boolean>(false)
   const inputRef = useRef<HTMLInputElement | null>(null)
   const keystrokeRef = useRef<Keystroke>({ id: 0, char: '' })
 
@@ -184,130 +73,6 @@ export const GameApp = () => {
   useEffect(() => {
     if (tab === 'type') inputRef.current?.focus()
   }, [tab])
-
-  useEffect(() => {
-    if (!session) {
-      const userRecords = localStorage.getItem('bestRecords')
-      setRecords(userRecords ? JSON.parse(userRecords) : [])
-      const localHistory = localStorage.getItem('gameHistory')
-      setHistory(localHistory ? JSON.parse(localHistory) : [])
-      const localStreak = localStorage.getItem('dailyStreak')
-      setStreak(localStreak ? JSON.parse(localStreak) : null)
-      const localProgression = localStorage.getItem('progression')
-      setProgression(localProgression ? JSON.parse(localProgression) : null)
-      return
-    }
-
-    apiGetRecords(session).then(setRecords).catch(() => {})
-    apiGetStats(session).then(setPersonalStats).catch(() => {})
-    apiGetHistory(session)
-      .then((entries) => {
-        if (entries.length > 0) setHistory(entries)
-      })
-      .catch(() => {})
-    apiGetStreak(session)
-      .then((cloudStreak) => {
-        if (cloudStreak) setStreak(cloudStreak)
-      })
-      .catch(() => {})
-    apiGetProgression(session)
-      .then((cloudProgression) => {
-        if (cloudProgression) setProgression(cloudProgression)
-      })
-      .catch(() => {})
-  }, [session])
-
-  useEffect(() => {
-    if (state.timer > 0) return
-    if (hasSavedRef.current) return
-    hasSavedRef.current = true
-
-    playFanfare()
-
-    const userResult = Math.round((state.correctKeystroke * 12) / state.duration)
-    if (userResult <= 0) {
-      setXpGain(null)
-      return
-    }
-
-    let newRecords = records.concat(userResult)
-    newRecords.sort((a: number, b: number) => b - a)
-    newRecords = newRecords.slice(0, 5)
-
-    localStorage.setItem('bestRecords', JSON.stringify(newRecords))
-    setRecords(newRecords)
-
-    const newHistory = history.concat({ wpm: userResult, timestamp: Date.now() }).slice(-HISTORY_LIMIT)
-    localStorage.setItem('gameHistory', JSON.stringify(newHistory))
-    setHistory(newHistory)
-
-    const newStreak = advanceStreak(streak, new Date())
-    localStorage.setItem('dailyStreak', JSON.stringify(newStreak))
-    setStreak(newStreak)
-
-    const accuracy = (state.correctKeystroke * 100) / (totalKeyStrokes + state.correction)
-
-    const {
-      progression: newProgression,
-      earnedXp,
-      leveledUp,
-    } = advanceProgression(progression, {
-      wpm: userResult,
-      accuracy,
-      wordsTyped: state.correctWords,
-      mode,
-      duration,
-    })
-    localStorage.setItem('progression', JSON.stringify(newProgression))
-    setProgression(newProgression)
-    setXpGain({ earned: earnedXp, totalXp: newProgression.xp, leveledUp })
-
-    if (!session || !displayName) return
-
-    apiSaveRecords(session, newRecords).catch(() => {})
-    apiSaveHistory(session, newHistory).catch(() => {})
-    apiSaveStreak(session, newStreak).catch(() => {})
-    apiSaveProgression(session, newProgression).catch(() => {})
-
-    const statsSubmitted = apiSubmitStats(session, {
-      wpm: userResult,
-      wordsTyped: state.correctWords,
-      displayName,
-      duration,
-      mode,
-      xpEarned: earnedXp,
-      level: levelFromXp(newProgression.xp),
-    })
-
-    statsSubmitted
-      .then(() => {
-        setLeaderboardRefreshKey((prev) => prev + 1)
-        return apiGetStats(session)
-      })
-      .then(setPersonalStats)
-      .catch(() => {})
-
-    // stat-tied achievements (first-game, speed tiers, level/volume milestones) unlock
-    // server-side when stats land, so diff them only after the submission settles
-    statsSubmitted
-      .catch(() => {})
-      .then(() =>
-        apiProcessAchievements(session, {
-          accuracy,
-          previousCodes: [...unlockedAchievements],
-          streak: newStreak.currentStreak,
-          perfectStreak: newProgression.perfectStreak,
-          modesPlayed: newProgression.modesPlayed,
-          durationsPlayed: newProgression.durationsPlayed,
-        })
-      )
-      .then((newlyUnlocked) => {
-        if (newlyUnlocked.length === 0) return
-        setUnlockedAchievements(new Set([...unlockedAchievements, ...newlyUnlocked.map((a) => a.achievementCode)]))
-        setNewAchievement(newlyUnlocked[0])
-      })
-      .catch(() => {})
-  }, [state.timer, state.correctKeystroke])
 
   const timerHandler = () => {
     let timesLeft: number = state.timer
@@ -368,7 +133,6 @@ export const GameApp = () => {
   const restartHandler = useCallback(() => {
     clearInterval(intervalRef.current!)
     hasStartedRef.current = false
-    hasSavedRef.current = false
     setHasStarted(false)
     dispatch({ type: 'RESTART', words: generateWords(mode, numberOfWords), duration })
     inputRef.current?.focus()
@@ -379,7 +143,6 @@ export const GameApp = () => {
     setDuration(nextDuration)
     clearInterval(intervalRef.current!)
     hasStartedRef.current = false
-    hasSavedRef.current = false
     dispatch({ type: 'RESTART', words: generateWords(mode, numberOfWords), duration: nextDuration })
   }
 
@@ -388,7 +151,6 @@ export const GameApp = () => {
     setMode(nextMode)
     clearInterval(intervalRef.current!)
     hasStartedRef.current = false
-    hasSavedRef.current = false
     dispatch({ type: 'RESTART', words: generateWords(nextMode, numberOfWords), duration })
   }
 
@@ -402,17 +164,6 @@ export const GameApp = () => {
     return () => window.removeEventListener('keydown', handleGlobalKeyDown)
   }, [restartHandler])
 
-  const clearRecords = () => {
-    const bestRecords = localStorage.getItem('bestRecords')
-    if (bestRecords) {
-      localStorage.removeItem('bestRecords')
-      setRecords([])
-    }
-    if (session) {
-      apiSaveRecords(session, []).catch(() => {})
-    }
-  }
-
   const elapsed = state.duration - state.timer
   const liveWpm = elapsed > 0 ? (state.correctKeystroke * 12) / elapsed : 0
   const isGameOver = state.timer === 0
@@ -424,7 +175,7 @@ export const GameApp = () => {
         <header className="flex flex-row items-center justify-between">
           <Heading />
           <div className="flex flex-row items-center gap-3">
-            <LevelBadge xp={progression?.xp ?? 0} />
+            <LevelBadge xp={progression.data?.xp ?? 0} />
             <AccentPicker session={session} />
             <SoundToggle />
             <ThemeToggle />
@@ -478,23 +229,7 @@ export const GameApp = () => {
             </div>
           ) : (
             <div className="mt-10">
-              <Result
-                wpm={Math.round((state.correctKeystroke * 12) / state.duration)}
-                correctKeystroke={state.correctKeystroke}
-                wrongKeystroke={state.wrongKeystroke}
-                accuracy={((state.correctKeystroke * 100) / (totalKeyStrokes + state.correction)).toFixed(2)}
-                correctWords={state.correctWords}
-                wrongWords={state.wrongWords}
-                personalStats={personalStats}
-                records={records}
-                clearRecords={clearRecords}
-                samples={state.wpmSamples}
-                missMap={state.missMap}
-                wordStats={state.wordStats}
-                duration={state.duration}
-                displayName={displayName}
-                xpGain={xpGain}
-              />
+              <Result state={state} session={session} displayName={displayName} xpGain={xpGain} />
               <div className="flex justify-center items-center gap-2 mt-8">
                 <span className="text-[10px] text-muted border border-solid border-edge rounded px-1 py-0.5">Tab</span>
                 <RestartButton onClick={restartHandler} />
@@ -502,15 +237,13 @@ export const GameApp = () => {
             </div>
           ))}
 
-        {tab === 'stats' && (
-          <StatsTab personalStats={personalStats} history={history} streak={streak} isLoggedIn={!!session} />
-        )}
+        {tab === 'stats' && <StatsTab session={session} />}
 
-        {tab === 'leaderboard' && <Leaderboard refreshKey={leaderboardRefreshKey} currentUserId={session?.userId ?? null} />}
+        {tab === 'leaderboard' && <Leaderboard currentUserId={session?.userId ?? null} />}
 
         {tab === 'achievements' && <AchievementsTab unlockedCodes={unlockedAchievements} isLoggedIn={!!session} />}
       </div>
-      <AchievementToast achievement={newAchievement} onDismiss={() => setNewAchievement(null)} />
+      <AchievementToast achievement={newAchievement} onDismiss={dismissAchievement} />
     </>
   )
 }

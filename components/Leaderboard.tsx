@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { apiGetLeaderboard } from '@/lib/api'
-import type { LeaderboardEntry, LeaderboardMetric, LeaderboardRange } from '@/lib/ags/leaderboard'
+import { useState } from 'react'
+import { useLeaderboardQuery } from '@/lib/queries'
+import type { LeaderboardMetric, LeaderboardRange } from '@/lib/ags/leaderboard'
 import { DURATIONS } from './DurationSelector'
 import type { Duration } from './DurationSelector'
 import { ModeSelector } from './ModeSelector'
@@ -10,46 +10,26 @@ import type { WordMode } from '@/lib/word-generators'
 import { Podium3D } from './Podium3D'
 
 interface Props {
-  refreshKey: number
   currentUserId: string | null
 }
 
 const RANGES: LeaderboardRange[] = ['alltime', 'weekly']
 const METRICS: LeaderboardMetric[] = ['wpm', 'xp']
 
-export const Leaderboard = ({ refreshKey, currentUserId }: Props) => {
-  const [entries, setEntries] = useState<LeaderboardEntry[]>([])
-  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
+export const Leaderboard = ({ currentUserId }: Props) => {
   const [metric, setMetric] = useState<LeaderboardMetric>('wpm')
   const [duration, setDuration] = useState<Duration | 'all'>('all')
   const [mode, setMode] = useState<WordMode>('words')
   const [range, setRange] = useState<LeaderboardRange>('alltime')
 
-  useEffect(() => {
-    let cancelled = false
-
-    setStatus('loading')
-    apiGetLeaderboard({
-      limit: 10,
-      metric,
-      duration: metric === 'xp' || duration === 'all' ? null : duration,
-      mode,
-      range,
-    })
-      .then((data) => {
-        if (cancelled) return
-        setEntries(data)
-        setStatus('ready')
-      })
-      .catch(() => {
-        if (cancelled) return
-        setStatus('error')
-      })
-
-    return () => {
-      cancelled = true
-    }
-  }, [refreshKey, metric, duration, mode, range])
+  const leaderboard = useLeaderboardQuery({
+    metric,
+    duration: metric === 'xp' || duration === 'all' ? null : duration,
+    mode,
+    range,
+  })
+  const isReady = !leaderboard.isFetching && !leaderboard.isError
+  const entries = leaderboard.data ?? []
 
   const top3 = entries.slice(0, 3)
   const rest = entries.slice(3)
@@ -127,13 +107,13 @@ export const Leaderboard = ({ refreshKey, currentUserId }: Props) => {
         )}
       </div>
 
-      {status === 'loading' && <p className="text-center text-sm text-muted py-8">Loading...</p>}
-      {status === 'error' && <p className="text-center text-sm text-muted py-8">Couldn&apos;t load the leaderboard — try again later.</p>}
-      {status === 'ready' && entries.length === 0 && (
+      {leaderboard.isFetching && <p className="text-center text-sm text-muted py-8">Loading...</p>}
+      {leaderboard.isError && <p className="text-center text-sm text-muted py-8">Couldn&apos;t load the leaderboard — try again later.</p>}
+      {isReady && entries.length === 0 && (
         <p className="text-center text-sm text-muted py-8">No scores yet — be the first!</p>
       )}
 
-      {status === 'ready' && entries.length > 0 && (
+      {isReady && entries.length > 0 && (
         <>
           <Podium3D records={top3.map((entry) => entry.wpm)} labels={top3.map((entry) => entry.displayName)} />
 

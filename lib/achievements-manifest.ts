@@ -4,8 +4,8 @@ interface AchievementManifestEntry {
   description: string
 }
 
-// display metadata for the achievements configured in the AGS Admin Portal;
-// unlock state comes from the fetched set in useAgsSession
+// display metadata only (name/description) for the achievements configured in the AGS
+// Admin Portal; unlock state is a separate Set of codes from useAgsSession's unlockedAchievements
 export const achievementsManifest: AchievementManifestEntry[] = [
   { code: 'speed-demon', name: 'Speed Demon', description: 'Reach 100 WPM in a single game' },
   { code: 'perfectionist', name: 'Perfectionist', description: 'Finish a game with 100% accuracy' },

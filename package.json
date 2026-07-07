@@ -9,27 +9,28 @@
     "lint": "oxlint"
   },
   "dependencies": {
-    "@accelbyte/sdk": "^4.3.2",
-    "@accelbyte/sdk-achievement": "^5.3.5",
-    "@accelbyte/sdk-cloudsave": "^6.3.5",
-    "@accelbyte/sdk-iam": "^6.3.5",
-    "@accelbyte/sdk-leaderboard": "^5.3.5",
-    "@accelbyte/sdk-social": "^6.3.5",
-    "@faker-js/faker": "^10.5.0",
-    "@types/three": "^0.185.0",
-    "axios": "^1.18.1",
+    "@accelbyte/sdk": "4.3.2",
+    "@accelbyte/sdk-achievement": "5.3.5",
+    "@accelbyte/sdk-cloudsave": "6.3.5",
+    "@accelbyte/sdk-iam": "6.3.5",
+    "@accelbyte/sdk-leaderboard": "5.3.5",
+    "@accelbyte/sdk-social": "6.3.5",
+    "@faker-js/faker": "10.5.0",
+    "@tanstack/react-query": "5.101.2",
+    "@types/three": "0.185.0",
+    "axios": "1.18.1",
     "next": "16.2.10",
     "react": "19.2.4",
     "react-dom": "19.2.4",
-    "three": "^0.185.1"
+    "three": "0.185.1"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "oxlint": "^1.72.0",
-    "tailwindcss": "^4",
-    "typescript": "^5"
+    "@tailwindcss/postcss": "4.3.2",
+    "@types/node": "20.19.43",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
+    "oxlint": "1.72.0",
+    "tailwindcss": "4.3.2",
+    "typescript": "5.9.3"
   }
 }

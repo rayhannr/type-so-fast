@@ -36,7 +36,7 @@ const renderCard = ({ wpm, accuracy, duration, displayName }: Props): HTMLCanvas
   ctx.fillText('TypeSoFast!', 80, 116)
   ctx.fillStyle = '#646669'
   ctx.font = font(26)
-  ctx.fillText('how fast can you type in Indonesian?', 80, 158)
+  ctx.fillText('How fast can you type in Indonesian?', 80, 158)
 
   ctx.fillStyle = accent
   ctx.font = font(230, 800)

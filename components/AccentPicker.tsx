@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { apiGetSettings, apiSaveSettings } from '@/lib/api'
-import type { AgsSession } from '@/lib/api'
+import { useSettingsQuery, useSaveSettingsMutation } from '@/lib/queries'
+import type { AgsSession } from '@/lib/queries'
 
 const DEFAULT_ACCENT = '#e2b714'
 
@@ -33,19 +33,17 @@ export const AccentPicker = ({ session }: Props) => {
     }
   }, [])
 
+  const settings = useSettingsQuery(session)
+  const saveSettingsMutation = useSaveSettingsMutation(session)
+
   useEffect(() => {
-    if (!session) return
-    apiGetSettings(session)
-      .then((settings) => {
-        const cloud = settings.accentColor
-        if (cloud && isValidHex(cloud)) {
-          setAccent(cloud)
-          applyAccent(cloud)
-          localStorage.setItem('accentColor', cloud)
-        }
-      })
-      .catch(() => {})
-  }, [session])
+    const cloud = settings.data?.accentColor
+    if (cloud && isValidHex(cloud)) {
+      setAccent(cloud)
+      applyAccent(cloud)
+      localStorage.setItem('accentColor', cloud)
+    }
+  }, [settings.data])
 
   useEffect(() => {
     if (!open) return
@@ -60,7 +58,7 @@ export const AccentPicker = ({ session }: Props) => {
     setAccent(color)
     applyAccent(color)
     localStorage.setItem('accentColor', color)
-    if (session) apiSaveSettings(session, { accentColor: color }).catch(() => {})
+    if (session) saveSettingsMutation.mutate({ accentColor: color })
   }
 
   const submitHex = () => {
