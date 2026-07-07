@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 
 const ROUTES = [
   { href: '/', label: 'Type' },
+  { href: '/pvc', label: 'vs Computer' },
   { href: '/stats', label: 'Stats' },
   { href: '/leaderboard', label: 'Leaderboard' },
   { href: '/achievements', label: 'Achievements' },

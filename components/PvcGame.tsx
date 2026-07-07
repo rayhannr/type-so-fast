@@ -3,7 +3,6 @@
 import { useEffect, useReducer, useState, useMemo, useRef, useCallback } from 'react'
 import type { ChangeEvent, InputEvent, KeyboardEvent } from 'react'
 import { generateWords } from '@/lib/word-generators'
-import type { WordMode } from '@/lib/word-generators'
 
 import { WordContainer } from './WordContainer'
 import { Input } from './Input'
@@ -15,23 +14,45 @@ import { TypingHands } from './TypingHands'
 import type { Keystroke } from './TypingHands'
 import { DurationSelector } from './DurationSelector'
 import type { Duration } from './DurationSelector'
-import { ModeSelector } from './ModeSelector'
+import { DifficultySelector } from './DifficultySelector'
+import type { Difficulty } from '@/lib/botDifficulty'
 
 import { useAgsSessionContext } from '@/lib/ags/AgsSessionContext'
 import { useGameEndSync } from '@/lib/useGameEndSync'
+import { useBotTypist } from '@/lib/useBotTypist'
 import { playKeyClick, playErrorBuzz, playWordChime } from '@/lib/sounds'
 import { gameReducer, createInitialState } from '@/lib/gameReducer'
 
 const numberOfWords = 400
 
-export const SoloGame = () => {
+type Outcome = 'win' | 'lose' | 'tie'
+
+const OUTCOME_LABEL: Record<Outcome, string> = { win: 'You Win!', lose: 'Bot Wins', tie: "It's a Tie" }
+const OUTCOME_CLASS: Record<Outcome, string> = { win: 'text-correct', lose: 'text-error', tie: 'text-active' }
+
+export const PvcGame = () => {
   const [state, dispatch] = useReducer(gameReducer, [], () => createInitialState([]))
+  const [raceWords, setRaceWords] = useState<string[]>([])
   const [duration, setDuration] = useState<Duration>(60)
-  const [mode, setMode] = useState<WordMode>('words')
+  const [difficulty, setDifficulty] = useState<Difficulty>('medium')
   const [hasStarted, setHasStarted] = useState(false)
   const [capsLockOn, setCapsLockOn] = useState(false)
 
   const { session, displayName } = useAgsSessionContext()
+
+  const currentWord: string = useMemo(() => state.words[0], [state.words])
+  const isGameOver = state.timer === 0
+
+  const bot = useBotTypist({ words: raceWords, difficulty, active: hasStarted && !isGameOver, duration })
+
+  const playerWpm = Math.round((state.correctKeystroke * 12) / state.duration)
+  const botWpm = Math.round((bot.state.correctKeystroke * 12) / state.duration)
+
+  let outcome: Outcome | null = null
+  if (isGameOver) {
+    if (playerWpm === botWpm) outcome = 'tie'
+    else outcome = playerWpm > botWpm ? 'win' : 'lose'
+  }
 
   const { xpGain, newAchievement, dismissAchievement } = useGameEndSync({
     timer: state.timer,
@@ -40,21 +61,26 @@ export const SoloGame = () => {
     correction: state.correction,
     correctWords: state.correctWords,
     duration,
-    mode,
+    mode: 'words',
     session,
     displayName,
+    pvc: isGameOver ? { difficulty, won: outcome === 'win' } : undefined,
   })
-
-  const currentWord: string = useMemo(() => state.words[0], [state.words])
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const hasStartedRef = useRef<boolean>(false)
   const inputRef = useRef<HTMLInputElement | null>(null)
   const keystrokeRef = useRef<Keystroke>({ id: 0, char: '' })
 
+  const startRound = (nextDuration: Duration) => {
+    const words = generateWords('words', numberOfWords)
+    dispatch({ type: 'RESTART', words, duration: nextDuration })
+    setRaceWords(words)
+  }
+
   // words are generated client-side only (random), so the initial fill happens in an effect
   useEffect(() => {
-    dispatch({ type: 'RESTART', words: generateWords('words', numberOfWords), duration: 60 })
+    startRound(60)
   }, [])
 
   useEffect(() => {
@@ -66,6 +92,7 @@ export const SoloGame = () => {
     intervalRef.current = setInterval(() => {
       timesLeft -= 1
       dispatch({ type: 'TICK' })
+      bot.dispatch({ type: 'TICK' })
 
       if (timesLeft <= 0) {
         clearInterval(intervalRef.current!)
@@ -121,24 +148,21 @@ export const SoloGame = () => {
     clearInterval(intervalRef.current!)
     hasStartedRef.current = false
     setHasStarted(false)
-    dispatch({ type: 'RESTART', words: generateWords(mode, numberOfWords), duration })
+    startRound(duration)
     inputRef.current?.focus()
-  }, [mode, duration])
+  }, [duration])
 
   const changeDuration = (nextDuration: Duration) => {
     if (hasStarted) return
     setDuration(nextDuration)
     clearInterval(intervalRef.current!)
     hasStartedRef.current = false
-    dispatch({ type: 'RESTART', words: generateWords(mode, numberOfWords), duration: nextDuration })
+    startRound(nextDuration)
   }
 
-  const changeMode = (nextMode: WordMode) => {
+  const changeDifficulty = (nextDifficulty: Difficulty) => {
     if (hasStarted) return
-    setMode(nextMode)
-    clearInterval(intervalRef.current!)
-    hasStartedRef.current = false
-    dispatch({ type: 'RESTART', words: generateWords(nextMode, numberOfWords), duration })
+    setDifficulty(nextDifficulty)
   }
 
   useEffect(() => {
@@ -169,7 +193,7 @@ export const SoloGame = () => {
 
   const elapsed = state.duration - state.timer
   const liveWpm = elapsed > 0 ? (state.correctKeystroke * 12) / elapsed : 0
-  const isGameOver = state.timer === 0
+  const botLiveWpm = elapsed > 0 ? (bot.state.correctKeystroke * 12) / elapsed : 0
 
   return (
     <>
@@ -179,7 +203,7 @@ export const SoloGame = () => {
         <div className="max-w-3xl mx-auto mt-10 md:mt-14">
           <div className="flex flex-col items-center gap-2 mb-6">
             <DurationSelector active={duration} disabled={hasStarted} onChange={changeDuration} />
-            <ModeSelector active={mode} disabled={hasStarted} onChange={changeMode} />
+            <DifficultySelector active={difficulty} disabled={hasStarted} onChange={changeDifficulty} />
           </div>
           <div className="flex flex-row items-center justify-between mb-4">
             <Timer timer={state.timer} />
@@ -205,9 +229,29 @@ export const SoloGame = () => {
             wrongKeystroke={state.wrongKeystroke}
             onFocusRequest={() => inputRef.current?.focus()}
           />
+
+          <div className="mt-6 pt-4 border-t border-solid border-edge">
+            <p className="text-xs text-muted mb-1">
+              Bot ({difficulty}) — {Math.round(botLiveWpm)} WPM
+            </p>
+            <WordContainer
+              words={bot.state.words}
+              typedInput={bot.state.wordInput}
+              wpm={botLiveWpm}
+              wrongKeystroke={bot.state.wrongKeystroke}
+              onFocusRequest={() => {}}
+              compact
+            />
+          </div>
         </div>
       ) : (
         <div className="mt-10">
+          <div className="text-center mb-8">
+            <p className={`text-3xl font-bold ${outcome ? OUTCOME_CLASS[outcome] : ''}`}>{outcome && OUTCOME_LABEL[outcome]}</p>
+            <p className="text-muted text-sm mt-1">
+              You: {playerWpm} WPM &middot; Bot ({difficulty}): {botWpm} WPM
+            </p>
+          </div>
           <Result state={state} session={session} displayName={displayName} xpGain={xpGain} />
           <div className="flex justify-center items-center gap-2 mt-8">
             <span className="text-[10px] text-muted border border-solid border-edge rounded px-1 py-0.5">Tab</span>

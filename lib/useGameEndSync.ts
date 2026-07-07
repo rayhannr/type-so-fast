@@ -4,18 +4,21 @@ import type { UnlockedAchievement } from '@/lib/ags/achievements'
 import type { XpGain } from '@/components/Result'
 import type { Duration } from '@/components/DurationSelector'
 import type { WordMode } from '@/lib/word-generators'
-import { advanceStreak, advanceProgression, levelFromXp, HISTORY_LIMIT } from '@/lib/progress'
+import { advanceStreak, advanceProgression, advancePvc, levelFromXp, HISTORY_LIMIT } from '@/lib/progress'
+import type { Difficulty } from '@/lib/botDifficulty'
 import { playFanfare } from '@/lib/sounds'
 import {
   useRecordsQuery,
   useHistoryQuery,
   useStreakQuery,
   useProgressionQuery,
+  usePvcProgressQuery,
   useAchievementsQuery,
   useSaveRecordsMutation,
   useSaveHistoryMutation,
   useSaveStreakMutation,
   useSaveProgressionMutation,
+  useSavePvcProgressMutation,
   useSubmitStatsMutation,
   useProcessAchievementsMutation,
 } from '@/lib/queries'
@@ -30,6 +33,7 @@ interface GameEndParams {
   mode: WordMode
   session: AgsSession | null
   displayName: string | null
+  pvc?: { difficulty: Difficulty; won: boolean }
 }
 
 // runs once per finished round: computes the next records/history/streak/progression,
@@ -44,6 +48,7 @@ export const useGameEndSync = ({
   mode,
   session,
   displayName,
+  pvc,
 }: GameEndParams) => {
   const [xpGain, setXpGain] = useState<XpGain | null>(null)
   const [newAchievement, setNewAchievement] = useState<UnlockedAchievement | null>(null)
@@ -53,12 +58,14 @@ export const useGameEndSync = ({
   const history = useHistoryQuery(session)
   const streak = useStreakQuery(session)
   const progression = useProgressionQuery(session)
+  const pvcProgress = usePvcProgressQuery(session)
   const achievements = useAchievementsQuery(session)
 
   const saveRecordsMutation = useSaveRecordsMutation(session)
   const saveHistoryMutation = useSaveHistoryMutation(session)
   const saveStreakMutation = useSaveStreakMutation(session)
   const saveProgressionMutation = useSaveProgressionMutation(session)
+  const savePvcProgressMutation = useSavePvcProgressMutation(session)
   const submitStatsMutation = useSubmitStatsMutation(session)
   const processAchievementsMutation = useProcessAchievementsMutation(session)
 
@@ -101,12 +108,15 @@ export const useGameEndSync = ({
     })
     setXpGain({ earned: earnedXp, totalXp: newProgression.xp, leveledUp })
 
+    const newPvcProgress = pvc ? advancePvc(pvcProgress.data ?? null, pvc) : null
+
     // these mutations write to the AGS CloudSave route when signed in, or localStorage
     // otherwise, and update the cache with the exact value on success either way
     saveRecordsMutation.mutate(newRecords)
     saveHistoryMutation.mutate(newHistory)
     saveStreakMutation.mutate(newStreak)
     saveProgressionMutation.mutate(newProgression)
+    if (newPvcProgress) savePvcProgressMutation.mutate(newPvcProgress)
 
     if (!session || !displayName) return
 
@@ -132,6 +142,7 @@ export const useGameEndSync = ({
               perfectStreak: newProgression.perfectStreak,
               modesPlayed: newProgression.modesPlayed,
               durationsPlayed: newProgression.durationsPlayed,
+              pvc: pvc && newPvcProgress ? { difficulty: pvc.difficulty, won: pvc.won, pvcProgress: newPvcProgress } : undefined,
             },
             {
               onSuccess: (newlyUnlocked) => {

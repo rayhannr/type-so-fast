@@ -3,10 +3,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { LeaderboardEntry, LeaderboardMetric, LeaderboardRange } from '@/lib/ags/leaderboard'
 import type { PersonalStats, GameResultStats } from '@/lib/ags/statistics'
 import type { UnlockedAchievement, AchievementInfo } from '@/lib/ags/achievements'
-import type { GameHistoryEntry, StreakData, ProgressionData } from '@/lib/progress'
+import type { GameHistoryEntry, StreakData, ProgressionData, PvcData } from '@/lib/progress'
 import type { UserSettings } from '@/lib/ags/cloudsave'
 import type { Duration } from '@/components/DurationSelector'
 import type { WordMode } from '@/lib/word-generators'
+import type { Difficulty } from '@/lib/botDifficulty'
 
 export interface AgsSession {
   userId: string
@@ -25,6 +26,7 @@ export interface AchievementContext {
   perfectStreak: number
   modesPlayed: string[]
   durationsPlayed: number[]
+  pvc?: { difficulty: Difficulty; won: boolean; pvcProgress: PvcData }
 }
 
 const readLocal = <T,>(key: string, fallback: T): T => {
@@ -42,6 +44,7 @@ const queryKeys = {
   history: (userId?: string) => ['history', userId ?? 'local'] as const,
   streak: (userId?: string) => ['streak', userId ?? 'local'] as const,
   progression: (userId?: string) => ['progression', userId ?? 'local'] as const,
+  pvcProgress: (userId?: string) => ['pvcProgress', userId ?? 'local'] as const,
   leaderboard: (filters: { metric: LeaderboardMetric; duration: Duration | null; mode: WordMode; range: LeaderboardRange }) =>
     ['leaderboard', filters] as const,
   displayName: (userId: string) => ['displayName', userId] as const,
@@ -147,6 +150,16 @@ export const useProgressionQuery = (session: AgsSession | null) =>
     initialData: session ? undefined : () => readLocal<ProgressionData | null>('progression', null),
   })
 
+export const usePvcProgressQuery = (session: AgsSession | null) =>
+  useQuery({
+    queryKey: queryKeys.pvcProgress(session?.userId),
+    queryFn: () =>
+      session
+        ? axios.get<PvcData | null>('/api/pvc-progress', { headers: authHeaders(session) }).then((res) => res.data)
+        : Promise.resolve(readLocal<PvcData | null>('pvcProgress', null)),
+    initialData: session ? undefined : () => readLocal<PvcData | null>('pvcProgress', null),
+  })
+
 export const useStatsQuery = (session: AgsSession | null) =>
   useQuery({
     queryKey: queryKeys.stats(session?.userId ?? ''),
@@ -215,6 +228,18 @@ export const useSaveProgressionMutation = (session: AgsSession | null) => {
       else writeLocal('progression', progression)
     },
     onSuccess: (_, progression) => queryClient.setQueryData(key, progression),
+  })
+}
+
+export const useSavePvcProgressMutation = (session: AgsSession | null) => {
+  const queryClient = useQueryClient()
+  const key = queryKeys.pvcProgress(session?.userId)
+  return useMutation({
+    mutationFn: async (pvc: PvcData) => {
+      if (session) await axios.put('/api/pvc-progress', { pvc }, { headers: authHeaders(session) })
+      else writeLocal('pvcProgress', pvc)
+    },
+    onSuccess: (_, pvc) => queryClient.setQueryData(key, pvc),
   })
 }
 

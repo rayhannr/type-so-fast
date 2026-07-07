@@ -4,6 +4,10 @@
 - Only add `export` once it is actually imported/used by another file.
 - Remove `export` keywords that are no longer used by any other file.
 
+# Control flow
+
+- No nested ternaries (a ternary whose consequent or alternate is itself another ternary). Use an if/else chain, an early return, or a lookup table/object map instead. A single-level ternary is fine.
+
 # Naming rules
 
 - Don't suffix a variable with `Query` (e.g. `recordsQuery`) just because it holds a `useQuery`/`useMutation` result. Assign it to the plain resource name instead (`records`, `stats`, `history`) — or a short prefixed variant if it needs disambiguating from another value in scope (e.g. `cloudRecords` vs `localRecords`) — never `recordsQuery`/`recordsData`.

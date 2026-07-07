@@ -2,10 +2,30 @@ import { UserAchievementsApi, AchievementsApi } from '@accelbyte/sdk-achievement
 import { createSdk } from './sdk'
 import { WORD_MODES } from '@/lib/word-generators'
 import { DURATIONS } from '@/components/DurationSelector'
+import type { Difficulty } from '@/lib/botDifficulty'
+import type { PvcData } from '@/lib/progress'
 
 const ACHIEVEMENT_PERFECTIONIST = 'perfectionist'
 const ACHIEVEMENT_MODE_EXPLORER = 'mode-explorer'
 const ACHIEVEMENT_TIME_TRAVELER = 'time-traveler'
+const ACHIEVEMENT_PVC_FLAWLESS = 'pvc-flawless'
+
+const PVC_WIN_ACHIEVEMENTS: Record<Difficulty, string> = {
+  easy: 'pvc-win-easy',
+  medium: 'pvc-win-medium',
+  hard: 'pvc-win-hard',
+  legend: 'pvc-win-legend',
+}
+
+const PVC_STREAK_ACHIEVEMENTS: { code: string; streak: number }[] = [
+  { code: 'pvc-streak-legend-3', streak: 3 },
+  { code: 'pvc-streak-legend-5', streak: 5 },
+]
+
+const PVC_WIN_MILESTONES: { code: string; wins: number }[] = [
+  { code: 'pvc-wins-10', wins: 10 },
+  { code: 'pvc-wins-50', wins: 50 },
+]
 
 const PERFECT_STREAK_ACHIEVEMENTS: { code: string; games: number }[] = [
   { code: 'perfect-3', games: 3 },
@@ -99,6 +119,27 @@ export const unlockVarietyIfEligible = async (
   const userAchievementsApi = UserAchievementsApi(sdk)
   await Promise.all(
     eligible.map((code) => userAchievementsApi.updateUnlock_ByUserId_ByAchievementCode(userId, code).catch(() => { }))
+  )
+}
+
+export const unlockPvcAchievementsIfEligible = async (
+  userId: string,
+  accessToken: string,
+  context: { difficulty: Difficulty; won: boolean; accuracy: number; pvcProgress: PvcData }
+): Promise<void> => {
+  if (!context.won) return
+
+  const totalWins =
+    context.pvcProgress.easyWins + context.pvcProgress.mediumWins + context.pvcProgress.hardWins + context.pvcProgress.legendWins
+  const eligible: string[] = [PVC_WIN_ACHIEVEMENTS[context.difficulty]]
+  if (context.accuracy >= 100) eligible.push(ACHIEVEMENT_PVC_FLAWLESS)
+  PVC_STREAK_ACHIEVEMENTS.filter((a) => context.pvcProgress.legendWinStreak >= a.streak).forEach((a) => eligible.push(a.code))
+  PVC_WIN_MILESTONES.filter((a) => totalWins >= a.wins).forEach((a) => eligible.push(a.code))
+
+  const sdk = createSdk(accessToken)
+  const userAchievementsApi = UserAchievementsApi(sdk)
+  await Promise.all(
+    eligible.map((code) => userAchievementsApi.updateUnlock_ByUserId_ByAchievementCode(userId, code).catch(() => {}))
   )
 }
 

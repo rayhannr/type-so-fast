@@ -10,11 +10,12 @@ type Props = {
   wpm: number
   wrongKeystroke: number
   onFocusRequest: () => void
+  compact?: boolean
 }
 
 const VISIBLE_WORDS = 60
 
-export const WordContainer = ({ words, typedInput, wpm, wrongKeystroke, onFocusRequest }: Props) => {
+export const WordContainer = ({ words, typedInput, wpm, wrongKeystroke, onFocusRequest, compact = false }: Props) => {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const caretElRef = useRef<HTMLSpanElement | null>(null)
   const caretPosRef = useRef<CaretPosition>({ x: 0, y: 0 })
@@ -41,7 +42,11 @@ export const WordContainer = ({ words, typedInput, wpm, wrongKeystroke, onFocusR
     <div
       ref={containerRef}
       onClick={onFocusRequest}
-      className="relative cursor-text select-none overflow-hidden h-[7.5rem] md:h-[9rem] leading-10 md:leading-12 text-2xl md:text-3xl"
+      className={
+        compact
+          ? 'relative select-none overflow-hidden h-14 leading-7 text-base opacity-80'
+          : 'relative cursor-text select-none overflow-hidden h-[7.5rem] md:h-[9rem] leading-10 md:leading-12 text-2xl md:text-3xl'
+      }
     >
       <span className="break-words">
         {currentWord.split('').map((char, index) => {
@@ -66,7 +71,7 @@ export const WordContainer = ({ words, typedInput, wpm, wrongKeystroke, onFocusR
           {word}{' '}
         </span>
       ))}
-      <CaretTrail caretRef={caretPosRef} wpm={wpm} wrongKeystroke={wrongKeystroke} />
+      {!compact && <CaretTrail caretRef={caretPosRef} wpm={wpm} wrongKeystroke={wrongKeystroke} />}
     </div>
   )
 }

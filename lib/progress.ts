@@ -1,3 +1,5 @@
+import type { Difficulty } from './botDifficulty'
+
 export interface GameHistoryEntry {
   wpm: number
   timestamp: number
@@ -61,6 +63,34 @@ export const advanceProgression = (
     },
     earnedXp,
     leveledUp: levelFromXp(xp) > levelFromXp(base.xp),
+  }
+}
+
+export interface PvcData {
+  easyWins: number
+  mediumWins: number
+  hardWins: number
+  legendWins: number
+  legendWinStreak: number
+}
+
+interface PvcRoundResult {
+  difficulty: Difficulty
+  won: boolean
+}
+
+export const advancePvc = (previous: PvcData | null, result: PvcRoundResult): PvcData => {
+  const base = previous ?? { easyWins: 0, mediumWins: 0, hardWins: 0, legendWins: 0, legendWinStreak: 0 }
+
+  let legendWinStreak = base.legendWinStreak
+  if (result.difficulty === 'legend') legendWinStreak = result.won ? base.legendWinStreak + 1 : 0
+
+  return {
+    easyWins: base.easyWins + (result.won && result.difficulty === 'easy' ? 1 : 0),
+    mediumWins: base.mediumWins + (result.won && result.difficulty === 'medium' ? 1 : 0),
+    hardWins: base.hardWins + (result.won && result.difficulty === 'hard' ? 1 : 0),
+    legendWins: base.legendWins + (result.won && result.difficulty === 'legend' ? 1 : 0),
+    legendWinStreak,
   }
 }
 
