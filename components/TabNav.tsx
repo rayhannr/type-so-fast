@@ -1,33 +1,32 @@
-export type Tab = 'type' | 'stats' | 'leaderboard' | 'achievements'
+'use client'
 
-const TABS: Tab[] = ['type', 'stats', 'leaderboard', 'achievements']
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 
-const TAB_LABELS: Record<Tab, string> = {
-  type: 'Type',
-  stats: 'Stats',
-  leaderboard: 'Leaderboard',
-  achievements: 'Achievements',
+const ROUTES = [
+  { href: '/', label: 'Type' },
+  { href: '/stats', label: 'Stats' },
+  { href: '/leaderboard', label: 'Leaderboard' },
+  { href: '/achievements', label: 'Achievements' },
+]
+
+export const TabNav = () => {
+  const pathname = usePathname()
+
+  return (
+    <nav className="flex flex-row justify-center gap-6 md:gap-8 mt-8" aria-label="Sections">
+      {ROUTES.map((route) => (
+        <Link
+          key={route.href}
+          href={route.href}
+          aria-current={pathname === route.href ? 'page' : undefined}
+          className={`pb-1 text-sm border-b-2 border-solid transition-colors ${
+            pathname === route.href ? 'text-active border-accent' : 'text-muted border-transparent hover:text-active'
+          }`}
+        >
+          {route.label}
+        </Link>
+      ))}
+    </nav>
+  )
 }
-
-interface Props {
-  active: Tab
-  onChange: (tab: Tab) => void
-}
-
-export const TabNav = ({ active, onChange }: Props) => (
-  <nav className="flex flex-row justify-center gap-6 md:gap-8 mt-8" aria-label="Sections">
-    {TABS.map((tab) => (
-      <button
-        key={tab}
-        type="button"
-        onClick={() => onChange(tab)}
-        aria-current={active === tab ? 'page' : undefined}
-        className={`pb-1 text-sm border-b-2 border-solid transition-colors cursor-pointer ${
-          active === tab ? 'text-active border-accent' : 'text-muted border-transparent hover:text-active'
-        }`}
-      >
-        {TAB_LABELS[tab]}
-      </button>
-    ))}
-  </nav>
-)

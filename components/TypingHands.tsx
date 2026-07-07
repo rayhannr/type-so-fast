@@ -25,9 +25,13 @@ interface Props {
   gameOver: boolean
 }
 
-const KEY_COLOR = new Color('#3a3d42')
+const KEY_COLOR_DARK = new Color('#3a3d42')
+const HAND_COLOR_DARK = new Color('#646669')
+const KEY_COLOR_LIGHT = new Color('#fafbfc')
+const HAND_COLOR_LIGHT = new Color('#eff0f2')
 const GLOW_COLOR = new Color('#e2b714')
-const HAND_COLOR = new Color('#646669')
+
+const isLightTheme = () => document.documentElement.getAttribute('data-theme') === 'light'
 
 // QWERTY layout, top row to bottom row; '\b' additionally maps to the top-right key
 const KEY_LAYOUT = ['1234567890-=', 'qwertyuiop[]', "asdfghjkl;'", 'zxcvbnm,./']
@@ -67,8 +71,9 @@ export const TypingHands = ({ keystrokeRef, gameOver }: Props) => {
     renderer.domElement.style.opacity = '0.5'
     container.appendChild(renderer.domElement)
 
-    scene.add(new AmbientLight(0xffffff, 0.7))
-    const sun = new DirectionalLight(0xffffff, 1)
+    const ambient = new AmbientLight(0xffffff, isLightTheme() ? 1.6 : 0.7)
+    scene.add(ambient)
+    const sun = new DirectionalLight(0xffffff, isLightTheme() ? 0.6 : 1)
     sun.position.set(2, 8, 4)
     scene.add(sun)
 
@@ -79,7 +84,10 @@ export const TypingHands = ({ keystrokeRef, gameOver }: Props) => {
     const charToKey = new Map<string, number>()
 
     const addKey = (geometry: BoxGeometry, x: number, z: number) => {
-      const material = new MeshStandardMaterial({ color: KEY_COLOR, roughness: 0.85 })
+      const material = new MeshStandardMaterial({
+        color: isLightTheme() ? KEY_COLOR_LIGHT : KEY_COLOR_DARK,
+        roughness: 0.85,
+      })
       const mesh = new Mesh(geometry, material)
       mesh.position.set(x, 0, z)
       scene.add(mesh)
@@ -97,7 +105,10 @@ export const TypingHands = ({ keystrokeRef, gameOver }: Props) => {
     const spacebarGeometry = new BoxGeometry(5, 0.25, 0.85)
     const spacebarIndex = addKey(spacebarGeometry, 0.45, 2.5 * KEY_STEP)
 
-    const handMaterial = new MeshStandardMaterial({ color: HAND_COLOR, roughness: 0.7 })
+    const handMaterial = new MeshStandardMaterial({
+      color: isLightTheme() ? HAND_COLOR_LIGHT : HAND_COLOR_DARK,
+      roughness: 0.7,
+    })
     const palmGeometry = new BoxGeometry(1.7, 0.35, 1.3)
     // finger pivots at its knuckle (back edge) so rotation.x dips the tip
     const fingerGeometry = new BoxGeometry(0.3, 0.26, 1.25)
@@ -209,9 +220,19 @@ export const TypingHands = ({ keystrokeRef, gameOver }: Props) => {
     }
     window.addEventListener('resize', resizeHandler)
 
+    const themeObserver = new MutationObserver(() => {
+      const light = isLightTheme()
+      handMaterial.color.copy(light ? HAND_COLOR_LIGHT : HAND_COLOR_DARK)
+      keys.forEach((key) => key.material.color.copy(light ? KEY_COLOR_LIGHT : KEY_COLOR_DARK))
+      ambient.intensity = light ? 1.6 : 0.7
+      sun.intensity = light ? 0.6 : 1
+    })
+    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+
     return () => {
       cancelAnimationFrame(frameId)
       window.removeEventListener('resize', resizeHandler)
+      themeObserver.disconnect()
       keyGeometry.dispose()
       spacebarGeometry.dispose()
       palmGeometry.dispose()

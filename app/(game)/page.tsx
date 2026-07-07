@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { GameApp } from '@/components/GameApp'
+import { SoloGame } from '@/components/SoloGame'
 
 export const metadata: Metadata = {
   title: 'TypeSoFast!',
@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 }
 
 export default function Home() {
-  return <GameApp />
+  return <SoloGame />
 }
