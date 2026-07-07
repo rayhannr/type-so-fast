@@ -43,7 +43,7 @@ export const GameApp = () => {
   const [hasStarted, setHasStarted] = useState(false)
   const [capsLockOn, setCapsLockOn] = useState(false)
 
-  const { session, displayName, unlockedAchievements } = useAgsSession()
+  const { session, displayName } = useAgsSession()
   const progression = useProgressionQuery(session)
 
   const { xpGain, newAchievement, dismissAchievement } = useGameEndSync({
@@ -241,7 +241,7 @@ export const GameApp = () => {
 
         {tab === 'leaderboard' && <Leaderboard currentUserId={session?.userId ?? null} />}
 
-        {tab === 'achievements' && <AchievementsTab unlockedCodes={unlockedAchievements} isLoggedIn={!!session} />}
+        {tab === 'achievements' && <AchievementsTab session={session} />}
       </div>
       <AchievementToast achievement={newAchievement} onDismiss={dismissAchievement} />
     </>

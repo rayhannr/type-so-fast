@@ -19,6 +19,12 @@
 - Query keys fall back to a `'local'` (or per-resource empty-string) bucket when there's no AGS session, so guest data never shares a cache entry with a signed-in user's data on the same device.
 - A localStorage-backed local fallback belongs in the query's own `queryFn`/`initialData` only when the existing storage format is a plain JSON-able value owned by that hook. Don't force an already-bespoke local format (e.g. a raw hex string) through a generic JSON local-storage helper — that silently breaks existing users' saved data. Leave that one's local handling where it already lives.
 
+# Comments
+
+- Do not write comments that reference the past state of the code, a prior refactor, or what a file/function "used to" or "no longer" do (e.g. "removed since X no longer needs this", "changed because this file no longer does Y"). Once the refactor lands, that context is meaningless to a future reader who never saw the old version — it just raises unanswerable questions about what the old behavior even was.
+- Comments must describe the current code as it stands, not the diff that produced it. If a comment only makes sense by knowing what the code used to look like, delete it — put that context in the commit message/PR description instead.
+- Before adding a comment, ask whether it would still make sense to someone with no memory of this chat session — not just someone unfamiliar with the code, but someone who never saw the task, the prior version, or the reasoning that led here. If it only makes sense with that session's context, it doesn't belong in the file at all.
+
 # Module boundaries
 
 - A component must not import from another component file just to reuse a type or helper (e.g. a leaf component importing a parent's state type). Shared types/logic move to `lib/` so both sides depend downward on the same module instead of on each other.

@@ -1,4 +1,4 @@
-import { UserAchievementsApi } from '@accelbyte/sdk-achievement'
+import { UserAchievementsApi, AchievementsApi } from '@accelbyte/sdk-achievement'
 import { createSdk } from './sdk'
 import { WORD_MODES } from '@/lib/word-generators'
 import { DURATIONS } from '@/components/DurationSelector'
@@ -62,7 +62,7 @@ export const unlockStreakAchievementsIfEligible = async (
   await Promise.all(
     eligible.map((achievement) =>
       // one milestone failing shouldn't block the others from unlocking
-      userAchievementsApi.updateUnlock_ByUserId_ByAchievementCode(userId, achievement.code).catch(() => {})
+      userAchievementsApi.updateUnlock_ByUserId_ByAchievementCode(userId, achievement.code).catch(() => { })
     )
   )
 }
@@ -79,7 +79,7 @@ export const unlockPerfectStreakIfEligible = async (
   const userAchievementsApi = UserAchievementsApi(sdk)
   await Promise.all(
     eligible.map((achievement) =>
-      userAchievementsApi.updateUnlock_ByUserId_ByAchievementCode(userId, achievement.code).catch(() => {})
+      userAchievementsApi.updateUnlock_ByUserId_ByAchievementCode(userId, achievement.code).catch(() => { })
     )
   )
 }
@@ -98,8 +98,40 @@ export const unlockVarietyIfEligible = async (
   const sdk = createSdk(accessToken)
   const userAchievementsApi = UserAchievementsApi(sdk)
   await Promise.all(
-    eligible.map((code) => userAchievementsApi.updateUnlock_ByUserId_ByAchievementCode(userId, code).catch(() => {}))
+    eligible.map((code) => userAchievementsApi.updateUnlock_ByUserId_ByAchievementCode(userId, code).catch(() => { }))
   )
+}
+
+export interface AchievementInfo {
+  code: string
+  name: string
+  description: string
+  unlocked: boolean
+}
+
+export const getAchievementList = async (userId: string, accessToken: string): Promise<AchievementInfo[]> => {
+  const sdk = createSdk(accessToken)
+  const achievementsApi = AchievementsApi(sdk)
+  const userAchievementsApi = UserAchievementsApi(sdk)
+
+  const [{ data: catalog }, { data: userAchievements }] = await Promise.all([
+    achievementsApi.getAchievements({ language: 'en', limit: 100 }),
+    userAchievementsApi.getAchievements_ByUserId(userId, { limit: 100 }),
+  ])
+
+  const unlockedCodes = new Set(
+    userAchievements.data.filter((item) => item.status === UNLOCKED_STATUS).map((item) => item.achievementCode)
+  )
+
+  return catalog.data
+    .filter((achievement) => !achievement.hidden || unlockedCodes.has(achievement.achievementCode))
+    .sort((a, b) => a.listOrder - b.listOrder)
+    .map((achievement) => ({
+      code: achievement.achievementCode,
+      name: achievement.name,
+      description: achievement.description,
+      unlocked: unlockedCodes.has(achievement.achievementCode),
+    }))
 }
 
 export const diffNewlyUnlocked = async (

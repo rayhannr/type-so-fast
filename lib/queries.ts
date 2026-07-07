@@ -2,7 +2,7 @@ import axios from 'axios'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { LeaderboardEntry, LeaderboardMetric, LeaderboardRange } from '@/lib/ags/leaderboard'
 import type { PersonalStats, GameResultStats } from '@/lib/ags/statistics'
-import type { UnlockedAchievement } from '@/lib/ags/achievements'
+import type { UnlockedAchievement, AchievementInfo } from '@/lib/ags/achievements'
 import type { GameHistoryEntry, StreakData, ProgressionData } from '@/lib/progress'
 import type { UserSettings } from '@/lib/ags/cloudsave'
 import type { Duration } from '@/components/DurationSelector'
@@ -46,6 +46,7 @@ const queryKeys = {
     ['leaderboard', filters] as const,
   displayName: (userId: string) => ['displayName', userId] as const,
   achievements: (userId: string) => ['achievements', userId] as const,
+  achievementList: (userId: string) => ['achievementList', userId] as const,
   settings: (userId: string) => ['settings', userId] as const,
 }
 
@@ -78,6 +79,16 @@ export const useAchievementsQuery = (session: AgsSession | null) => {
   })
   return { ...query, data: new Set(query.data?.map((a) => a.achievementCode) ?? []) }
 }
+
+// full display list (name/description/unlocked) fetched live from AGS's achievement
+// catalog merged with the user's own status — replaces the old hardcoded manifest file
+export const useAchievementListQuery = (session: AgsSession | null) =>
+  useQuery({
+    queryKey: queryKeys.achievementList(session?.userId ?? ''),
+    queryFn: () =>
+      axios.get<AchievementInfo[]>('/api/achievements/list', { headers: authHeaders(session!) }).then((res) => res.data),
+    enabled: !!session,
+  })
 
 export const useSettingsQuery = (session: AgsSession | null) =>
   useQuery({

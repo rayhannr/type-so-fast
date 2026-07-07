@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { useLoginMutation, useDisplayNameQuery, useAchievementsQuery } from '@/lib/queries'
+import { useLoginMutation, useDisplayNameQuery } from '@/lib/queries'
 import type { AgsSession } from '@/lib/queries'
 
 const getDeviceId = (): string => {
@@ -17,7 +17,6 @@ const getDeviceId = (): string => {
 interface AgsSessionState {
   session: AgsSession | null
   displayName: string | null
-  unlockedAchievements: Set<string>
 }
 
 export const useAgsSession = (): AgsSessionState => {
@@ -34,7 +33,6 @@ export const useAgsSession = (): AgsSessionState => {
   }, [])
 
   const displayName = useDisplayNameQuery(session)
-  const achievements = useAchievementsQuery(session)
 
-  return { session, displayName: displayName.data ?? null, unlockedAchievements: achievements.data }
+  return { session, displayName: displayName.data ?? null }
 }

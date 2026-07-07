@@ -1,27 +1,33 @@
-import { achievementsManifest } from '@/lib/achievements-manifest'
+import { useAchievementListQuery } from '@/lib/queries'
+import type { AgsSession } from '@/lib/queries'
 
 interface Props {
-  unlockedCodes: Set<string>
-  isLoggedIn: boolean
+  session: AgsSession | null
 }
 
-export const AchievementsTab = ({ unlockedCodes, isLoggedIn }: Props) => (
-  <div className="w-full max-w-2xl mx-auto mt-10">
-    <h2 className="text-muted text-sm mb-6 text-center">Achievements</h2>
-    {!isLoggedIn && (
-      <p className="text-center text-xs text-muted mb-6">Offline — progress is tracked once the game connects.</p>
-    )}
-    <ul className="flex flex-col gap-3">
-      {achievementsManifest.map((achievement) => {
-        const unlocked = isLoggedIn && unlockedCodes.has(achievement.code)
-        return (
+export const AchievementsTab = ({ session }: Props) => {
+  const achievements = useAchievementListQuery(session)
+  const isLoggedIn = !!session
+
+  return (
+    <div className="w-full max-w-2xl mx-auto mt-10">
+      <h2 className="text-muted text-sm mb-6 text-center">Achievements</h2>
+      {!isLoggedIn && (
+        <p className="text-center text-xs text-muted mb-6">Offline — progress is tracked once the game connects.</p>
+      )}
+      {achievements.isFetching && <p className="text-center text-xs text-muted mb-6">Loading achievements…</p>}
+      {achievements.isError && (
+        <p className="text-center text-xs text-muted mb-6">Couldn&apos;t load achievements — try again later.</p>
+      )}
+      <ul className="flex flex-col gap-3">
+        {(achievements.data ?? []).map((achievement) => (
           <li
             key={achievement.code}
             className={`flex flex-row items-center gap-4 rounded-lg border border-solid border-edge bg-surface px-4 py-3 ${
-              unlocked ? '' : 'opacity-70'
+              achievement.unlocked ? '' : 'opacity-70'
             }`}
           >
-            {unlocked ? (
+            {achievement.unlocked ? (
               <svg
                 className="w-6 h-6 shrink-0 text-accent"
                 fill="none"
@@ -42,15 +48,15 @@ export const AchievementsTab = ({ unlockedCodes, isLoggedIn }: Props) => (
               </svg>
             )}
             <div>
-              <p className={`font-semibold text-sm ${unlocked ? 'text-active' : 'text-muted'}`}>{achievement.name}</p>
+              <p className={`font-semibold text-sm ${achievement.unlocked ? 'text-active' : 'text-muted'}`}>{achievement.name}</p>
               <p className="text-xs text-muted">{achievement.description}</p>
             </div>
-            <span className={`ml-auto text-xs ${unlocked ? 'text-accent' : 'text-muted'}`}>
-              {unlocked ? 'Unlocked' : 'Locked'}
+            <span className={`ml-auto text-xs ${achievement.unlocked ? 'text-accent' : 'text-muted'}`}>
+              {achievement.unlocked ? 'Unlocked' : 'Locked'}
             </span>
           </li>
-        )
-      })}
-    </ul>
-  </div>
-)
+        ))}
+      </ul>
+    </div>
+  )
+}
