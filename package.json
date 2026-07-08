@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "oxlint",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:unit": "vitest run"
   },
   "dependencies": {
     "@accelbyte/sdk": "4.3.2",
@@ -35,6 +36,8 @@
     "@types/react-dom": "19.2.3",
     "oxlint": "1.72.0",
     "tailwindcss": "4.3.2",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "vite-tsconfig-paths": "6.1.1",
+    "vitest": "4.1.10"
   }
 }

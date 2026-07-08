@@ -42,6 +42,7 @@ export const WordContainer = ({ words, typedInput, wpm, wrongKeystroke, onFocusR
     <div
       ref={containerRef}
       onClick={onFocusRequest}
+      data-testid={compact ? 'word-container-compact' : 'word-container'}
       className={
         compact
           ? 'relative select-none overflow-hidden h-14 leading-7 text-base opacity-80'
