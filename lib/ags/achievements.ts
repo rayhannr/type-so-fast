@@ -3,7 +3,7 @@ import { createSdk } from './sdk'
 import { WORD_MODES } from '@/lib/word-generators'
 import { DURATIONS } from '@/components/DurationSelector'
 import type { Difficulty } from '@/lib/botDifficulty'
-import type { PvcData } from '@/lib/progress'
+import type { PvcData, PvpData } from '@/lib/progress'
 
 const ACHIEVEMENT_PERFECTIONIST = 'perfectionist'
 const ACHIEVEMENT_MODE_EXPLORER = 'mode-explorer'
@@ -25,6 +25,19 @@ const PVC_STREAK_ACHIEVEMENTS: { code: string; streak: number }[] = [
 const PVC_WIN_MILESTONES: { code: string; wins: number }[] = [
   { code: 'pvc-wins-10', wins: 10 },
   { code: 'pvc-wins-50', wins: 50 },
+]
+
+const ACHIEVEMENT_PVP_WIN = 'pvp-win'
+const ACHIEVEMENT_PVP_FLAWLESS = 'pvp-flawless'
+
+const PVP_STREAK_ACHIEVEMENTS: { code: string; streak: number }[] = [
+  { code: 'pvp-streak-3', streak: 3 },
+  { code: 'pvp-streak-5', streak: 5 },
+]
+
+const PVP_WIN_MILESTONES: { code: string; wins: number }[] = [
+  { code: 'pvp-wins-10', wins: 10 },
+  { code: 'pvp-wins-50', wins: 50 },
 ]
 
 const PERFECT_STREAK_ACHIEVEMENTS: { code: string; games: number }[] = [
@@ -135,6 +148,25 @@ export const unlockPvcAchievementsIfEligible = async (
   if (context.accuracy >= 100) eligible.push(ACHIEVEMENT_PVC_FLAWLESS)
   PVC_STREAK_ACHIEVEMENTS.filter((a) => context.pvcProgress.legendWinStreak >= a.streak).forEach((a) => eligible.push(a.code))
   PVC_WIN_MILESTONES.filter((a) => totalWins >= a.wins).forEach((a) => eligible.push(a.code))
+
+  const sdk = createSdk(accessToken)
+  const userAchievementsApi = UserAchievementsApi(sdk)
+  await Promise.all(
+    eligible.map((code) => userAchievementsApi.updateUnlock_ByUserId_ByAchievementCode(userId, code).catch(() => {}))
+  )
+}
+
+export const unlockPvpAchievementsIfEligible = async (
+  userId: string,
+  accessToken: string,
+  context: { outcome: 'win' | 'lose' | 'tie'; accuracy: number; pvpProgress: PvpData }
+): Promise<void> => {
+  if (context.outcome !== 'win') return
+
+  const eligible: string[] = [ACHIEVEMENT_PVP_WIN]
+  if (context.accuracy >= 100) eligible.push(ACHIEVEMENT_PVP_FLAWLESS)
+  PVP_STREAK_ACHIEVEMENTS.filter((a) => context.pvpProgress.winStreak >= a.streak).forEach((a) => eligible.push(a.code))
+  PVP_WIN_MILESTONES.filter((a) => context.pvpProgress.wins >= a.wins).forEach((a) => eligible.push(a.code))
 
   const sdk = createSdk(accessToken)
   const userAchievementsApi = UserAchievementsApi(sdk)

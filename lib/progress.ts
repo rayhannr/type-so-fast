@@ -94,6 +94,28 @@ export const advancePvc = (previous: PvcData | null, result: PvcRoundResult): Pv
   }
 }
 
+export interface PvpData {
+  wins: number
+  losses: number
+  ties: number
+  winStreak: number
+}
+
+interface PvpRoundResult {
+  outcome: 'win' | 'lose' | 'tie'
+}
+
+export const advancePvp = (previous: PvpData | null, result: PvpRoundResult): PvpData => {
+  const base = previous ?? { wins: 0, losses: 0, ties: 0, winStreak: 0 }
+
+  return {
+    wins: base.wins + (result.outcome === 'win' ? 1 : 0),
+    losses: base.losses + (result.outcome === 'lose' ? 1 : 0),
+    ties: base.ties + (result.outcome === 'tie' ? 1 : 0),
+    winStreak: result.outcome === 'win' ? base.winStreak + 1 : 0,
+  }
+}
+
 // local calendar date, so a "day" matches what the player sees on their clock
 const toDateString = (date: Date): string => {
   const y = date.getFullYear()

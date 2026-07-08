@@ -3,8 +3,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { LeaderboardEntry, LeaderboardMetric, LeaderboardRange } from '@/lib/ags/leaderboard'
 import type { PersonalStats, GameResultStats } from '@/lib/ags/statistics'
 import type { UnlockedAchievement, AchievementInfo } from '@/lib/ags/achievements'
-import type { GameHistoryEntry, StreakData, ProgressionData, PvcData } from '@/lib/progress'
+import type { GameHistoryEntry, StreakData, ProgressionData, PvcData, PvpData } from '@/lib/progress'
 import type { UserSettings } from '@/lib/ags/cloudsave'
+import type { MatchTicket, MatchTicketStatus } from '@/lib/ags/matchmaking'
+import type { PvpSession, PvpSessionAttributes } from '@/lib/ags/session'
 import type { Duration } from '@/components/DurationSelector'
 import type { WordMode } from '@/lib/word-generators'
 import type { Difficulty } from '@/lib/botDifficulty'
@@ -27,6 +29,7 @@ export interface AchievementContext {
   modesPlayed: string[]
   durationsPlayed: number[]
   pvc?: { difficulty: Difficulty; won: boolean; pvcProgress: PvcData }
+  pvp?: { outcome: 'win' | 'lose' | 'tie'; pvpProgress: PvpData }
 }
 
 const readLocal = <T,>(key: string, fallback: T): T => {
@@ -45,6 +48,7 @@ const queryKeys = {
   streak: (userId?: string) => ['streak', userId ?? 'local'] as const,
   progression: (userId?: string) => ['progression', userId ?? 'local'] as const,
   pvcProgress: (userId?: string) => ['pvcProgress', userId ?? 'local'] as const,
+  pvpProgress: (userId?: string) => ['pvpProgress', userId ?? 'local'] as const,
   leaderboard: (filters: { metric: LeaderboardMetric; duration: Duration | null; mode: WordMode; range: LeaderboardRange }) =>
     ['leaderboard', filters] as const,
   displayName: (userId: string) => ['displayName', userId] as const,
@@ -160,6 +164,16 @@ export const usePvcProgressQuery = (session: AgsSession | null) =>
     initialData: session ? undefined : () => readLocal<PvcData | null>('pvcProgress', null),
   })
 
+export const usePvpProgressQuery = (session: AgsSession | null) =>
+  useQuery({
+    queryKey: queryKeys.pvpProgress(session?.userId),
+    queryFn: () =>
+      session
+        ? axios.get<PvpData | null>('/api/pvp-progress', { headers: authHeaders(session) }).then((res) => res.data)
+        : Promise.resolve(readLocal<PvpData | null>('pvpProgress', null)),
+    initialData: session ? undefined : () => readLocal<PvpData | null>('pvpProgress', null),
+  })
+
 export const useStatsQuery = (session: AgsSession | null) =>
   useQuery({
     queryKey: queryKeys.stats(session?.userId ?? ''),
@@ -243,6 +257,18 @@ export const useSavePvcProgressMutation = (session: AgsSession | null) => {
   })
 }
 
+export const useSavePvpProgressMutation = (session: AgsSession | null) => {
+  const queryClient = useQueryClient()
+  const key = queryKeys.pvpProgress(session?.userId)
+  return useMutation({
+    mutationFn: async (pvp: PvpData) => {
+      if (session) await axios.put('/api/pvp-progress', { pvp }, { headers: authHeaders(session) })
+      else writeLocal('pvpProgress', pvp)
+    },
+    onSuccess: (_, pvp) => queryClient.setQueryData(key, pvp),
+  })
+}
+
 // stats submission also moves the leaderboard, and the server computes the real
 // aggregate (increments/max), so this one needs a genuine invalidate + refetch
 export const useSubmitStatsMutation = (session: AgsSession | null) => {
@@ -255,6 +281,54 @@ export const useSubmitStatsMutation = (session: AgsSession | null) => {
     },
   })
 }
+
+export const useCreateMatchTicketMutation = (session: AgsSession | null) =>
+  useMutation({
+    mutationFn: () => axios.post<MatchTicket>('/api/matchmaking', {}, { headers: authHeaders(session!) }).then((res) => res.data),
+  })
+
+export const useMatchTicketStatusQuery = (session: AgsSession | null, ticketId: string | null) =>
+  useQuery({
+    queryKey: ['matchTicketStatus', ticketId],
+    queryFn: () =>
+      axios.get<MatchTicketStatus>(`/api/matchmaking/${ticketId}`, { headers: authHeaders(session!) }).then((res) => res.data),
+    enabled: !!session && !!ticketId,
+    refetchInterval: 2000,
+  })
+
+export const useCancelMatchTicketMutation = (session: AgsSession | null) =>
+  useMutation({
+    mutationFn: (ticketId: string) => axios.delete(`/api/matchmaking/${ticketId}`, { headers: authHeaders(session!) }),
+  })
+
+export const useSessionQuery = (session: AgsSession | null, sessionId: string | null) =>
+  useQuery({
+    queryKey: ['pvpSession', sessionId],
+    queryFn: () => axios.get<PvpSession>(`/api/session/${sessionId}`, { headers: authHeaders(session!) }).then((res) => res.data),
+    enabled: !!session && !!sessionId,
+    refetchInterval: 1500,
+  })
+
+// the writer already knows the exact resulting attributes (it just built them), so update the
+// cache immediately rather than waiting on the next poll tick — otherwise the writer's own view
+// of `attributes` can lag behind actions (e.g. the WebRTC handshake) that don't wait on that poll
+export const useSetSessionAttributesMutation = (session: AgsSession | null) => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ sessionId, attributes }: { sessionId: string; attributes: Partial<PvpSessionAttributes> }) =>
+      axios.patch(`/api/session/${sessionId}`, { attributes }, { headers: authHeaders(session!) }),
+    onSuccess: (_, { sessionId, attributes }) => {
+      queryClient.setQueryData(['pvpSession', sessionId], (current: PvpSession | undefined) =>
+        current ? { ...current, attributes: { ...current.attributes, ...attributes } } : current
+      )
+    },
+  })
+}
+
+export const useLeaveSessionMutation = (session: AgsSession | null) =>
+  useMutation({
+    mutationFn: (sessionId: string) => axios.delete(`/api/session/${sessionId}`, { headers: authHeaders(session!) }),
+  })
 
 export const useProcessAchievementsMutation = (session: AgsSession | null) => {
   const queryClient = useQueryClient()

@@ -1,6 +1,6 @@
 import { Cloudsave } from '@accelbyte/sdk-cloudsave'
 import { createSdk } from './sdk'
-import type { GameHistoryEntry, ProgressionData, PvcData, StreakData } from '@/lib/progress'
+import type { GameHistoryEntry, ProgressionData, PvcData, PvpData, StreakData } from '@/lib/progress'
 
 const RECORDS_KEY = 'bestRecords'
 const HISTORY_KEY = 'gameHistory'
@@ -8,6 +8,7 @@ const STREAK_KEY = 'dailyStreak'
 const SETTINGS_KEY = 'settings'
 const PROGRESSION_KEY = 'progression'
 const PVC_KEY = 'pvcProgress'
+const PVP_KEY = 'pvpProgress'
 
 export interface UserSettings {
   accentColor?: string
@@ -104,6 +105,25 @@ export const savePvcProgress = async (userId: string, accessToken: string, pvc: 
   const { PublicPlayerRecordApi } = Cloudsave
   const playerRecordApi = PublicPlayerRecordApi(createSdk(accessToken))
   await playerRecordApi.createRecord_ByUserId_ByKey(userId, PVC_KEY, { ...pvc })
+}
+
+export const getPvpProgress = async (userId: string, accessToken: string): Promise<PvpData | null> => {
+  const { PublicPlayerRecordApi } = Cloudsave
+  const playerRecordApi = PublicPlayerRecordApi(createSdk(accessToken))
+
+  try {
+    const { data } = await playerRecordApi.getRecord_ByUserId_ByKey(userId, PVP_KEY)
+    const value = data.value as PvpData | undefined
+    return typeof value?.winStreak === 'number' ? value : null
+  } catch {
+    return null
+  }
+}
+
+export const savePvpProgress = async (userId: string, accessToken: string, pvp: PvpData): Promise<void> => {
+  const { PublicPlayerRecordApi } = Cloudsave
+  const playerRecordApi = PublicPlayerRecordApi(createSdk(accessToken))
+  await playerRecordApi.createRecord_ByUserId_ByKey(userId, PVP_KEY, { ...pvp })
 }
 
 export const getSettings = async (userId: string, accessToken: string): Promise<UserSettings> => {

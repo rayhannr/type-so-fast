@@ -4,6 +4,7 @@ import {
   unlockPerfectionistIfEligible,
   unlockPerfectStreakIfEligible,
   unlockPvcAchievementsIfEligible,
+  unlockPvpAchievementsIfEligible,
   unlockStreakAchievementsIfEligible,
   unlockVarietyIfEligible,
 } from '@/lib/ags/achievements'
@@ -27,7 +28,7 @@ export async function POST(request: Request) {
   if (!auth) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
   try {
-    const { accuracy, previousCodes, streak, perfectStreak, modesPlayed, durationsPlayed, pvc } = await request.json()
+    const { accuracy, previousCodes, streak, perfectStreak, modesPlayed, durationsPlayed, pvc, pvp } = await request.json()
     await unlockPerfectionistIfEligible(auth.userId, auth.accessToken, accuracy)
     await unlockStreakAchievementsIfEligible(auth.userId, auth.accessToken, streak ?? 0)
     await unlockPerfectStreakIfEligible(auth.userId, auth.accessToken, perfectStreak ?? 0)
@@ -38,6 +39,13 @@ export async function POST(request: Request) {
         won: pvc.won,
         accuracy,
         pvcProgress: pvc.pvcProgress,
+      })
+    }
+    if (pvp) {
+      await unlockPvpAchievementsIfEligible(auth.userId, auth.accessToken, {
+        outcome: pvp.outcome,
+        accuracy,
+        pvpProgress: pvp.pvpProgress,
       })
     }
     const newlyUnlocked = await diffNewlyUnlocked(auth.userId, auth.accessToken, previousCodes ?? [])
