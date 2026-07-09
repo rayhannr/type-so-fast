@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import Pusher from 'pusher-js'
+import { useQueryClient } from '@tanstack/react-query'
+import { incomingFriendRequestsKey } from '@/lib/queries/social'
 import type { AgsSession } from '@/lib/queries/shared'
 
 export interface PendingInvite {
@@ -23,13 +25,15 @@ interface PendingInviteState {
 }
 
 // Single private channel carries every invite-related event for this user: someone invited them
-// (invite:new), someone accepted an invite they sent (invite:accepted), or declined one
-// (invite:declined) — all delivered live, with no fallback poll
+// (invite:new), someone accepted an invite they sent (invite:accepted), declined one
+// (invite:declined), or sent a friend request (friend:request) — all delivered live, with no
+// fallback poll
 export const usePendingInvite = (session: AgsSession | null): PendingInviteState => {
   const [invite, setInvite] = useState<PendingInvite | null>(null)
   const [acceptedInvite, setAcceptedInvite] = useState<AcceptedInvite | null>(null)
   const [declined, setDeclined] = useState(false)
   const [connected, setConnected] = useState(false)
+  const queryClient = useQueryClient()
 
   useEffect(() => {
     if (!session) return
@@ -49,13 +53,14 @@ export const usePendingInvite = (session: AgsSession | null): PendingInviteState
     channel.bind('invite:new', (data: PendingInvite) => setInvite(data))
     channel.bind('invite:accepted', (data: AcceptedInvite) => setAcceptedInvite(data))
     channel.bind('invite:declined', () => setDeclined(true))
+    channel.bind('friend:request', () => queryClient.invalidateQueries({ queryKey: incomingFriendRequestsKey(session.userId) }))
 
     return () => {
       pusher.unsubscribe(`private-user-${session.userId}`)
       pusher.disconnect()
       setConnected(false)
     }
-  }, [session])
+  }, [session, queryClient])
 
   return {
     invite,

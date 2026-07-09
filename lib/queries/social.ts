@@ -5,7 +5,7 @@ import { authHeaders } from './shared'
 import type { AgsSession } from './shared'
 
 const friendsKey = (userId: string) => ['friends', userId] as const
-const incomingFriendRequestsKey = (userId: string) => ['incomingFriendRequests', userId] as const
+export const incomingFriendRequestsKey = (userId: string) => ['incomingFriendRequests', userId] as const
 const blockedUsersKey = (userId: string) => ['blockedUsers', userId] as const
 
 export const useFriendsQuery = (session: AgsSession | null) =>

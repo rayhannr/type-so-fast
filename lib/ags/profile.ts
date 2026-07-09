@@ -29,3 +29,9 @@ export const getOrCreateProfile = async (accessToken: string): Promise<AgsProfil
     throw err
   }
 }
+
+export const getUserIdByPublicId = async (accessToken: string, publicId: string): Promise<string> => {
+  const api = UserProfileApi(createSdk(accessToken))
+  const { data } = await api.getProfilesPublicByPublicId({ publicId })
+  return data.userId ?? ''
+}
