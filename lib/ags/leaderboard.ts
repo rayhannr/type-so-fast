@@ -1,4 +1,4 @@
-import { Leaderboard } from '@accelbyte/sdk-leaderboard'
+import { LeaderboardDataV3Api } from '@accelbyte/sdk-leaderboard'
 import { createSdk } from './sdk'
 import type { Duration } from '@/components/DurationSelector'
 import type { WordMode } from '@/lib/word-generators'
@@ -57,7 +57,7 @@ export const getTopLeaderboard = async (
   cycleId?: string
 ): Promise<LeaderboardEntry[]> => {
   const sdk = createSdk()
-  const leaderboardDataApi = Leaderboard.LeaderboardDataV3Api(sdk)
+  const leaderboardDataApi = LeaderboardDataV3Api(sdk)
 
   try {
     const { data } = cycleId

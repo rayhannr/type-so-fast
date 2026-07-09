@@ -1,4 +1,4 @@
-import { Cloudsave } from '@accelbyte/sdk-cloudsave'
+import { PublicPlayerRecordApi } from '@accelbyte/sdk-cloudsave'
 import { fakerEN } from '@faker-js/faker'
 import { createSdk } from './sdk'
 
@@ -9,7 +9,6 @@ const generateDisplayName = () =>
   `${capitalize(fakerEN.word.adjective())} ${capitalize(fakerEN.word.noun())}`
 
 export const getOrCreateDisplayName = async (userId: string, accessToken: string, localNameHint?: string): Promise<string> => {
-  const { PublicPlayerRecordApi } = Cloudsave
   const playerRecordApi = PublicPlayerRecordApi(createSdk(accessToken))
 
   try {

@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { Basic } from '@accelbyte/sdk-basic'
+import { UserProfileApi } from '@accelbyte/sdk-basic'
 import { createSdk } from './sdk'
 
 export interface AgsProfile {
@@ -8,13 +8,13 @@ export interface AgsProfile {
 }
 
 export const getMyProfile = async (accessToken: string): Promise<AgsProfile> => {
-  const api = Basic.UserProfileApi(createSdk(accessToken))
+  const api = UserProfileApi(createSdk(accessToken))
   const { data } = await api.getUsersMeProfiles()
   return { userId: data.userId ?? '', publicId: data.publicId ?? '' }
 }
 
 export const createProfile = async (accessToken: string): Promise<AgsProfile> => {
-  const api = Basic.UserProfileApi(createSdk(accessToken))
+  const api = UserProfileApi(createSdk(accessToken))
   const { data } = await api.createUserMeProfile({})
   return { userId: data.userId ?? '', publicId: data.publicId ?? '' }
 }
