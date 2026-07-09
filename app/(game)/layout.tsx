@@ -8,6 +8,7 @@ import { AccentPicker } from '@/components/AccentPicker'
 import { SoundToggle } from '@/components/SoundToggle'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { TabNav } from '@/components/TabNav'
+import { PendingInviteBanner } from '@/components/PendingInviteBanner'
 
 const GameChrome = ({ children }: { children: React.ReactNode }) => {
   const { session } = useAgsSessionContext()
@@ -39,6 +40,8 @@ const GameChrome = ({ children }: { children: React.ReactNode }) => {
       <TabNav />
 
       {children}
+
+      <PendingInviteBanner session={session} />
     </div>
   )
 }

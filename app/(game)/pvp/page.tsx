@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
 import { PvpGame } from '@/components/PvpGame'
 
 export const metadata: Metadata = {
@@ -7,5 +8,9 @@ export const metadata: Metadata = {
 }
 
 export default function PvpPage() {
-  return <PvpGame />
+  return (
+    <Suspense>
+      <PvpGame />
+    </Suspense>
+  )
 }

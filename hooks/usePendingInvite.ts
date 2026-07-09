@@ -8,13 +8,27 @@ export interface PendingInvite {
   inviterUserId: string
 }
 
-interface PendingInviteState {
-  invite: PendingInvite | null
-  connected: boolean
+interface AcceptedInvite {
+  sessionId: string
 }
 
+interface PendingInviteState {
+  invite: PendingInvite | null
+  acceptedInvite: AcceptedInvite | null
+  declined: boolean
+  connected: boolean
+  dismissInvite: () => void
+  dismissAcceptedInvite: () => void
+  dismissDeclined: () => void
+}
+
+// Single private channel carries every invite-related event for this user: someone invited them
+// (invite:new), someone accepted an invite they sent (invite:accepted), or declined one
+// (invite:declined) — all delivered live, with no fallback poll
 export const usePendingInvite = (session: AgsSession | null): PendingInviteState => {
   const [invite, setInvite] = useState<PendingInvite | null>(null)
+  const [acceptedInvite, setAcceptedInvite] = useState<AcceptedInvite | null>(null)
+  const [declined, setDeclined] = useState(false)
   const [connected, setConnected] = useState(false)
 
   useEffect(() => {
@@ -33,6 +47,8 @@ export const usePendingInvite = (session: AgsSession | null): PendingInviteState
     channel.bind('pusher:subscription_succeeded', () => setConnected(true))
     channel.bind('pusher:subscription_error', () => setConnected(false))
     channel.bind('invite:new', (data: PendingInvite) => setInvite(data))
+    channel.bind('invite:accepted', (data: AcceptedInvite) => setAcceptedInvite(data))
+    channel.bind('invite:declined', () => setDeclined(true))
 
     return () => {
       pusher.unsubscribe(`private-user-${session.userId}`)
@@ -41,5 +57,13 @@ export const usePendingInvite = (session: AgsSession | null): PendingInviteState
     }
   }, [session])
 
-  return { invite, connected }
+  return {
+    invite,
+    acceptedInvite,
+    declined,
+    connected,
+    dismissInvite: () => setInvite(null),
+    dismissAcceptedInvite: () => setAcceptedInvite(null),
+    dismissDeclined: () => setDeclined(false),
+  }
 }

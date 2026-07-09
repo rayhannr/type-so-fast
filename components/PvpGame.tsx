@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useReducer, useRef, useState, useCallback } from 'react'
 import type { ChangeEvent, InputEvent, KeyboardEvent } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { generateWords } from '@/lib/word-generators'
 import type { WordMode } from '@/lib/word-generators'
 
@@ -36,11 +37,16 @@ const OUTCOME_CLASS: Record<Outcome, string> = { win: 'text-correct', lose: 'tex
 export const PvpGame = () => {
   const { session, displayName } = useAgsSessionContext()
 
+  // a match-invite accept lands here via `/pvp?session=<id>` — the session already has both
+  // players named in its roster (see lib/ags/session.ts's createInviteSession), so this joins
+  // it directly instead of going through Quick Match's idle/queueing ticket flow.
+  const joinSessionId = useSearchParams().get('session')
+
   const [duration, setDuration] = useState<Duration>(60)
   const [mode, setMode] = useState<WordMode>('words')
-  const [phase, setPhase] = useState<Phase>('idle')
+  const [phase, setPhase] = useState<Phase>(joinSessionId ? 'connecting' : 'idle')
   const [ticketId, setTicketId] = useState<string | null>(null)
-  const [sessionId, setSessionId] = useState('')
+  const [sessionId, setSessionId] = useState(joinSessionId ?? '')
   const [timedOut, setTimedOut] = useState(false)
   const [countdown, setCountdown] = useState(3)
   const [capsLockOn, setCapsLockOn] = useState(false)
