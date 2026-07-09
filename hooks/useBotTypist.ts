@@ -1,10 +1,10 @@
 'use client'
 
 import { useEffect, useReducer, useRef } from 'react'
-import { gameReducer, createInitialState } from './gameReducer'
-import type { GameState, GameAction } from './gameReducer'
-import { BOT_PROFILES } from './botDifficulty'
-import type { Difficulty, BotProfile } from './botDifficulty'
+import { gameReducer, createInitialState } from '@/lib/gameReducer'
+import type { GameState, GameAction } from '@/lib/gameReducer'
+import { BOT_PROFILES } from '@/lib/botDifficulty'
+import type { Difficulty, BotProfile } from '@/lib/botDifficulty'
 
 const WRONG_CHAR_POOL = 'abcdefghijklmnopqrstuvwxyz'
 

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Pusher from 'pusher-js'
 import type { PresenceChannel } from 'pusher-js'
-import type { AgsSession } from './queries/shared'
+import type { AgsSession } from '@/lib/queries/shared'
 
 const PRESENCE_CHANNEL = 'presence-online-users'
 

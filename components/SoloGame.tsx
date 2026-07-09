@@ -18,7 +18,7 @@ import type { Duration } from './DurationSelector'
 import { ModeSelector } from './ModeSelector'
 
 import { useAgsSessionContext } from '@/lib/ags/AgsSessionContext'
-import { useGameEndSync } from '@/lib/useGameEndSync'
+import { useGameEndSync } from '@/hooks/useGameEndSync'
 import { playKeyClick, playErrorBuzz, playWordChime } from '@/lib/sounds'
 import { gameReducer, createInitialState } from '@/lib/gameReducer'
 

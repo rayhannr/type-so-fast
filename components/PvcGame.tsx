@@ -18,8 +18,8 @@ import { DifficultySelector } from './DifficultySelector'
 import type { Difficulty } from '@/lib/botDifficulty'
 
 import { useAgsSessionContext } from '@/lib/ags/AgsSessionContext'
-import { useGameEndSync } from '@/lib/useGameEndSync'
-import { useBotTypist } from '@/lib/useBotTypist'
+import { useGameEndSync } from '@/hooks/useGameEndSync'
+import { useBotTypist } from '@/hooks/useBotTypist'
 import { playKeyClick, playErrorBuzz, playWordChime } from '@/lib/sounds'
 import { gameReducer, createInitialState } from '@/lib/gameReducer'
 

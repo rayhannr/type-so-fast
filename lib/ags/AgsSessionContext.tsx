@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useContext } from 'react'
-import { useAgsSession } from './useAgsSession'
+import { useAgsSession } from '@/hooks/useAgsSession'
 import type { AgsSession } from '@/lib/queries/shared'
 
 interface AgsSessionState {

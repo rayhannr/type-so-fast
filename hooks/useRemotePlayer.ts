@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import type { SignalPayload } from './ags/session'
+import type { SignalPayload } from '@/lib/ags/session'
 
 // TODO: swap for AGS's TURN relay credentials once the exact fetch endpoint is confirmed
 // (see docs/ags-plans/2026-07-07-pvp-quick-match.md Risks) — public STUN is enough for direct

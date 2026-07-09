@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Pusher from 'pusher-js'
-import type { AgsSession } from './queries/shared'
+import type { AgsSession } from '@/lib/queries/shared'
 
 export interface PendingInvite {
   inviterUserId: string
