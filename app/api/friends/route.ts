@@ -9,7 +9,7 @@ export async function GET(request: Request) {
 
   try {
     const friendIds = await listFriends(auth.accessToken)
-    const friends = await getUserSummaries(auth.accessToken, friendIds)
+    const friends = await getUserSummaries(friendIds)
     return Response.json(friends)
   } catch (err) {
     return errorResponse(err, '[friends] GET failed')

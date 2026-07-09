@@ -9,7 +9,7 @@ export async function GET(request: Request) {
 
   try {
     const blockedIds = await listBlockedUsers(auth.accessToken)
-    const blocked = await getUserSummaries(auth.accessToken, blockedIds)
+    const blocked = await getUserSummaries(blockedIds)
     return Response.json(blocked)
   } catch (err) {
     return errorResponse(err, '[blocks] GET failed')

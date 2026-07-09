@@ -1,6 +1,7 @@
-import { UsersApi } from '@accelbyte/sdk-iam'
+import { UsersAdminApi, UsersApi } from '@accelbyte/sdk-iam'
 import { fakerEN } from '@faker-js/faker'
 import { createSdk } from './sdk'
+import { getAdminAccessToken } from './adminToken'
 
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 const generateDisplayName = () =>
@@ -23,13 +24,11 @@ export interface UserSummary {
   displayName: string
 }
 
-export const getUserSummaries = async (accessToken: string, userIds: string[]): Promise<UserSummary[]> => {
+export const getUserSummaries = async (userIds: string[]): Promise<UserSummary[]> => {
   if (userIds.length === 0) return []
-  const usersApi = UsersApi(createSdk(accessToken))
-  // bulk/basic is marked deprecated upstream, but its designated substitute (POST /users/platforms)
-  // only returns third-party platform identities (Steam/PSN/Xbox), which headless Device ID users
-  // don't have — bulk/basic is the endpoint that returns the AGS display name per userId.
-  const { data } = await usersApi.createUserBulkBasic_v3({ userIds })
+  const adminAccessToken = await getAdminAccessToken()
+  const usersApi = UsersAdminApi(createSdk(adminAccessToken))
+  const { data } = await usersApi.createUserBulk_v3({ userIds })
   const names = new Map(data.data.map((user) => [user.userId, user.displayName]))
   return userIds.map((userId) => ({ userId, displayName: names.get(userId) || userId.slice(0, 8) }))
 }
