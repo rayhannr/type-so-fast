@@ -18,7 +18,7 @@ export interface XpGain {
 interface Props {
   state: GameState
   session: AgsSession | null
-  displayName: string | null
+  displayName?: string
   xpGain: XpGain | null
 }
 

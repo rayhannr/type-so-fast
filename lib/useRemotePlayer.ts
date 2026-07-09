@@ -77,7 +77,7 @@ export const useRemotePlayer = ({ isOfferer, active, offer, answer, onOffer, onA
       attachChannel(pc.createDataChannel('race-progress'))
       pc.createOffer()
         .then((offerDescription) => pc.setLocalDescription(offerDescription))
-        .catch(() => {})
+        .catch(() => { })
     } else {
       pc.addEventListener('datachannel', (event) => attachChannel(event.channel))
     }
@@ -100,7 +100,7 @@ export const useRemotePlayer = ({ isOfferer, active, offer, answer, onOffer, onA
       .then(() => Promise.all(offer.candidates.map((c) => pc.addIceCandidate(new RTCIceCandidate(c)))))
       .then(() => pc.createAnswer())
       .then((answerDescription) => pc.setLocalDescription(answerDescription))
-      .catch(() => {})
+      .catch(() => { })
   }, [isOfferer, offer])
 
   // offerer: apply the answer once it lands in session attributes
@@ -110,7 +110,7 @@ export const useRemotePlayer = ({ isOfferer, active, offer, answer, onOffer, onA
     remoteDescriptionSetRef.current = true
     pc.setRemoteDescription(new RTCSessionDescription(answer.sdp))
       .then(() => Promise.all(answer.candidates.map((c) => pc.addIceCandidate(new RTCIceCandidate(c)))))
-      .catch(() => {})
+      .catch(() => { })
   }, [isOfferer, answer])
 
   const sendSnapshot = (snapshot: RemotePlayerSnapshot) => {

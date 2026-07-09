@@ -46,7 +46,7 @@ export const PvpGame = () => {
   const [mode, setMode] = useState<WordMode>('words')
   const [phase, setPhase] = useState<Phase>('idle')
   const [ticketId, setTicketId] = useState<string | null>(null)
-  const [sessionId, setSessionId] = useState<string | null>(null)
+  const [sessionId, setSessionId] = useState('')
   const [timedOut, setTimedOut] = useState(false)
   const [countdown, setCountdown] = useState(3)
   const [capsLockOn, setCapsLockOn] = useState(false)
@@ -77,8 +77,8 @@ export const PvpGame = () => {
     active: phase === 'connecting' || phase === 'countdown' || phase === 'racing',
     offer: attributes?.offer,
     answer: attributes?.answer,
-    onOffer: (offer) => setSessionAttributes.mutate({ sessionId: sessionId!, attributes: { offer } }),
-    onAnswer: (answer) => setSessionAttributes.mutate({ sessionId: sessionId!, attributes: { answer } }),
+    onOffer: (offer) => setSessionAttributes.mutate({ sessionId, attributes: { offer } }),
+    onAnswer: (answer) => setSessionAttributes.mutate({ sessionId, attributes: { answer } }),
   })
 
   const playerWpm = Math.round((state.correctKeystroke * 12) / state.duration)
@@ -119,7 +119,7 @@ export const PvpGame = () => {
     const words = generateWords(mode, numberOfWords)
     dispatch({ type: 'RESTART', words, duration })
     setSessionAttributes.mutate({
-      sessionId: sessionId!,
+      sessionId,
       attributes: { mode, duration, words, authorityUserId: session!.userId },
     })
   }, [phase, pvpSession.data, isAuthority, attributes?.words])
@@ -200,7 +200,7 @@ export const PvpGame = () => {
     if (sessionId) leaveSession.mutate(sessionId)
     clearInterval(intervalRef.current!)
     setPhase('idle')
-    setSessionId(null)
+    setSessionId('')
     setTicketId(null)
     setCountdown(3)
     dispatch({ type: 'RESTART', words: [], duration })
@@ -330,7 +330,7 @@ export const PvpGame = () => {
                 typedInput={remote.remote.wordInput}
                 wpm={remoteLiveWpm}
                 wrongKeystroke={remote.remote.wrongKeystroke}
-                onFocusRequest={() => {}}
+                onFocusRequest={() => { }}
                 compact
               />
             ) : (

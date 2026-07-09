@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { useLoginMutation, useDisplayNameQuery } from '@/lib/queries'
+import { useLoginMutation, useDisplayNameQuery, useMyProfileQuery } from '@/lib/queries'
 import type { AgsSession } from '@/lib/queries'
 
 const getDeviceId = (): string => {
@@ -16,7 +16,8 @@ const getDeviceId = (): string => {
 
 interface AgsSessionState {
   session: AgsSession | null
-  displayName: string | null
+  displayName?: string
+  publicId?: string
 }
 
 export const useAgsSession = (): AgsSessionState => {
@@ -29,10 +30,11 @@ export const useAgsSession = (): AgsSessionState => {
     hasInitialized.current = true
 
     // AGS unavailable; game still works via localStorage fallbacks with session left null
-    loginMutation.mutate(getDeviceId(), { onSuccess: setSession, onError: () => {} })
+    loginMutation.mutate(getDeviceId(), { onSuccess: setSession, onError: () => { } })
   }, [])
 
   const displayName = useDisplayNameQuery(session)
+  const profile = useMyProfileQuery(session)
 
-  return { session, displayName: displayName.data ?? null }
+  return { session, displayName: displayName.data, publicId: profile.data?.publicId }
 }

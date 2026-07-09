@@ -1,5 +1,6 @@
 import axios from 'axios'
-import { Session } from '@accelbyte/sdk-session'
+import { GameSessionApi } from '@accelbyte/sdk-session'
+import type { UpdateGameSessionRequest } from '@accelbyte/sdk-session'
 import { createSdk } from './sdk'
 
 export interface SignalPayload {
@@ -26,7 +27,6 @@ export interface PvpSession {
 }
 
 export const getSession = async (accessToken: string, sessionId: string): Promise<PvpSession> => {
-  const { GameSessionApi } = Session
   const api = GameSessionApi(createSdk(accessToken))
   const { data } = await api.getGamesession_BySessionId(sessionId)
   return {
@@ -36,9 +36,6 @@ export const getSession = async (accessToken: string, sessionId: string): Promis
   }
 }
 
-// Bypasses the SDK's patchGamesession_BySessionId — its zod schema requires the full session
-// shape even for a partial PATCH, which rejects an attributes-only body. Raw REST call instead,
-// same escape hatch lib/ags/auth.ts uses for device-id login.
 // AGS uses optimistic concurrency on game sessions (a `version` field that must match the
 // current one or the PATCH 400s with VersionMismatch) — fetch the live version right before
 // writing and retry once if another client's write raced ahead of us.
@@ -51,13 +48,15 @@ export const setSessionAttributes = async (
   sessionId: string,
   attributes: Partial<PvpSessionAttributes>
 ): Promise<void> => {
-  const url = `${process.env.ACCELBYTE_BASE_URL}/session/v1/public/namespaces/${process.env.ACCELBYTE_NAMESPACE}/gamesessions/${sessionId}`
-  const headers = { Authorization: `Bearer ${accessToken}` }
+  const api = GameSessionApi(createSdk(accessToken))
 
   const patchOnce = async (): Promise<void> => {
-    const { data: current } = await axios.get(url, { headers })
+    const { data: current } = await api.getGamesession_BySessionId(sessionId)
     const merged = { ...current.attributes, ...attributes }
-    await axios.patch(url, { attributes: merged, version: current.version }, { headers })
+    await api.patchGamesession_BySessionId(sessionId, {
+      attributes: merged,
+      version: current.version,
+    } as UpdateGameSessionRequest)
   }
 
   try {
@@ -72,7 +71,6 @@ export const setSessionAttributes = async (
 }
 
 export const leaveSession = async (accessToken: string, sessionId: string): Promise<void> => {
-  const { GameSessionApi } = Session
   const api = GameSessionApi(createSdk(accessToken))
   await api.deleteLeave_BySessionId(sessionId)
 }

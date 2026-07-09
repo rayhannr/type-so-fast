@@ -13,6 +13,7 @@
   "dependencies": {
     "@accelbyte/sdk": "4.3.2",
     "@accelbyte/sdk-achievement": "5.3.5",
+    "@accelbyte/sdk-basic": "6.2.7",
     "@accelbyte/sdk-cloudsave": "6.3.5",
     "@accelbyte/sdk-iam": "6.3.5",
     "@accelbyte/sdk-leaderboard": "5.3.5",
@@ -24,6 +25,8 @@
     "@types/three": "0.185.0",
     "axios": "1.18.1",
     "next": "16.2.10",
+    "pusher": "5.3.4",
+    "pusher-js": "8.5.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "three": "0.185.1"

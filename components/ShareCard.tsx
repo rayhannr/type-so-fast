@@ -6,7 +6,7 @@ interface Props {
   wpm: number
   accuracy: string
   duration: number
-  displayName: string | null
+  displayName?: string
 }
 
 const CARD_WIDTH = 1200

@@ -34,7 +34,7 @@ interface GameEndParams {
   duration: Duration
   mode: WordMode
   session: AgsSession | null
-  displayName: string | null
+  displayName?: string
   pvc?: { difficulty: Difficulty; won: boolean }
   pvp?: { outcome: 'win' | 'lose' | 'tie' }
 }

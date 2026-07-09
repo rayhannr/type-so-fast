@@ -7,6 +7,7 @@ import type { GameHistoryEntry, StreakData, ProgressionData, PvcData, PvpData } 
 import type { UserSettings } from '@/lib/ags/cloudsave'
 import type { MatchTicket, MatchTicketStatus } from '@/lib/ags/matchmaking'
 import type { PvpSession, PvpSessionAttributes } from '@/lib/ags/session'
+import type { AgsProfile } from '@/lib/ags/profile'
 import type { Duration } from '@/components/DurationSelector'
 import type { WordMode } from '@/lib/word-generators'
 import type { Difficulty } from '@/lib/botDifficulty'
@@ -52,6 +53,7 @@ const queryKeys = {
   leaderboard: (filters: { metric: LeaderboardMetric; duration: Duration | null; mode: WordMode; range: LeaderboardRange }) =>
     ['leaderboard', filters] as const,
   displayName: (userId: string) => ['displayName', userId] as const,
+  profile: (userId: string) => ['profile', userId] as const,
   achievements: (userId: string) => ['achievements', userId] as const,
   achievementList: (userId: string) => ['achievementList', userId] as const,
   settings: (userId: string) => ['settings', userId] as const,
@@ -73,6 +75,18 @@ export const useDisplayNameQuery = (session: AgsSession | null) =>
       })
       writeLocal('displayName', data.displayName)
       return data.displayName
+    },
+    enabled: !!session,
+  })
+
+export const useMyProfileQuery = (session: AgsSession | null) =>
+  useQuery({
+    queryKey: queryKeys.profile(session?.userId ?? ''),
+    queryFn: async () => {
+      const { data } = await axios.get<AgsProfile>('/api/profile', {
+        headers: authHeaders(session!),
+      })
+      return data
     },
     enabled: !!session,
   })

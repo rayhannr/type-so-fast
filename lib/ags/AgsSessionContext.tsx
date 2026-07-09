@@ -6,7 +6,8 @@ import type { AgsSession } from '@/lib/queries'
 
 interface AgsSessionState {
   session: AgsSession | null
-  displayName: string | null
+  displayName?: string
+  publicId?: string
 }
 
 const AgsSessionContext = createContext<AgsSessionState | null>(null)

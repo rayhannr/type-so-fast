@@ -33,6 +33,13 @@
 
 - A component must not import from another component file just to reuse a type or helper (e.g. a leaf component importing a parent's state type). Shared types/logic move to `lib/` so both sides depend downward on the same module instead of on each other.
 
+# AGS calls
+
+- When calling an AccelByte Gaming Services endpoint from `lib/ags/*.ts`, use the matching official `@accelbyte/sdk-*` package (e.g. `UserProfileApi` from `@accelbyte/sdk-basic`, `GameSessionApi` from `@accelbyte/sdk-session`) via `createSdk(accessToken)` — not a raw `axios` call — so request/response shapes stay generated from AccelByte's spec instead of hand-maintained.
+- The generated SDK methods don't validate request bodies at runtime (only responses go through Zod) — a generated request type marking a field required doesn't mean the real endpoint needs it. If a partial/valid request doesn't satisfy the generated TS type, cast rather than reaching for raw `axios`.
+- Only fall back to raw `axios` against the documented REST path when the SDK's generated client is actually broken for that call (wrong URL, wrong verb, a response shape it can't parse, etc — not just an overly strict request type). Record the specific defect in a comment when doing this, so it's clear the raw call is a workaround and not the default style.
+- If no `@accelbyte/sdk-*` package exists yet for a service you need, check npm for one before assuming raw REST is required — e.g. `@accelbyte/sdk-basic` isn't installed by default in this repo but does exist and should be added.
+
 # Dependencies
 
 - Pin every direct dependency in `package.json` to an exact version (no `^`, `~`, or bare major like `"4"`) — if `package-lock.json` is ever lost, a fresh install must still land on the same versions.
