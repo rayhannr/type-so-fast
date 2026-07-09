@@ -128,7 +128,9 @@ export const FriendsTab = () => {
         className="group w-full flex flex-col items-center gap-1.5 rounded-lg border border-solid border-edge bg-surface px-4 py-5 mb-4 transition-colors cursor-pointer hover:border-accent/40 disabled:cursor-default"
       >
         <span className="text-[10px] text-muted uppercase tracking-widest">Your friend code</span>
-        <span className="text-2xl font-bold text-accent tracking-[0.3em] tabular-nums -mr-[0.3em]">{publicId ?? '········'}</span>
+        <span data-testid="friend-code" className="text-2xl font-bold text-accent tracking-[0.3em] tabular-nums -mr-[0.3em]">
+          {publicId ?? '········'}
+        </span>
         <span className={`flex flex-row items-center gap-1 text-xs transition-colors ${copied ? 'text-correct' : 'text-muted group-hover:text-active'}`}>
           {copied ? (
             <>

@@ -16,9 +16,9 @@ const GameChrome = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <div className="relative font-inter min-h-screen max-w-5xl mx-auto px-6 md:px-10 pt-8 pb-16">
-      <header className="flex flex-row items-center justify-between">
+      <header className="flex flex-row flex-wrap items-center justify-between gap-x-4 gap-y-3">
         <Heading />
-        <div className="flex flex-row items-center gap-3">
+        <div className="flex flex-row items-center gap-2 sm:gap-3">
           <LevelBadge xp={progression.data?.xp ?? 0} />
           <AccentPicker session={session} />
           <SoundToggle />
