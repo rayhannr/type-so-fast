@@ -1,7 +1,7 @@
 'use client'
 
 import { AgsSessionProvider, useAgsSessionContext } from '@/lib/ags/AgsSessionContext'
-import { useProgressionQuery } from '@/lib/queries'
+import { useProgressionQuery } from '@/lib/queries/cloudsave'
 import { Heading } from '@/components/Heading'
 import { LevelBadge } from '@/components/LevelBadge'
 import { AccentPicker } from '@/components/AccentPicker'

@@ -17,6 +17,7 @@
     "@accelbyte/sdk-cloudsave": "6.3.5",
     "@accelbyte/sdk-iam": "6.3.5",
     "@accelbyte/sdk-leaderboard": "5.3.5",
+    "@accelbyte/sdk-lobby": "5.2.7",
     "@accelbyte/sdk-matchmaking": "5.3.5",
     "@accelbyte/sdk-session": "5.3.5",
     "@accelbyte/sdk-social": "6.3.5",

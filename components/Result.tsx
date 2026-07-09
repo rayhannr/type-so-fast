@@ -5,8 +5,9 @@ import { AccuracyBreakdown } from './AccuracyBreakdown'
 import { ShareCard } from './ShareCard'
 import { LevelBadge } from './LevelBadge'
 import { levelFromXp } from '@/lib/progress'
-import { useRecordsQuery, useStatsQuery, useSaveRecordsMutation } from '@/lib/queries'
-import type { AgsSession } from '@/lib/queries'
+import { useRecordsQuery, useSaveRecordsMutation } from '@/lib/queries/cloudsave'
+import { useStatsQuery } from '@/lib/queries/statistics'
+import type { AgsSession } from '@/lib/queries/shared'
 import type { GameState } from '@/lib/gameReducer'
 
 export interface XpGain {

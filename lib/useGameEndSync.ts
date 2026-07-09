@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import type { AgsSession } from '@/lib/queries'
+import type { AgsSession } from '@/lib/queries/shared'
 import type { UnlockedAchievement } from '@/lib/ags/achievements'
 import type { XpGain } from '@/components/Result'
 import type { Duration } from '@/components/DurationSelector'
@@ -14,16 +14,15 @@ import {
   useProgressionQuery,
   usePvcProgressQuery,
   usePvpProgressQuery,
-  useAchievementsQuery,
   useSaveRecordsMutation,
   useSaveHistoryMutation,
   useSaveStreakMutation,
   useSaveProgressionMutation,
   useSavePvcProgressMutation,
   useSavePvpProgressMutation,
-  useSubmitStatsMutation,
-  useProcessAchievementsMutation,
-} from '@/lib/queries'
+} from '@/lib/queries/cloudsave'
+import { useSubmitStatsMutation } from '@/lib/queries/statistics'
+import { useAchievementsQuery, useProcessAchievementsMutation } from '@/lib/queries/achievements'
 
 interface GameEndParams {
   timer: number

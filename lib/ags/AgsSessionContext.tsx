@@ -2,7 +2,7 @@
 
 import { createContext, useContext } from 'react'
 import { useAgsSession } from './useAgsSession'
-import type { AgsSession } from '@/lib/queries'
+import type { AgsSession } from '@/lib/queries/shared'
 
 interface AgsSessionState {
   session: AgsSession | null

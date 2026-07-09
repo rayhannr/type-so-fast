@@ -22,14 +22,8 @@ import { useGameEndSync } from '@/lib/useGameEndSync'
 import { useRemotePlayer } from '@/lib/useRemotePlayer'
 import { playKeyClick, playErrorBuzz, playWordChime } from '@/lib/sounds'
 import { gameReducer, createInitialState } from '@/lib/gameReducer'
-import {
-  useCreateMatchTicketMutation,
-  useMatchTicketStatusQuery,
-  useCancelMatchTicketMutation,
-  useSessionQuery,
-  useSetSessionAttributesMutation,
-  useLeaveSessionMutation,
-} from '@/lib/queries'
+import { useCreateMatchTicketMutation, useMatchTicketStatusQuery, useCancelMatchTicketMutation } from '@/lib/queries/matchmaking'
+import { useSessionQuery, useSetSessionAttributesMutation, useLeaveSessionMutation } from '@/lib/queries/session'
 
 const numberOfWords = 400
 

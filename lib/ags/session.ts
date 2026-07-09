@@ -1,7 +1,9 @@
 import axios from 'axios'
 import { GameSessionApi } from '@accelbyte/sdk-session'
-import type { UpdateGameSessionRequest } from '@accelbyte/sdk-session'
+import type { CreateGameSessionRequest, UpdateGameSessionRequest } from '@accelbyte/sdk-session'
 import { createSdk } from './sdk'
+
+const PVP_SESSION_TEMPLATE = 'pvp-quick-match-session'
 
 export interface SignalPayload {
   sdp: RTCSessionDescriptionInit
@@ -24,6 +26,28 @@ export interface PvpSession {
   id: string
   members: { userID: string; status: string }[]
   attributes: Partial<PvpSessionAttributes>
+}
+
+// Reuses the PvP quick-match session template but overrides joinability to INVITE_ONLY and names
+// both players directly in `teams`, bypassing Matchmaking entirely — the create-session call takes
+// joinability/type/etc. from the template only when not provided in the request (confirmed via
+// `ags session game-sessions create --help`), so no separate invite-only template is needed.
+export const createInviteSession = async (
+  accessToken: string,
+  inviterUserId: string,
+  inviteeUserId: string
+): Promise<PvpSession> => {
+  const api = GameSessionApi(createSdk(accessToken))
+  const { data } = await api.createGamesession({
+    configurationName: PVP_SESSION_TEMPLATE,
+    joinability: 'INVITE_ONLY',
+    teams: [{ userIDs: [inviterUserId, inviteeUserId] }],
+  } as CreateGameSessionRequest)
+  return {
+    id: data.id ?? '',
+    members: (data.members ?? []).map((m) => ({ userID: m.id ?? '', status: m.status ?? '' })),
+    attributes: (data.attributes as Partial<PvpSessionAttributes>) ?? {},
+  }
 }
 
 export const getSession = async (accessToken: string, sessionId: string): Promise<PvpSession> => {

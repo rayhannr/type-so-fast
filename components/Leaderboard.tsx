@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useLeaderboardQuery } from '@/lib/queries'
+import { useLeaderboardQuery } from '@/lib/queries/leaderboard'
 import type { LeaderboardMetric, LeaderboardRange } from '@/lib/ags/leaderboard'
 import { DURATIONS } from './DurationSelector'
 import type { Duration } from './DurationSelector'

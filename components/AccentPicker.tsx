@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { useSettingsQuery, useSaveSettingsMutation } from '@/lib/queries'
-import type { AgsSession } from '@/lib/queries'
+import { useSettingsQuery, useSaveSettingsMutation } from '@/lib/queries/settings'
+import type { AgsSession } from '@/lib/queries/shared'
 
 const DEFAULT_ACCENT = '#e2b714'
 
