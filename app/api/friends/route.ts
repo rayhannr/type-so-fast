@@ -1,6 +1,7 @@
 import { listFriends, sendFriendRequest } from '@/lib/ags/social'
 import { getUserSummaries } from '@/lib/ags/displayName'
 import { getAuth } from '@/lib/api-auth'
+import { errorResponse } from '@/lib/api-error'
 
 export async function GET(request: Request) {
   const auth = getAuth(request)
@@ -11,8 +12,7 @@ export async function GET(request: Request) {
     const friends = await getUserSummaries(auth.accessToken, friendIds)
     return Response.json(friends)
   } catch (err) {
-    console.error('[friends] GET failed:', err)
-    return Response.json({ error: 'Failed to fetch friends' }, { status: 500 })
+    return errorResponse(err, '[friends] GET failed')
   }
 }
 
@@ -25,7 +25,6 @@ export async function POST(request: Request) {
     await sendFriendRequest(auth.accessToken, publicId)
     return Response.json({ ok: true })
   } catch (err) {
-    console.error('[friends] POST failed:', err)
-    return Response.json({ error: 'Failed to send friend request' }, { status: 500 })
+    return errorResponse(err, '[friends] POST failed')
   }
 }

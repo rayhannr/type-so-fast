@@ -1,5 +1,6 @@
 import { getAuth } from '@/lib/api-auth'
 import { trigger } from '@/lib/pusher'
+import { errorResponse } from '@/lib/api-error'
 
 export async function POST(request: Request) {
   const auth = getAuth(request)
@@ -10,7 +11,6 @@ export async function POST(request: Request) {
     await trigger(`private-user-${inviterUserId}`, 'invite:declined', { inviteeUserId: auth.userId })
     return Response.json({ ok: true })
   } catch (err) {
-    console.error('[match-invites/decline] POST failed:', err)
-    return Response.json({ error: 'Failed to decline match invite' }, { status: 500 })
+    return errorResponse(err, '[match-invites/decline] POST failed')
   }
 }

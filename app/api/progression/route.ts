@@ -1,5 +1,6 @@
 import { getProgression, saveProgression } from '@/lib/ags/cloudsave'
 import { getAuth } from '@/lib/api-auth'
+import { errorResponse } from '@/lib/api-error'
 
 export async function GET(request: Request) {
   const auth = getAuth(request)
@@ -9,8 +10,7 @@ export async function GET(request: Request) {
     const progression = await getProgression(auth.userId, auth.accessToken)
     return Response.json(progression)
   } catch (err) {
-    console.error('[progression] GET failed:', err)
-    return Response.json({ error: 'Failed to fetch progression' }, { status: 500 })
+    return errorResponse(err, '[progression] GET failed')
   }
 }
 
@@ -23,7 +23,6 @@ export async function PUT(request: Request) {
     await saveProgression(auth.userId, auth.accessToken, progression)
     return Response.json({ ok: true })
   } catch (err) {
-    console.error('[progression] PUT failed:', err)
-    return Response.json({ error: 'Failed to save progression' }, { status: 500 })
+    return errorResponse(err, '[progression] PUT failed')
   }
 }

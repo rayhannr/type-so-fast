@@ -1,6 +1,7 @@
 import { listIncomingFriendRequests } from '@/lib/ags/social'
 import { getUserSummaries } from '@/lib/ags/displayName'
 import { getAuth } from '@/lib/api-auth'
+import { errorResponse } from '@/lib/api-error'
 
 export async function GET(request: Request) {
   const auth = getAuth(request)
@@ -11,7 +12,6 @@ export async function GET(request: Request) {
     const incoming = await getUserSummaries(auth.accessToken, requesterIds)
     return Response.json(incoming)
   } catch (err) {
-    console.error('[friends/incoming] GET failed:', err)
-    return Response.json({ error: 'Failed to fetch incoming friend requests' }, { status: 500 })
+    return errorResponse(err, '[friends/incoming] GET failed')
   }
 }

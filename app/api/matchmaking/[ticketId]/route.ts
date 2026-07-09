@@ -1,5 +1,6 @@
 import { cancelMatchTicket, getMatchTicketStatus } from '@/lib/ags/matchmaking'
 import { getAuth } from '@/lib/api-auth'
+import { errorResponse } from '@/lib/api-error'
 
 export async function GET(request: Request, { params }: { params: Promise<{ ticketId: string }> }) {
   const auth = getAuth(request)
@@ -10,8 +11,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ tick
     const status = await getMatchTicketStatus(auth.accessToken, ticketId)
     return Response.json(status)
   } catch (err) {
-    console.error('[matchmaking/:ticketId] GET failed:', err)
-    return Response.json({ error: 'Failed to fetch match ticket status' }, { status: 500 })
+    return errorResponse(err, '[matchmaking/:ticketId] GET failed')
   }
 }
 
@@ -24,7 +24,6 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ t
     await cancelMatchTicket(auth.accessToken, ticketId)
     return Response.json({ ok: true })
   } catch (err) {
-    console.error('[matchmaking/:ticketId] DELETE failed:', err)
-    return Response.json({ error: 'Failed to cancel match ticket' }, { status: 500 })
+    return errorResponse(err, '[matchmaking/:ticketId] DELETE failed')
   }
 }

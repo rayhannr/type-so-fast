@@ -1,5 +1,6 @@
 import { declineFriendRequest } from '@/lib/ags/social'
 import { getAuth } from '@/lib/api-auth'
+import { errorResponse } from '@/lib/api-error'
 
 export async function POST(request: Request, { params }: { params: Promise<{ userId: string }> }) {
   const auth = getAuth(request)
@@ -10,7 +11,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ use
     await declineFriendRequest(auth.accessToken, userId)
     return Response.json({ ok: true })
   } catch (err) {
-    console.error('[friends/:userId/decline] POST failed:', err)
-    return Response.json({ error: 'Failed to decline friend request' }, { status: 500 })
+    return errorResponse(err, '[friends/:userId/decline] POST failed')
   }
 }

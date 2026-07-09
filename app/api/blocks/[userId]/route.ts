@@ -1,5 +1,6 @@
 import { unblockUser } from '@/lib/ags/social'
 import { getAuth } from '@/lib/api-auth'
+import { errorResponse } from '@/lib/api-error'
 
 export async function DELETE(request: Request, { params }: { params: Promise<{ userId: string }> }) {
   const auth = getAuth(request)
@@ -10,7 +11,6 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ u
     await unblockUser(auth.accessToken, userId)
     return Response.json({ ok: true })
   } catch (err) {
-    console.error('[blocks/:userId] DELETE failed:', err)
-    return Response.json({ error: 'Failed to unblock user' }, { status: 500 })
+    return errorResponse(err, '[blocks/:userId] DELETE failed')
   }
 }

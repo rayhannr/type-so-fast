@@ -9,6 +9,7 @@ import {
   unlockVarietyIfEligible,
 } from '@/lib/ags/achievements'
 import { getAuth } from '@/lib/api-auth'
+import { errorResponse } from '@/lib/api-error'
 
 export async function GET(request: Request) {
   const auth = getAuth(request)
@@ -18,8 +19,7 @@ export async function GET(request: Request) {
     const achievements = await getUnlockedAchievements(auth.userId, auth.accessToken)
     return Response.json(achievements)
   } catch (err) {
-    console.error('[achievements] GET failed:', err)
-    return Response.json({ error: 'Failed to fetch achievements' }, { status: 500 })
+    return errorResponse(err, '[achievements] GET failed')
   }
 }
 
@@ -51,7 +51,6 @@ export async function POST(request: Request) {
     const newlyUnlocked = await diffNewlyUnlocked(auth.userId, auth.accessToken, previousCodes ?? [])
     return Response.json(newlyUnlocked)
   } catch (err) {
-    console.error('[achievements] POST failed:', err)
-    return Response.json({ error: 'Failed to process achievements' }, { status: 500 })
+    return errorResponse(err, '[achievements] POST failed')
   }
 }

@@ -1,5 +1,6 @@
 import { createMatchTicket } from '@/lib/ags/matchmaking'
 import { getAuth } from '@/lib/api-auth'
+import { errorResponse } from '@/lib/api-error'
 
 export async function POST(request: Request) {
   const auth = getAuth(request)
@@ -9,7 +10,6 @@ export async function POST(request: Request) {
     const ticket = await createMatchTicket(auth.accessToken)
     return Response.json(ticket)
   } catch (err) {
-    console.error('[matchmaking] POST failed:', err)
-    return Response.json({ error: 'Failed to create match ticket' }, { status: 500 })
+    return errorResponse(err, '[matchmaking] POST failed')
   }
 }

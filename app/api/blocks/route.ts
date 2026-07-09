@@ -1,6 +1,7 @@
 import { blockUser, listBlockedUsers } from '@/lib/ags/social'
 import { getUserSummaries } from '@/lib/ags/displayName'
 import { getAuth } from '@/lib/api-auth'
+import { errorResponse } from '@/lib/api-error'
 
 export async function GET(request: Request) {
   const auth = getAuth(request)
@@ -11,8 +12,7 @@ export async function GET(request: Request) {
     const blocked = await getUserSummaries(auth.accessToken, blockedIds)
     return Response.json(blocked)
   } catch (err) {
-    console.error('[blocks] GET failed:', err)
-    return Response.json({ error: 'Failed to fetch blocked users' }, { status: 500 })
+    return errorResponse(err, '[blocks] GET failed')
   }
 }
 
@@ -25,7 +25,6 @@ export async function POST(request: Request) {
     await blockUser(auth.accessToken, userId)
     return Response.json({ ok: true })
   } catch (err) {
-    console.error('[blocks] POST failed:', err)
-    return Response.json({ error: 'Failed to block user' }, { status: 500 })
+    return errorResponse(err, '[blocks] POST failed')
   }
 }

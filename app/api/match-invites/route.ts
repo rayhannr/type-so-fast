@@ -1,5 +1,6 @@
 import { getAuth } from '@/lib/api-auth'
 import { trigger } from '@/lib/pusher'
+import { errorResponse } from '@/lib/api-error'
 
 // No server-side invite record: delivery is purely the live Pusher event on the invitee's
 // private channel. If the invitee isn't connected when this fires, the invite is simply missed —
@@ -13,7 +14,6 @@ export async function POST(request: Request) {
     await trigger(`private-user-${inviteeUserId}`, 'invite:new', { inviterUserId: auth.userId })
     return Response.json({ ok: true })
   } catch (err) {
-    console.error('[match-invites] POST failed:', err)
-    return Response.json({ error: 'Failed to send match invite' }, { status: 500 })
+    return errorResponse(err, '[match-invites] POST failed')
   }
 }

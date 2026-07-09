@@ -1,5 +1,6 @@
 import { getSession, leaveSession, setSessionAttributes } from '@/lib/ags/session'
 import { getAuth } from '@/lib/api-auth'
+import { errorResponse } from '@/lib/api-error'
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = getAuth(request)
@@ -10,8 +11,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const session = await getSession(auth.accessToken, id)
     return Response.json(session)
   } catch (err) {
-    console.error('[session/:id] GET failed:', err)
-    return Response.json({ error: 'Failed to fetch session' }, { status: 500 })
+    return errorResponse(err, '[session/:id] GET failed')
   }
 }
 
@@ -25,8 +25,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     await setSessionAttributes(auth.accessToken, id, attributes)
     return Response.json({ ok: true })
   } catch (err) {
-    console.error('[session/:id] PATCH failed:', err)
-    return Response.json({ error: 'Failed to update session attributes' }, { status: 500 })
+    return errorResponse(err, '[session/:id] PATCH failed')
   }
 }
 
@@ -39,7 +38,6 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     await leaveSession(auth.accessToken, id)
     return Response.json({ ok: true })
   } catch (err) {
-    console.error('[session/:id] DELETE failed:', err)
-    return Response.json({ error: 'Failed to leave session' }, { status: 500 })
+    return errorResponse(err, '[session/:id] DELETE failed')
   }
 }

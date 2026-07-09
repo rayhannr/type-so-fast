@@ -1,5 +1,6 @@
 import { getOrCreateDisplayName } from '@/lib/ags/displayName'
 import { getAuth } from '@/lib/api-auth'
+import { errorResponse } from '@/lib/api-error'
 
 export async function GET(request: Request) {
   const auth = getAuth(request)
@@ -11,7 +12,6 @@ export async function GET(request: Request) {
     const displayName = await getOrCreateDisplayName(auth.accessToken, localNameHint)
     return Response.json({ displayName })
   } catch (err) {
-    console.error('[display-name] GET failed:', err)
-    return Response.json({ error: 'Failed to fetch display name' }, { status: 500 })
+    return errorResponse(err, '[display-name] GET failed')
   }
 }

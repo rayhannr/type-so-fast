@@ -1,5 +1,6 @@
 import { getOrCreateProfile } from '@/lib/ags/profile'
 import { getAuth } from '@/lib/api-auth'
+import { errorResponse } from '@/lib/api-error'
 
 export async function GET(request: Request) {
   const auth = getAuth(request)
@@ -9,7 +10,6 @@ export async function GET(request: Request) {
     const profile = await getOrCreateProfile(auth.accessToken)
     return Response.json(profile)
   } catch (err) {
-    console.error('[profile] GET failed:', err)
-    return Response.json({ error: 'Failed to fetch profile' }, { status: 500 })
+    return errorResponse(err, '[profile] GET failed')
   }
 }

@@ -1,5 +1,6 @@
 import { getPersonalStats, submitGameStats } from '@/lib/ags/statistics'
 import { getAuth } from '@/lib/api-auth'
+import { errorResponse } from '@/lib/api-error'
 
 export async function GET(request: Request) {
   const auth = getAuth(request)
@@ -9,8 +10,7 @@ export async function GET(request: Request) {
     const stats = await getPersonalStats(auth.userId, auth.accessToken)
     return Response.json(stats)
   } catch (err) {
-    console.error('[stats] GET failed:', err)
-    return Response.json({ error: 'Failed to fetch stats' }, { status: 500 })
+    return errorResponse(err, '[stats] GET failed')
   }
 }
 
@@ -23,7 +23,6 @@ export async function POST(request: Request) {
     await submitGameStats(auth.userId, auth.accessToken, result)
     return Response.json({ ok: true })
   } catch (err) {
-    console.error('[stats] POST failed:', err)
-    return Response.json({ error: 'Failed to submit stats' }, { status: 500 })
+    return errorResponse(err, '[stats] POST failed')
   }
 }

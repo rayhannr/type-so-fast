@@ -11,6 +11,7 @@ import { DURATIONS } from '@/components/DurationSelector'
 import type { Duration } from '@/components/DurationSelector'
 import { WORD_MODES } from '@/lib/word-generators'
 import type { WordMode } from '@/lib/word-generators'
+import { errorResponse } from '@/lib/api-error'
 
 export async function GET(request: Request) {
   try {
@@ -45,7 +46,6 @@ export async function GET(request: Request) {
     const entries = await getTopLeaderboard(limit, leaderboardCode, cycleId)
     return Response.json(entries)
   } catch (err) {
-    console.error('[leaderboard] GET failed:', err)
-    return Response.json({ error: 'Failed to fetch leaderboard' }, { status: 500 })
+    return errorResponse(err, '[leaderboard] GET failed')
   }
 }

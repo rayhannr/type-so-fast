@@ -1,6 +1,7 @@
 import { createInviteSession } from '@/lib/ags/session'
 import { getAuth } from '@/lib/api-auth'
 import { trigger } from '@/lib/pusher'
+import { errorResponse } from '@/lib/api-error'
 
 export async function POST(request: Request) {
   const auth = getAuth(request)
@@ -12,7 +13,6 @@ export async function POST(request: Request) {
     await trigger(`private-user-${inviterUserId}`, 'invite:accepted', { sessionId: session.id })
     return Response.json(session)
   } catch (err) {
-    console.error('[match-invites/accept] POST failed:', err)
-    return Response.json({ error: 'Failed to accept match invite' }, { status: 500 })
+    return errorResponse(err, '[match-invites/accept] POST failed')
   }
 }

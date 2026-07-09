@@ -1,5 +1,6 @@
 import { getStreak, saveStreak } from '@/lib/ags/cloudsave'
 import { getAuth } from '@/lib/api-auth'
+import { errorResponse } from '@/lib/api-error'
 
 export async function GET(request: Request) {
   const auth = getAuth(request)
@@ -9,8 +10,7 @@ export async function GET(request: Request) {
     const streak = await getStreak(auth.userId, auth.accessToken)
     return Response.json(streak)
   } catch (err) {
-    console.error('[streak] GET failed:', err)
-    return Response.json({ error: 'Failed to fetch streak' }, { status: 500 })
+    return errorResponse(err, '[streak] GET failed')
   }
 }
 
@@ -23,7 +23,6 @@ export async function PUT(request: Request) {
     await saveStreak(auth.userId, auth.accessToken, streak)
     return Response.json({ ok: true })
   } catch (err) {
-    console.error('[streak] PUT failed:', err)
-    return Response.json({ error: 'Failed to save streak' }, { status: 500 })
+    return errorResponse(err, '[streak] PUT failed')
   }
 }

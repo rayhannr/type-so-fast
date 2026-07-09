@@ -1,4 +1,5 @@
 import { loginWithDeviceId } from '@/lib/ags/auth'
+import { errorResponse } from '@/lib/api-error'
 
 export async function POST(request: Request) {
   try {
@@ -9,7 +10,6 @@ export async function POST(request: Request) {
     const session = await loginWithDeviceId(deviceId)
     return Response.json(session)
   } catch (err) {
-    console.error('[auth] loginWithDeviceId failed:', err)
-    return Response.json({ error: 'Authentication failed' }, { status: 500 })
+    return errorResponse(err, '[auth] loginWithDeviceId failed')
   }
 }

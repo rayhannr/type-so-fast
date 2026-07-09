@@ -1,5 +1,6 @@
 import { getGameHistory, saveGameHistory } from '@/lib/ags/cloudsave'
 import { getAuth } from '@/lib/api-auth'
+import { errorResponse } from '@/lib/api-error'
 
 export async function GET(request: Request) {
   const auth = getAuth(request)
@@ -9,8 +10,7 @@ export async function GET(request: Request) {
     const entries = await getGameHistory(auth.userId, auth.accessToken)
     return Response.json(entries)
   } catch (err) {
-    console.error('[history] GET failed:', err)
-    return Response.json({ error: 'Failed to fetch history' }, { status: 500 })
+    return errorResponse(err, '[history] GET failed')
   }
 }
 
@@ -23,7 +23,6 @@ export async function PUT(request: Request) {
     await saveGameHistory(auth.userId, auth.accessToken, entries)
     return Response.json({ ok: true })
   } catch (err) {
-    console.error('[history] PUT failed:', err)
-    return Response.json({ error: 'Failed to save history' }, { status: 500 })
+    return errorResponse(err, '[history] PUT failed')
   }
 }

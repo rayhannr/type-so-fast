@@ -1,5 +1,6 @@
 import { getPvpProgress, savePvpProgress } from '@/lib/ags/cloudsave'
 import { getAuth } from '@/lib/api-auth'
+import { errorResponse } from '@/lib/api-error'
 
 export async function GET(request: Request) {
   const auth = getAuth(request)
@@ -9,8 +10,7 @@ export async function GET(request: Request) {
     const pvp = await getPvpProgress(auth.userId, auth.accessToken)
     return Response.json(pvp)
   } catch (err) {
-    console.error('[pvp-progress] GET failed:', err)
-    return Response.json({ error: 'Failed to fetch pvp progress' }, { status: 500 })
+    return errorResponse(err, '[pvp-progress] GET failed')
   }
 }
 
@@ -23,7 +23,6 @@ export async function PUT(request: Request) {
     await savePvpProgress(auth.userId, auth.accessToken, pvp)
     return Response.json({ ok: true })
   } catch (err) {
-    console.error('[pvp-progress] PUT failed:', err)
-    return Response.json({ error: 'Failed to save pvp progress' }, { status: 500 })
+    return errorResponse(err, '[pvp-progress] PUT failed')
   }
 }

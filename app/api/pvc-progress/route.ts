@@ -1,5 +1,6 @@
 import { getPvcProgress, savePvcProgress } from '@/lib/ags/cloudsave'
 import { getAuth } from '@/lib/api-auth'
+import { errorResponse } from '@/lib/api-error'
 
 export async function GET(request: Request) {
   const auth = getAuth(request)
@@ -9,8 +10,7 @@ export async function GET(request: Request) {
     const pvc = await getPvcProgress(auth.userId, auth.accessToken)
     return Response.json(pvc)
   } catch (err) {
-    console.error('[pvc-progress] GET failed:', err)
-    return Response.json({ error: 'Failed to fetch pvc progress' }, { status: 500 })
+    return errorResponse(err, '[pvc-progress] GET failed')
   }
 }
 
@@ -23,7 +23,6 @@ export async function PUT(request: Request) {
     await savePvcProgress(auth.userId, auth.accessToken, pvc)
     return Response.json({ ok: true })
   } catch (err) {
-    console.error('[pvc-progress] PUT failed:', err)
-    return Response.json({ error: 'Failed to save pvc progress' }, { status: 500 })
+    return errorResponse(err, '[pvc-progress] PUT failed')
   }
 }

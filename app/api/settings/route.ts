@@ -1,5 +1,6 @@
 import { getSettings, saveSettings } from '@/lib/ags/cloudsave'
 import { getAuth } from '@/lib/api-auth'
+import { errorResponse } from '@/lib/api-error'
 
 export async function GET(request: Request) {
   const auth = getAuth(request)
@@ -9,8 +10,7 @@ export async function GET(request: Request) {
     const settings = await getSettings(auth.userId, auth.accessToken)
     return Response.json(settings)
   } catch (err) {
-    console.error('[settings] GET failed:', err)
-    return Response.json({ error: 'Failed to fetch settings' }, { status: 500 })
+    return errorResponse(err, '[settings] GET failed')
   }
 }
 
@@ -23,7 +23,6 @@ export async function PUT(request: Request) {
     await saveSettings(auth.userId, auth.accessToken, settings)
     return Response.json({ ok: true })
   } catch (err) {
-    console.error('[settings] PUT failed:', err)
-    return Response.json({ error: 'Failed to save settings' }, { status: 500 })
+    return errorResponse(err, '[settings] PUT failed')
   }
 }
