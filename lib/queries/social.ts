@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import type { BlockedUser } from '@/lib/ags/social'
+import type { UserSummary } from '@/lib/ags/displayName'
 import { authHeaders } from './shared'
 import type { AgsSession } from './shared'
 
@@ -11,14 +11,14 @@ const blockedUsersKey = (userId: string) => ['blockedUsers', userId] as const
 export const useFriendsQuery = (session: AgsSession | null) =>
   useQuery({
     queryKey: friendsKey(session?.userId ?? ''),
-    queryFn: () => axios.get<string[]>('/api/friends', { headers: authHeaders(session!) }).then((res) => res.data),
+    queryFn: () => axios.get<UserSummary[]>('/api/friends', { headers: authHeaders(session!) }).then((res) => res.data),
     enabled: !!session,
   })
 
 export const useIncomingFriendRequestsQuery = (session: AgsSession | null) =>
   useQuery({
     queryKey: incomingFriendRequestsKey(session?.userId ?? ''),
-    queryFn: () => axios.get<string[]>('/api/friends/incoming', { headers: authHeaders(session!) }).then((res) => res.data),
+    queryFn: () => axios.get<UserSummary[]>('/api/friends/incoming', { headers: authHeaders(session!) }).then((res) => res.data),
     enabled: !!session,
   })
 
@@ -63,7 +63,7 @@ export const useRemoveFriendMutation = (session: AgsSession | null) => {
 export const useBlockedUsersQuery = (session: AgsSession | null) =>
   useQuery({
     queryKey: blockedUsersKey(session?.userId ?? ''),
-    queryFn: () => axios.get<BlockedUser[]>('/api/blocks', { headers: authHeaders(session!) }).then((res) => res.data),
+    queryFn: () => axios.get<UserSummary[]>('/api/blocks', { headers: authHeaders(session!) }).then((res) => res.data),
     enabled: !!session,
   })
 

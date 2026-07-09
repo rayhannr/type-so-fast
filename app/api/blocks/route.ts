@@ -1,4 +1,5 @@
 import { blockUser, listBlockedUsers } from '@/lib/ags/social'
+import { getUserSummaries } from '@/lib/ags/displayName'
 import { getAuth } from '@/lib/api-auth'
 
 export async function GET(request: Request) {
@@ -6,7 +7,8 @@ export async function GET(request: Request) {
   if (!auth) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
   try {
-    const blocked = await listBlockedUsers(auth.accessToken)
+    const blockedIds = await listBlockedUsers(auth.accessToken)
+    const blocked = await getUserSummaries(auth.accessToken, blockedIds)
     return Response.json(blocked)
   } catch (err) {
     console.error('[blocks] GET failed:', err)

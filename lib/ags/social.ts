@@ -1,21 +1,20 @@
 import { FriendsApi, PlayerApi } from '@accelbyte/sdk-lobby'
 import { createSdk } from './sdk'
 
-export interface BlockedUser {
-  userId: string
-  blockedAt: string
-}
-
+// getFriendsMe/getFriendsMeIncoming actually return the plain `{ friendIDs, paging }` object,
+// not the one-element array their generated type (`GetUserFriendsResponseArray`) suggests —
+// verified live. Schema validation is disabled globally (see lib/ags/sdk.ts), so this only
+// needs a cast to the real shape.
 export const listFriends = async (accessToken: string): Promise<string[]> => {
   const api = FriendsApi(createSdk(accessToken))
   const { data } = await api.getFriendsMe()
-  return data[0]?.friendIDs ?? []
+  return (data as unknown as { friendIDs?: string[] })?.friendIDs ?? []
 }
 
 export const listIncomingFriendRequests = async (accessToken: string): Promise<string[]> => {
   const api = FriendsApi(createSdk(accessToken))
   const { data } = await api.getFriendsMeIncoming()
-  return data[0]?.friendIDs ?? []
+  return (data as unknown as { friendIDs?: string[] })?.friendIDs ?? []
 }
 
 export const sendFriendRequest = async (accessToken: string, friendPublicId: string): Promise<void> => {
@@ -48,8 +47,8 @@ export const unblockUser = async (accessToken: string, userId: string): Promise<
   await api.createPlayerUserMeUnblock({ userId })
 }
 
-export const listBlockedUsers = async (accessToken: string): Promise<BlockedUser[]> => {
+export const listBlockedUsers = async (accessToken: string): Promise<string[]> => {
   const api = PlayerApi(createSdk(accessToken))
   const { data } = await api.getPlayerUsersMeBlocked()
-  return data.data.map((entry) => ({ userId: entry.blockedUserId, blockedAt: entry.blockedAt }))
+  return data.data.map((entry) => entry.blockedUserId)
 }

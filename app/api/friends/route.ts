@@ -1,4 +1,5 @@
 import { listFriends, sendFriendRequest } from '@/lib/ags/social'
+import { getUserSummaries } from '@/lib/ags/displayName'
 import { getAuth } from '@/lib/api-auth'
 
 export async function GET(request: Request) {
@@ -6,7 +7,8 @@ export async function GET(request: Request) {
   if (!auth) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
   try {
-    const friends = await listFriends(auth.accessToken)
+    const friendIds = await listFriends(auth.accessToken)
+    const friends = await getUserSummaries(auth.accessToken, friendIds)
     return Response.json(friends)
   } catch (err) {
     console.error('[friends] GET failed:', err)

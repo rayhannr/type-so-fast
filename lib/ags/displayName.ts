@@ -1,31 +1,35 @@
-import { PublicPlayerRecordApi } from '@accelbyte/sdk-cloudsave'
+import { UsersApi } from '@accelbyte/sdk-iam'
 import { fakerEN } from '@faker-js/faker'
 import { createSdk } from './sdk'
-
-const DISPLAY_NAME_KEY = 'displayName'
 
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 const generateDisplayName = () =>
   `${capitalize(fakerEN.word.adjective())} ${capitalize(fakerEN.word.noun())}`
 
-export const getOrCreateDisplayName = async (userId: string, accessToken: string, localNameHint?: string): Promise<string> => {
-  const playerRecordApi = PublicPlayerRecordApi(createSdk(accessToken))
-
-  try {
-    const { data } = await playerRecordApi.getRecord_ByUserId_ByKey(userId, DISPLAY_NAME_KEY)
-    const existingName = (data.value as { name?: string })?.name
-    if (existingName) return existingName
-  } catch {
-    // no record yet, fall through to create one
-  }
+// Headless Device ID accounts are created with an empty IAM displayName (verified live),
+// so the first load assigns one and every later load returns the stored value.
+export const getOrCreateDisplayName = async (accessToken: string, localNameHint?: string): Promise<string> => {
+  const usersApi = UsersApi(createSdk(accessToken))
+  const { data } = await usersApi.getUsersMe_v3()
+  if (data.displayName) return data.displayName
 
   const displayName = localNameHint || generateDisplayName()
-
-  try {
-    await playerRecordApi.createRecord_ByUserId_ByKey(userId, DISPLAY_NAME_KEY, { name: displayName })
-  } catch {
-    // best-effort sync to cloud
-  }
-
+  await usersApi.patchUserMe_v3({ displayName })
   return displayName
+}
+
+export interface UserSummary {
+  userId: string
+  displayName: string
+}
+
+export const getUserSummaries = async (accessToken: string, userIds: string[]): Promise<UserSummary[]> => {
+  if (userIds.length === 0) return []
+  const usersApi = UsersApi(createSdk(accessToken))
+  // bulk/basic is marked deprecated upstream, but its designated substitute (POST /users/platforms)
+  // only returns third-party platform identities (Steam/PSN/Xbox), which headless Device ID users
+  // don't have — bulk/basic is the endpoint that returns the AGS display name per userId.
+  const { data } = await usersApi.createUserBulkBasic_v3({ userIds })
+  const names = new Map(data.data.map((user) => [user.userId, user.displayName]))
+  return userIds.map((userId) => ({ userId, displayName: names.get(userId) || userId.slice(0, 8) }))
 }

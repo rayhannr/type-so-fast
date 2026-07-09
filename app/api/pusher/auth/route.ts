@@ -19,12 +19,12 @@ export async function POST(request: Request) {
   if (channelName.startsWith('private-user-')) {
     const ownerId = channelName.slice('private-user-'.length)
     if (ownerId !== auth.userId) return Response.json({ error: 'Forbidden' }, { status: 403 })
-    const response = await authenticate(socketId, channelName)
+    const response = authenticate(socketId, channelName)
     return Response.json(response)
   }
 
   if (channelName === PRESENCE_CHANNEL) {
-    const response = await authenticate(socketId, channelName, {
+    const response = authenticate(socketId, channelName, {
       user_id: auth.userId,
     })
     return Response.json(response)

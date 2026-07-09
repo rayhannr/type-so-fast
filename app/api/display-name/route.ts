@@ -8,7 +8,7 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const localNameHint = searchParams.get('localName') ?? undefined
-    const displayName = await getOrCreateDisplayName(auth.userId, auth.accessToken, localNameHint)
+    const displayName = await getOrCreateDisplayName(auth.accessToken, localNameHint)
     return Response.json({ displayName })
   } catch (err) {
     console.error('[display-name] GET failed:', err)
