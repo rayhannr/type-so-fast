@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import type { GameHistoryEntry, StreakData, ProgressionData, PvcData, PvpData } from '@/lib/progress'
+import type { GameHistoryEntry, StreakData, ProgressionData, PvcData, PvpData, RoomData } from '@/lib/progress'
 import { authHeaders, readLocal, writeLocal } from './shared'
 import type { AgsSession } from './shared'
 
@@ -133,5 +133,27 @@ export const useSavePvpProgressMutation = (session: AgsSession | null) => {
       else writeLocal('pvpProgress', pvp)
     },
     onSuccess: (_, pvp) => queryClient.setQueryData(key, pvp),
+  })
+}
+
+export const useRoomProgressQuery = (session: AgsSession | null) =>
+  useQuery({
+    queryKey: ['roomProgress', session?.userId ?? 'local'],
+    queryFn: () =>
+      session
+        ? axios.get<RoomData | null>('/api/room-progress', { headers: authHeaders(session) }).then((res) => res.data)
+        : Promise.resolve(readLocal<RoomData | null>('roomProgress', null)),
+    initialData: session ? undefined : () => readLocal<RoomData | null>('roomProgress', null),
+  })
+
+export const useSaveRoomProgressMutation = (session: AgsSession | null) => {
+  const queryClient = useQueryClient()
+  const key = ['roomProgress', session?.userId ?? 'local']
+  return useMutation({
+    mutationFn: async (room: RoomData) => {
+      if (session) await axios.put('/api/room-progress', { room }, { headers: authHeaders(session) })
+      else writeLocal('roomProgress', room)
+    },
+    onSuccess: (_, room) => queryClient.setQueryData(key, room),
   })
 }

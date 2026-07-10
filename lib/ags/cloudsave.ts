@@ -1,6 +1,6 @@
 import { PublicPlayerRecordApi } from '@accelbyte/sdk-cloudsave'
 import { createSdk } from './sdk'
-import type { GameHistoryEntry, ProgressionData, PvcData, PvpData, StreakData } from '@/lib/progress'
+import type { GameHistoryEntry, ProgressionData, PvcData, PvpData, RoomData, StreakData } from '@/lib/progress'
 
 const RECORDS_KEY = 'bestRecords'
 const HISTORY_KEY = 'gameHistory'
@@ -9,6 +9,7 @@ const SETTINGS_KEY = 'settings'
 const PROGRESSION_KEY = 'progression'
 const PVC_KEY = 'pvcProgress'
 const PVP_KEY = 'pvpProgress'
+const ROOM_KEY = 'roomProgress'
 
 export interface UserSettings {
   accentColor?: string
@@ -112,6 +113,23 @@ export const getPvpProgress = async (userId: string, accessToken: string): Promi
 export const savePvpProgress = async (userId: string, accessToken: string, pvp: PvpData): Promise<void> => {
   const playerRecordApi = PublicPlayerRecordApi(createSdk(accessToken))
   await playerRecordApi.createRecord_ByUserId_ByKey(userId, PVP_KEY, { ...pvp })
+}
+
+export const getRoomProgress = async (userId: string, accessToken: string): Promise<RoomData | null> => {
+  const playerRecordApi = PublicPlayerRecordApi(createSdk(accessToken))
+
+  try {
+    const { data } = await playerRecordApi.getRecord_ByUserId_ByKey(userId, ROOM_KEY)
+    const value = data.value as RoomData | undefined
+    return typeof value?.winStreak === 'number' ? value : null
+  } catch {
+    return null
+  }
+}
+
+export const saveRoomProgress = async (userId: string, accessToken: string, room: RoomData): Promise<void> => {
+  const playerRecordApi = PublicPlayerRecordApi(createSdk(accessToken))
+  await playerRecordApi.createRecord_ByUserId_ByKey(userId, ROOM_KEY, { ...room })
 }
 
 export const getSettings = async (userId: string, accessToken: string): Promise<UserSettings> => {

@@ -22,6 +22,7 @@
 - In a mutation's `onSuccess`, prefer `queryClient.setQueryData(key, value)` over `invalidateQueries` when the mutation already computed the exact resulting value client-side (e.g. saving a records list we just built). Reserve `invalidateQueries` for values only the server can compute (aggregated stats, leaderboard rank).
 - Query keys fall back to a `'local'` (or per-resource empty-string) bucket when there's no AGS session, so guest data never shares a cache entry with a signed-in user's data on the same device.
 - A localStorage-backed local fallback belongs in the query's own `queryFn`/`initialData` only when the existing storage format is a plain JSON-able value owned by that hook. Don't force an already-bespoke local format (e.g. a raw hex string) through a generic JSON local-storage helper — that silently breaks existing users' saved data. Leave that one's local handling where it already lives.
+- `await mutateAsync(...)` must be wrapped in `try/catch` (or `.catch(...)`) at the call site — unlike `.mutate(...)`, a rejected `mutateAsync` throws into the calling code, and an unhandled rejection there is an uncaught error, not just a `mutation.isError` flag. Only reach for `mutateAsync` when the caller genuinely needs to sequence on completion (e.g. don't fire a second dependent mutation until the first lands) or needs the resolved value inline — `.mutate(...)` is the default otherwise.
 
 # Comments
 
@@ -40,6 +41,7 @@
 - The generated SDK methods don't validate request bodies at runtime (only responses go through Zod) — a generated request type marking a field required doesn't mean the real endpoint needs it. If a partial/valid request doesn't satisfy the generated TS type, cast rather than reaching for raw `axios`.
 - Only fall back to raw `axios` against the documented REST path when the SDK's generated client is actually broken for that call (wrong URL, wrong verb, a response shape it can't parse, etc — not just an overly strict request type). Record the specific defect in a comment when doing this, so it's clear the raw call is a workaround and not the default style.
 - If no `@accelbyte/sdk-*` package exists yet for a service you need, check npm for one before assuming raw REST is required — e.g. `@accelbyte/sdk-basic` isn't installed by default in this repo but does exist and should be added.
+- When a UI needs to distinguish failure causes, use the AGS error response's `name`/`errorCode` (e.g. `LeadershipRequired`, `JoinNotAllowedInvalidCode`, `VersionMismatch`) to pick the specific user-facing message — don't string-match on `errorMessage` text or collapse everything into one generic "something went wrong". The API route should surface the AGS error identifier (pass `name`/`errorCode` through in its error response) so the client can branch on it; a generic fallback message is only for codes the UI doesn't specifically handle.
 
 # Dependencies
 

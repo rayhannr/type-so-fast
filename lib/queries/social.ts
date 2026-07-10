@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { UserSummary } from '@/lib/ags/displayName'
-import { authHeaders } from './shared'
+import { agsErrorMessage, authHeaders } from './shared'
 import type { AgsSession } from './shared'
 
 const friendsKey = (userId: string) => ['friends', userId] as const
@@ -38,13 +38,8 @@ const addFriendErrorMessages: Record<number, string> = {
   11591: 'Their friend list is full.',
 }
 
-export const addFriendErrorMessage = (error: unknown): string => {
-  if (axios.isAxiosError(error)) {
-    const errorCode = (error.response?.data as { errorCode?: number } | undefined)?.errorCode
-    if (errorCode !== undefined && addFriendErrorMessages[errorCode]) return addFriendErrorMessages[errorCode]
-  }
-  return "Couldn't send the request — check the code and try again."
-}
+export const addFriendErrorMessage = (error: unknown): string =>
+  agsErrorMessage(error, addFriendErrorMessages, "Couldn't send the request — check the code and try again.")
 
 export const useAcceptFriendRequestMutation = (session: AgsSession | null) => {
   const queryClient = useQueryClient()

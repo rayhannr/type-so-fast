@@ -4,7 +4,7 @@ import type { UnlockedAchievement } from '@/lib/ags/achievements'
 import type { XpGain } from '@/components/Result'
 import type { Duration } from '@/components/DurationSelector'
 import type { WordMode } from '@/lib/word-generators'
-import { advanceStreak, advanceProgression, advancePvc, advancePvp, levelFromXp, HISTORY_LIMIT } from '@/lib/progress'
+import { advanceStreak, advanceProgression, advancePvc, advancePvp, advanceRoom, levelFromXp, HISTORY_LIMIT } from '@/lib/progress'
 import type { Difficulty } from '@/lib/botDifficulty'
 import { playFanfare } from '@/lib/sounds'
 import {
@@ -14,12 +14,14 @@ import {
   useProgressionQuery,
   usePvcProgressQuery,
   usePvpProgressQuery,
+  useRoomProgressQuery,
   useSaveRecordsMutation,
   useSaveHistoryMutation,
   useSaveStreakMutation,
   useSaveProgressionMutation,
   useSavePvcProgressMutation,
   useSavePvpProgressMutation,
+  useSaveRoomProgressMutation,
 } from '@/lib/queries/cloudsave'
 import { useSubmitStatsMutation } from '@/lib/queries/statistics'
 import { useAchievementsQuery, useProcessAchievementsMutation } from '@/lib/queries/achievements'
@@ -36,6 +38,7 @@ interface GameEndParams {
   displayName?: string
   pvc?: { difficulty: Difficulty; won: boolean }
   pvp?: { outcome: 'win' | 'lose' | 'tie' }
+  room?: { won: boolean; fullHouse: boolean }
 }
 
 // runs once per finished round: computes the next records/history/streak/progression,
@@ -52,6 +55,7 @@ export const useGameEndSync = ({
   displayName,
   pvc,
   pvp,
+  room,
 }: GameEndParams) => {
   const [xpGain, setXpGain] = useState<XpGain | null>(null)
   const [newAchievement, setNewAchievement] = useState<UnlockedAchievement | null>(null)
@@ -63,6 +67,7 @@ export const useGameEndSync = ({
   const progression = useProgressionQuery(session)
   const pvcProgress = usePvcProgressQuery(session)
   const pvpProgress = usePvpProgressQuery(session)
+  const roomProgress = useRoomProgressQuery(session)
   const achievements = useAchievementsQuery(session)
 
   const saveRecordsMutation = useSaveRecordsMutation(session)
@@ -71,6 +76,7 @@ export const useGameEndSync = ({
   const saveProgressionMutation = useSaveProgressionMutation(session)
   const savePvcProgressMutation = useSavePvcProgressMutation(session)
   const savePvpProgressMutation = useSavePvpProgressMutation(session)
+  const saveRoomProgressMutation = useSaveRoomProgressMutation(session)
   const submitStatsMutation = useSubmitStatsMutation(session)
   const processAchievementsMutation = useProcessAchievementsMutation(session)
 
@@ -115,6 +121,7 @@ export const useGameEndSync = ({
 
     const newPvcProgress = pvc ? advancePvc(pvcProgress.data ?? null, pvc) : null
     const newPvpProgress = pvp ? advancePvp(pvpProgress.data ?? null, pvp) : null
+    const newRoomProgress = room ? advanceRoom(roomProgress.data ?? null, room) : null
 
     // these mutations write to the AGS CloudSave route when signed in, or localStorage
     // otherwise, and update the cache with the exact value on success either way
@@ -124,6 +131,7 @@ export const useGameEndSync = ({
     saveProgressionMutation.mutate(newProgression)
     if (newPvcProgress) savePvcProgressMutation.mutate(newPvcProgress)
     if (newPvpProgress) savePvpProgressMutation.mutate(newPvpProgress)
+    if (newRoomProgress) saveRoomProgressMutation.mutate(newRoomProgress)
 
     if (!session || !displayName) return
 
@@ -151,6 +159,7 @@ export const useGameEndSync = ({
               durationsPlayed: newProgression.durationsPlayed,
               pvc: pvc && newPvcProgress ? { difficulty: pvc.difficulty, won: pvc.won, pvcProgress: newPvcProgress } : undefined,
               pvp: pvp && newPvpProgress ? { outcome: pvp.outcome, pvpProgress: newPvpProgress } : undefined,
+              room: room && newRoomProgress ? { won: room.won, fullHouse: room.fullHouse, roomProgress: newRoomProgress } : undefined,
             },
             {
               onSuccess: (newlyUnlocked) => {

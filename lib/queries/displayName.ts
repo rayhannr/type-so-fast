@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { authHeaders, readLocal, writeLocal } from './shared'
+import { agsErrorMessage, authHeaders, readLocal, writeLocal } from './shared'
 import type { AgsSession } from './shared'
 
 const displayNameKey = (userId: string) => ['displayName', userId] as const
@@ -43,10 +43,5 @@ const updateDisplayNameErrorMessages: Record<number, string> = {
   20002: "That name isn't valid — try a different one.",
 }
 
-export const updateDisplayNameErrorMessage = (error: unknown): string => {
-  if (axios.isAxiosError(error)) {
-    const errorCode = (error.response?.data as { errorCode?: number } | undefined)?.errorCode
-    if (errorCode !== undefined && updateDisplayNameErrorMessages[errorCode]) return updateDisplayNameErrorMessages[errorCode]
-  }
-  return "Couldn't save your name — try again."
-}
+export const updateDisplayNameErrorMessage = (error: unknown): string =>
+  agsErrorMessage(error, updateDisplayNameErrorMessages, "Couldn't save your name — try again.")

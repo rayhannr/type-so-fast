@@ -3,7 +3,7 @@ import { createSdk } from './sdk'
 import { WORD_MODES } from '@/lib/word-generators'
 import { DURATIONS } from '@/components/DurationSelector'
 import type { Difficulty } from '@/lib/botDifficulty'
-import type { PvcData, PvpData } from '@/lib/progress'
+import type { PvcData, PvpData, RoomData } from '@/lib/progress'
 
 const ACHIEVEMENT_PERFECTIONIST = 'perfectionist'
 const ACHIEVEMENT_MODE_EXPLORER = 'mode-explorer'
@@ -39,6 +39,16 @@ const PVP_WIN_MILESTONES: { code: string; wins: number }[] = [
   { code: 'pvp-wins-10', wins: 10 },
   { code: 'pvp-wins-50', wins: 50 },
 ]
+
+const ACHIEVEMENT_ROOM_WIN = 'room-win'
+const ACHIEVEMENT_ROOM_FULL_HOUSE = 'room-full-house'
+
+const ROOM_STREAK_ACHIEVEMENTS: { code: string; streak: number }[] = [
+  { code: 'room-streak-3', streak: 3 },
+  { code: 'room-streak-5', streak: 5 },
+]
+
+const ROOM_WIN_MILESTONES: { code: string; wins: number }[] = [{ code: 'room-wins-10', wins: 10 }]
 
 const PERFECT_STREAK_ACHIEVEMENTS: { code: string; games: number }[] = [
   { code: 'perfect-3', games: 3 },
@@ -167,6 +177,25 @@ export const unlockPvpAchievementsIfEligible = async (
   if (context.accuracy >= 100) eligible.push(ACHIEVEMENT_PVP_FLAWLESS)
   PVP_STREAK_ACHIEVEMENTS.filter((a) => context.pvpProgress.winStreak >= a.streak).forEach((a) => eligible.push(a.code))
   PVP_WIN_MILESTONES.filter((a) => context.pvpProgress.wins >= a.wins).forEach((a) => eligible.push(a.code))
+
+  const sdk = createSdk(accessToken)
+  const userAchievementsApi = UserAchievementsApi(sdk)
+  await Promise.all(
+    eligible.map((code) => userAchievementsApi.updateUnlock_ByUserId_ByAchievementCode(userId, code).catch(() => {}))
+  )
+}
+
+export const unlockRoomAchievementsIfEligible = async (
+  userId: string,
+  accessToken: string,
+  context: { won: boolean; fullHouse: boolean; roomProgress: RoomData }
+): Promise<void> => {
+  if (!context.won) return
+
+  const eligible: string[] = [ACHIEVEMENT_ROOM_WIN]
+  if (context.fullHouse) eligible.push(ACHIEVEMENT_ROOM_FULL_HOUSE)
+  ROOM_STREAK_ACHIEVEMENTS.filter((a) => context.roomProgress.winStreak >= a.streak).forEach((a) => eligible.push(a.code))
+  ROOM_WIN_MILESTONES.filter((a) => context.roomProgress.wins >= a.wins).forEach((a) => eligible.push(a.code))
 
   const sdk = createSdk(accessToken)
   const userAchievementsApi = UserAchievementsApi(sdk)

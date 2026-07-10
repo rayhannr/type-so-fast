@@ -116,6 +116,28 @@ export const advancePvp = (previous: PvpData | null, result: PvpRoundResult): Pv
   }
 }
 
+export interface RoomData {
+  wins: number
+  winStreak: number
+  fullHouseWins: number
+}
+
+interface RoomRoundResult {
+  won: boolean
+  // true when the room had all 5 seats filled at race start
+  fullHouse: boolean
+}
+
+export const advanceRoom = (previous: RoomData | null, result: RoomRoundResult): RoomData => {
+  const base = previous ?? { wins: 0, winStreak: 0, fullHouseWins: 0 }
+
+  return {
+    wins: base.wins + (result.won ? 1 : 0),
+    winStreak: result.won ? base.winStreak + 1 : 0,
+    fullHouseWins: base.fullHouseWins + (result.won && result.fullHouse ? 1 : 0),
+  }
+}
+
 // local calendar date, so a "day" matches what the player sees on their clock
 const toDateString = (date: Date): string => {
   const y = date.getFullYear()

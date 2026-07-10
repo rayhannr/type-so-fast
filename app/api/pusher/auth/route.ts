@@ -30,5 +30,12 @@ export async function POST(request: Request) {
     return Response.json(response)
   }
 
+  // Room membership is enforced by AGS at join time (join-by-code), not here — the channel only
+  // ever carries progress numbers, so any authenticated user can subscribe.
+  if (channelName.startsWith('private-room-')) {
+    const response = authenticate(socketId, channelName)
+    return Response.json(response)
+  }
+
   return Response.json({ error: 'Forbidden' }, { status: 403 })
 }

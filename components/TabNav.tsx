@@ -8,6 +8,7 @@ const ROUTES = [
   { href: '/', label: 'Type' },
   { href: '/pvc', label: 'vs Computer' },
   { href: '/pvp', label: 'vs Player' },
+  { href: '/room', label: 'Room' },
   { href: '/friends', label: 'Friends' },
   { href: '/stats', label: 'Stats' },
   { href: '/leaderboard', label: 'Leaderboard' },
