@@ -98,6 +98,7 @@ export const RoomGame = () => {
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const inputRef = useRef<HTMLInputElement | null>(null)
+  const raceStartRef = useRef<number | null>(null)
   const keystrokeRef = useRef<Keystroke>({ id: 0, char: '' })
 
   // host seeds the shared word list once, when starting the race — joiners pick it up via the
@@ -128,15 +129,19 @@ export const RoomGame = () => {
     dispatch({ type: 'RESTART', words: attributes.words, duration: attributes.duration! })
   }, [isHost, phase, attributes?.words])
 
+  // the host's own attribute write resolves locally before the room:start broadcast reaches
+  // anyone (including the host), so gate the host's own transition on that same broadcast too —
+  // otherwise the host's clock starts a network round-trip ahead of every joiner's
   useEffect(() => {
-    if (phase === 'lobby' && (attributes?.status === 'racing' || roomChannel.phase === 'racing')) {
+    if (phase === 'lobby' && ((attributes?.status === 'racing' && !isHost) || roomChannel.phase === 'racing')) {
       setPhase('racing')
       inputRef.current?.focus()
     }
-  }, [phase, attributes?.status, roomChannel.phase])
+  }, [phase, attributes?.status, roomChannel.phase, isHost])
 
   useEffect(() => {
     if (phase !== 'racing') return
+    raceStartRef.current = Date.now()
     let timesLeft = state.timer
     intervalRef.current = setInterval(() => {
       timesLeft -= 1
@@ -146,9 +151,12 @@ export const RoomGame = () => {
     return () => clearInterval(intervalRef.current!)
   }, [phase])
 
-  const elapsed = state.duration - state.timer
-  const liveWpm = elapsed > 0 ? (state.correctKeystroke * 12) / elapsed : 0
-  const progressPct = state.words.length > 0 ? Math.min(100, (state.correctWords / (elapsed * 0.8 + 1)) * 10) : 0
+  // wall-clock elapsed, not `state.duration - state.timer` — the timer only advances once a
+  // second, while this recomputes on every keystroke, so a tick-based denominator can be
+  // momentarily too small right after a tick and spike the wpm we broadcast to opponents
+  const wallElapsed = raceStartRef.current ? (Date.now() - raceStartRef.current) / 1000 : 0
+  const liveWpm = wallElapsed > 0 ? (state.correctKeystroke * 12) / wallElapsed : 0
+  const progressPct = state.words.length > 0 ? Math.min(100, (state.correctWords / (wallElapsed * 0.8 + 1)) * 10) : 0
 
   // broadcast our own progress at a throttled rate so opponents' panels stay live
   useEffect(() => {
