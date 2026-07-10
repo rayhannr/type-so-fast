@@ -1,4 +1,4 @@
-import type { HTMLProps } from 'react'
+import { HTMLProps } from 'react'
 
 // visually hidden but not zero-size: some browsers refuse to focus a 0x0 element,
 // which would silently prevent autoFocus/programmatic focus from ever working.

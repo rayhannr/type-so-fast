@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { GameSessionApi } from '@accelbyte/sdk-session'
-import type { CreateGameSessionRequest, GameSessionResponse, UpdateGameSessionRequest } from '@accelbyte/sdk-session'
+import { CreateGameSessionRequest, GameSessionResponse, UpdateGameSessionRequest } from '@accelbyte/sdk-session'
 import { createSdk } from './sdk'
 
 const PVP_SESSION_TEMPLATE = 'pvp-quick-match-session'

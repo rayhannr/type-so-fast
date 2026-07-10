@@ -1,8 +1,7 @@
 import axios from 'axios'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import type { MatchTicket, MatchTicketStatus } from '@/lib/ags/matchmaking'
-import { authHeaders } from './shared'
-import type { AgsSession } from './shared'
+import { MatchTicket, MatchTicketStatus } from '@/lib/ags/matchmaking'
+import { authHeaders, AgsSession } from './shared'
 
 export const useCreateMatchTicketMutation = (session: AgsSession | null) =>
   useMutation({

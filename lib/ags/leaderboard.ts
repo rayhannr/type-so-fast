@@ -1,7 +1,7 @@
 import { LeaderboardDataV3Api } from '@accelbyte/sdk-leaderboard'
 import { createSdk } from './sdk'
-import type { Duration } from '@/components/DurationSelector'
-import type { WordMode } from '@/lib/word-generators'
+import { Duration } from '@/components/DurationSelector'
+import { WordMode } from '@/lib/word-generators'
 
 export const LEADERBOARD_CODE = 'wpm-alltime'
 export const XP_LEADERBOARD_CODE = 'xp-alltime'

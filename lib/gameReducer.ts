@@ -1,5 +1,5 @@
-import type { WpmSample } from '@/components/SpeedCurve'
-import type { WordStat } from '@/components/AccuracyBreakdown'
+import { WpmSample } from '@/components/SpeedCurve'
+import { WordStat } from '@/components/AccuracyBreakdown'
 
 export interface GameState {
   words: string[]

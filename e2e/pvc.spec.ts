@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import type { Page } from '@playwright/test'
+import { Page } from '@playwright/test'
 
 // Covers the player-vs-bot mode at /pvc: a human typing fast and accurately against the most
 // forgiving ("easy") bot profile should win, and a human who barely types at all against the

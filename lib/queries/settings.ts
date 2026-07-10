@@ -1,8 +1,7 @@
 import axios from 'axios'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import type { UserSettings } from '@/lib/ags/cloudsave'
-import { authHeaders } from './shared'
-import type { AgsSession } from './shared'
+import { UserSettings } from '@/lib/ags/cloudsave'
+import { authHeaders, AgsSession } from './shared'
 
 const settingsKey = (userId: string) => ['settings', userId] as const
 

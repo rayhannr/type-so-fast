@@ -1,7 +1,7 @@
 import { HistoryChart } from './HistoryChart'
 import { useStatsQuery } from '@/lib/queries/statistics'
 import { useHistoryQuery, useStreakQuery } from '@/lib/queries/cloudsave'
-import type { AgsSession } from '@/lib/queries/shared'
+import { AgsSession } from '@/lib/queries/shared'
 
 interface Props {
   session: AgsSession | null

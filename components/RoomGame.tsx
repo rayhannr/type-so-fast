@@ -1,9 +1,9 @@
 'use client'
 
 import { useEffect, useMemo, useReducer, useRef, useState, useCallback } from 'react'
-import type { ChangeEvent, FormEvent, InputEvent, KeyboardEvent } from 'react'
+import { ChangeEvent, FormEvent, InputEvent, KeyboardEvent } from 'react'
 import { generateWords } from '@/lib/word-generators'
-import type { WordMode } from '@/lib/word-generators'
+import { WordMode } from '@/lib/word-generators'
 
 import { WordContainer } from './WordContainer'
 import { Input } from './Input'
@@ -12,9 +12,9 @@ import { Timer } from './Timer'
 import { RestartButton } from './RestartButton'
 import { AchievementToast } from './AchievementToast'
 import { TypingHands } from './TypingHands'
-import type { Keystroke } from './TypingHands'
+import { Keystroke } from './TypingHands'
 import { DurationSelector } from './DurationSelector'
-import type { Duration } from './DurationSelector'
+import { Duration } from './DurationSelector'
 import { ModeSelector } from './ModeSelector'
 
 import { useAgsSessionContext } from '@/lib/ags/AgsSessionContext'

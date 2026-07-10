@@ -1,3 +1,8 @@
+# Imports
+
+- Do not use `import type`. Import types the same way as values (`import { Foo } from './x'`); `isolatedModules` erases type-only bindings automatically.
+- When multiple named imports (values and/or types) come from the same module, combine them into a single `import` statement rather than one per symbol.
+
 # Export rules
 
 - Do not export a variable, function, constant, or type immediately when defining it.

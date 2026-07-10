@@ -1,8 +1,7 @@
 import axios from 'axios'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import type { PersonalStats, GameResultStats } from '@/lib/ags/statistics'
-import { authHeaders } from './shared'
-import type { AgsSession } from './shared'
+import { PersonalStats, GameResultStats } from '@/lib/ags/statistics'
+import { authHeaders, AgsSession } from './shared'
 
 export const useStatsQuery = (session: AgsSession | null) =>
   useQuery({

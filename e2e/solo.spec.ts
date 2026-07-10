@@ -1,5 +1,4 @@
-import { test, expect } from '@playwright/test'
-import type { Page } from '@playwright/test'
+import { Page, test, expect } from '@playwright/test'
 
 // Covers the solo typing race at the root route: picking the shortest duration and the
 // default word mode, typing a mix of fully-correct words plus one deliberately mistyped word,

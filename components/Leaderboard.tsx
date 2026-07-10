@@ -2,11 +2,11 @@
 
 import { useState } from 'react'
 import { useLeaderboardQuery } from '@/lib/queries/leaderboard'
-import type { LeaderboardMetric, LeaderboardRange } from '@/lib/ags/leaderboard'
+import { LeaderboardMetric, LeaderboardRange } from '@/lib/ags/leaderboard'
 import { DURATIONS } from './DurationSelector'
-import type { Duration } from './DurationSelector'
+import { Duration } from './DurationSelector'
 import { ModeSelector } from './ModeSelector'
-import type { WordMode } from '@/lib/word-generators'
+import { WordMode } from '@/lib/word-generators'
 import { Podium3D } from './Podium3D'
 
 interface Props {

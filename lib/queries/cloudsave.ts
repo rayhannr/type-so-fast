@@ -1,8 +1,7 @@
 import axios from 'axios'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import type { GameHistoryEntry, StreakData, ProgressionData, PvcData, PvpData, RoomData } from '@/lib/progress'
-import { authHeaders, readLocal, writeLocal } from './shared'
-import type { AgsSession } from './shared'
+import { GameHistoryEntry, StreakData, ProgressionData, PvcData, PvpData, RoomData } from '@/lib/progress'
+import { authHeaders, readLocal, writeLocal, AgsSession } from './shared'
 
 export const useRecordsQuery = (session: AgsSession | null) =>
   useQuery({

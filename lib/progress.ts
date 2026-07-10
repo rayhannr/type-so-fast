@@ -1,4 +1,4 @@
-import type { Difficulty } from './botDifficulty'
+import { Difficulty } from './botDifficulty'
 
 export interface GameHistoryEntry {
   wpm: number

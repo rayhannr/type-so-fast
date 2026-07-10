@@ -1,7 +1,7 @@
 import { UserStatisticApi } from '@accelbyte/sdk-social'
 import { createSdk } from './sdk'
-import type { Duration } from '@/components/DurationSelector'
-import type { WordMode } from '@/lib/word-generators'
+import { Duration } from '@/components/DurationSelector'
+import { WordMode } from '@/lib/word-generators'
 
 const STAT_BEST_WPM = 'best-wpm'
 const STAT_GAMES_PLAYED = 'games-played'

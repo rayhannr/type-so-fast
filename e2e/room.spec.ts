@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import type { Browser, Page } from '@playwright/test'
+import { Browser, Page } from '@playwright/test'
 
 // Covers the room-code match flow end to end against the real AGS dev namespace: a host
 // creates a room (AGS-native generate-code, see lib/ags/session.ts's createRoomSession),

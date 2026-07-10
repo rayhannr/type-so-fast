@@ -1,10 +1,9 @@
 import axios from 'axios'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import type { UnlockedAchievement, AchievementInfo } from '@/lib/ags/achievements'
-import type { PvcData, PvpData, RoomData } from '@/lib/progress'
-import type { Difficulty } from '@/lib/botDifficulty'
-import { authHeaders } from './shared'
-import type { AgsSession } from './shared'
+import { UnlockedAchievement, AchievementInfo } from '@/lib/ags/achievements'
+import { PvcData, PvpData, RoomData } from '@/lib/progress'
+import { Difficulty } from '@/lib/botDifficulty'
+import { authHeaders, AgsSession } from './shared'
 
 export interface AchievementContext {
   accuracy: number

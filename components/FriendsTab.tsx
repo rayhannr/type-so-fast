@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import type { FormEvent, ReactNode } from 'react'
+import { FormEvent, ReactNode } from 'react'
 import { useAgsSessionContext } from '@/lib/ags/AgsSessionContext'
 import { useFriendsPresence } from '@/hooks/useFriendsPresence'
 import { useSendInviteMutation } from '@/lib/queries/matchInvites'

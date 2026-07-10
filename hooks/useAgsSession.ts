@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useLoginMutation } from '@/lib/queries/auth'
 import { useDisplayNameQuery } from '@/lib/queries/displayName'
 import { useMyProfileQuery } from '@/lib/queries/profile'
-import type { AgsSession } from '@/lib/queries/shared'
+import { AgsSession } from '@/lib/queries/shared'
 
 const getDeviceId = (): string => {
   const key = 'deviceId'

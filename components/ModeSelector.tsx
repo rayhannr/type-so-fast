@@ -1,5 +1,5 @@
 import { WORD_MODES } from '@/lib/word-generators'
-import type { WordMode } from '@/lib/word-generators'
+import { WordMode } from '@/lib/word-generators'
 
 const MODE_LABELS: Record<WordMode, string> = {
   words: 'Words',

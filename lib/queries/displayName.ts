@@ -1,7 +1,6 @@
 import axios from 'axios'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { agsErrorMessage, authHeaders, readLocal, writeLocal } from './shared'
-import type { AgsSession } from './shared'
+import { agsErrorMessage, authHeaders, readLocal, writeLocal, AgsSession } from './shared'
 
 const displayNameKey = (userId: string) => ['displayName', userId] as const
 

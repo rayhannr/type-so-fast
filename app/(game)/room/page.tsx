@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import { Metadata } from 'next'
 import { RoomGame } from '@/components/RoomGame'
 
 export const metadata: Metadata = {

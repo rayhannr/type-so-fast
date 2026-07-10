@@ -1,8 +1,7 @@
 import axios from 'axios'
 import { useQuery } from '@tanstack/react-query'
-import type { AgsProfile } from '@/lib/ags/profile'
-import { authHeaders } from './shared'
-import type { AgsSession } from './shared'
+import { AgsProfile } from '@/lib/ags/profile'
+import { authHeaders, AgsSession } from './shared'
 
 export const useMyProfileQuery = (session: AgsSession | null) =>
   useQuery({

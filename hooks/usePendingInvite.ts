@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Pusher from 'pusher-js'
 import { useQueryClient } from '@tanstack/react-query'
 import { incomingFriendRequestsKey } from '@/lib/queries/social'
-import type { AgsSession } from '@/lib/queries/shared'
+import { AgsSession } from '@/lib/queries/shared'
 
 export interface PendingInvite {
   inviterUserId: string

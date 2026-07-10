@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import type { Browser, Page } from '@playwright/test'
+import { Browser, Page } from '@playwright/test'
 
 // Covers the PvP quick-match flow end to end against the real AGS dev namespace: two
 // independent Device ID sessions queue, get matched, complete the WebRTC handshake (signaled

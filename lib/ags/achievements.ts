@@ -2,8 +2,8 @@ import { UserAchievementsApi, AchievementsApi } from '@accelbyte/sdk-achievement
 import { createSdk } from './sdk'
 import { WORD_MODES } from '@/lib/word-generators'
 import { DURATIONS } from '@/components/DurationSelector'
-import type { Difficulty } from '@/lib/botDifficulty'
-import type { PvcData, PvpData, RoomData } from '@/lib/progress'
+import { Difficulty } from '@/lib/botDifficulty'
+import { PvcData, PvpData, RoomData } from '@/lib/progress'
 
 const ACHIEVEMENT_PERFECTIONIST = 'perfectionist'
 const ACHIEVEMENT_MODE_EXPLORER = 'mode-explorer'

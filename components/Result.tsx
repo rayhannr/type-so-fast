@@ -7,8 +7,8 @@ import { LevelBadge } from './LevelBadge'
 import { levelFromXp } from '@/lib/progress'
 import { useRecordsQuery, useSaveRecordsMutation } from '@/lib/queries/cloudsave'
 import { useStatsQuery } from '@/lib/queries/statistics'
-import type { AgsSession } from '@/lib/queries/shared'
-import type { GameState } from '@/lib/gameReducer'
+import { AgsSession } from '@/lib/queries/shared'
+import { GameState } from '@/lib/gameReducer'
 
 export interface XpGain {
   earned: number

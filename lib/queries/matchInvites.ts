@@ -1,8 +1,7 @@
 import axios from 'axios'
 import { useMutation } from '@tanstack/react-query'
-import type { PvpSession } from '@/lib/ags/session'
-import { authHeaders } from './shared'
-import type { AgsSession } from './shared'
+import { PvpSession } from '@/lib/ags/session'
+import { authHeaders, AgsSession } from './shared'
 
 export const useSendInviteMutation = (session: AgsSession | null) =>
   useMutation({

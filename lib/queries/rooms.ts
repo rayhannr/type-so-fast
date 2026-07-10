@@ -1,9 +1,8 @@
 import axios from 'axios'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import type { RoomSession, RoomSessionAttributes } from '@/lib/ags/session'
-import type { UserSummary } from '@/lib/ags/displayName'
-import { agsErrorMessage, authHeaders } from './shared'
-import type { AgsSession } from './shared'
+import { RoomSession, RoomSessionAttributes } from '@/lib/ags/session'
+import { UserSummary } from '@/lib/ags/displayName'
+import { agsErrorMessage, authHeaders, AgsSession } from './shared'
 
 export interface RoomSessionWithNames extends RoomSession {
   memberNames: UserSummary[]

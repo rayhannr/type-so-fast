@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import type { UnlockedAchievement } from '@/lib/ags/achievements'
+import { UnlockedAchievement } from '@/lib/ags/achievements'
 
 interface Props {
   achievement: UnlockedAchievement | null

@@ -2,9 +2,9 @@
 
 import { useEffect, useReducer, useRef } from 'react'
 import { gameReducer, createInitialState } from '@/lib/gameReducer'
-import type { GameState, GameAction } from '@/lib/gameReducer'
+import { GameState, GameAction } from '@/lib/gameReducer'
 import { BOT_PROFILES } from '@/lib/botDifficulty'
-import type { Difficulty, BotProfile } from '@/lib/botDifficulty'
+import { Difficulty, BotProfile } from '@/lib/botDifficulty'
 
 const WRONG_CHAR_POOL = 'abcdefghijklmnopqrstuvwxyz'
 

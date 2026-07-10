@@ -4,7 +4,7 @@ import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { usePendingInvite } from '@/hooks/usePendingInvite'
 import { useAcceptInviteMutation, useDeclineInviteMutation } from '@/lib/queries/matchInvites'
-import type { AgsSession } from '@/lib/queries/shared'
+import { AgsSession } from '@/lib/queries/shared'
 
 interface Props {
   session: AgsSession | null

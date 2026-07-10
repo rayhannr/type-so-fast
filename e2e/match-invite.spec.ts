@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import type { Browser, Page } from '@playwright/test'
+import { Browser, Page } from '@playwright/test'
 
 // Covers the friends + match-invite flow end to end against the real AGS dev namespace: two
 // independent Device ID sessions become friends via friend code, one invites the other to a

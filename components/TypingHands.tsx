@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import type { RefObject } from 'react'
+import { RefObject } from 'react'
 import {
   AmbientLight,
   BoxGeometry,

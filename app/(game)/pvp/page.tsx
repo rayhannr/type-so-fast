@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import { Metadata } from 'next'
 import { Suspense } from 'react'
 import { PvpGame } from '@/components/PvpGame'
 

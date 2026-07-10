@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Pusher from 'pusher-js'
 import { useSendRoomProgressMutation } from '@/lib/queries/rooms'
-import type { AgsSession } from '@/lib/queries/shared'
+import { AgsSession } from '@/lib/queries/shared'
 
 export interface RoomOpponentProgress {
   wpm: number

@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import { Metadata } from 'next'
 import { FriendsTab } from '@/components/FriendsTab'
 
 export const metadata: Metadata = {

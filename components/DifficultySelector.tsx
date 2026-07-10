@@ -1,5 +1,5 @@
 import { DIFFICULTIES } from '@/lib/botDifficulty'
-import type { Difficulty } from '@/lib/botDifficulty'
+import { Difficulty } from '@/lib/botDifficulty'
 
 const DIFFICULTY_LABELS: Record<Difficulty, string> = {
   easy: 'Easy',

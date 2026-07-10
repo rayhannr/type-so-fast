@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import type { AgsSession } from '@/lib/queries/shared'
-import type { UnlockedAchievement } from '@/lib/ags/achievements'
-import type { XpGain } from '@/components/Result'
-import type { Duration } from '@/components/DurationSelector'
-import type { WordMode } from '@/lib/word-generators'
+import { AgsSession } from '@/lib/queries/shared'
+import { UnlockedAchievement } from '@/lib/ags/achievements'
+import { XpGain } from '@/components/Result'
+import { Duration } from '@/components/DurationSelector'
+import { WordMode } from '@/lib/word-generators'
 import { advanceStreak, advanceProgression, advancePvc, advancePvp, advanceRoom, levelFromXp, HISTORY_LIMIT } from '@/lib/progress'
-import type { Difficulty } from '@/lib/botDifficulty'
+import { Difficulty } from '@/lib/botDifficulty'
 import { playFanfare } from '@/lib/sounds'
 import {
   useRecordsQuery,

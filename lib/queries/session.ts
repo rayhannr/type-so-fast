@@ -1,8 +1,7 @@
 import axios from 'axios'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import type { PvpSession, PvpSessionAttributes } from '@/lib/ags/session'
-import { authHeaders } from './shared'
-import type { AgsSession } from './shared'
+import { PvpSession, PvpSessionAttributes } from '@/lib/ags/session'
+import { authHeaders, AgsSession } from './shared'
 
 export const useSessionQuery = (session: AgsSession | null, sessionId: string | null) =>
   useQuery({

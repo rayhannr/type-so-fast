@@ -1,5 +1,5 @@
 import { useAchievementListQuery } from '@/lib/queries/achievements'
-import type { AgsSession } from '@/lib/queries/shared'
+import { AgsSession } from '@/lib/queries/shared'
 
 interface Props {
   session: AgsSession | null

@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import type { KeyboardEvent, PointerEvent } from 'react'
+import { KeyboardEvent, PointerEvent } from 'react'
 
 export interface WpmSample {
   elapsed: number

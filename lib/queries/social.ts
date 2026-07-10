@@ -1,8 +1,7 @@
 import axios from 'axios'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import type { UserSummary } from '@/lib/ags/displayName'
-import { agsErrorMessage, authHeaders } from './shared'
-import type { AgsSession } from './shared'
+import { UserSummary } from '@/lib/ags/displayName'
+import { agsErrorMessage, authHeaders, AgsSession } from './shared'
 
 const friendsKey = (userId: string) => ['friends', userId] as const
 export const incomingFriendRequestsKey = (userId: string) => ['incomingFriendRequests', userId] as const

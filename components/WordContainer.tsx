@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import { CaretTrail } from './CaretTrail'
-import type { CaretPosition } from './CaretTrail'
+import { CaretPosition } from './CaretTrail'
 
 type Props = {
   words: string[]

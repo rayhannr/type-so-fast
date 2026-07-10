@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useReducer, useState, useMemo, useRef, useCallback } from 'react'
-import type { ChangeEvent, InputEvent, KeyboardEvent } from 'react'
+import { ChangeEvent, InputEvent, KeyboardEvent } from 'react'
 import { generateWords } from '@/lib/word-generators'
 
 import { WordContainer } from './WordContainer'
@@ -11,11 +11,11 @@ import { Timer } from './Timer'
 import { RestartButton } from './RestartButton'
 import { AchievementToast } from './AchievementToast'
 import { TypingHands } from './TypingHands'
-import type { Keystroke } from './TypingHands'
+import { Keystroke } from './TypingHands'
 import { DurationSelector } from './DurationSelector'
-import type { Duration } from './DurationSelector'
+import { Duration } from './DurationSelector'
 import { DifficultySelector } from './DifficultySelector'
-import type { Difficulty } from '@/lib/botDifficulty'
+import { Difficulty } from '@/lib/botDifficulty'
 
 import { useAgsSessionContext } from '@/lib/ags/AgsSessionContext'
 import { useGameEndSync } from '@/hooks/useGameEndSync'

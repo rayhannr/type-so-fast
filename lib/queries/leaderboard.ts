@@ -1,8 +1,8 @@
 import axios from 'axios'
 import { useQuery } from '@tanstack/react-query'
-import type { LeaderboardEntry, LeaderboardMetric, LeaderboardRange } from '@/lib/ags/leaderboard'
-import type { Duration } from '@/components/DurationSelector'
-import type { WordMode } from '@/lib/word-generators'
+import { LeaderboardEntry, LeaderboardMetric, LeaderboardRange } from '@/lib/ags/leaderboard'
+import { Duration } from '@/components/DurationSelector'
+import { WordMode } from '@/lib/word-generators'
 
 export const useLeaderboardQuery = (filters: {
   metric: LeaderboardMetric
