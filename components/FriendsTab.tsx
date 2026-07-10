@@ -5,7 +5,9 @@ import type { FormEvent, ReactNode } from 'react'
 import { useAgsSessionContext } from '@/lib/ags/AgsSessionContext'
 import { useFriendsPresence } from '@/hooks/useFriendsPresence'
 import { useSendInviteMutation } from '@/lib/queries/matchInvites'
+import { updateDisplayNameErrorMessage, useUpdateDisplayNameMutation } from '@/lib/queries/displayName'
 import {
+  addFriendErrorMessage,
   useAcceptFriendRequestMutation,
   useAddFriendMutation,
   useBlockedUsersQuery,
@@ -42,7 +44,7 @@ const StatusLine = ({ tone, children }: { tone: 'muted' | 'correct' | 'error'; c
 }
 
 export const FriendsTab = () => {
-  const { session, publicId } = useAgsSessionContext()
+  const { session, publicId, displayName } = useAgsSessionContext()
 
   const friends = useFriendsQuery(session)
   const incomingRequests = useIncomingFriendRequestsQuery(session)
@@ -56,11 +58,29 @@ export const FriendsTab = () => {
   const blockUser = useBlockUserMutation(session)
   const unblockUser = useUnblockUserMutation(session)
   const sendInvite = useSendInviteMutation(session)
+  const updateDisplayName = useUpdateDisplayNameMutation(session)
 
   const [codeInput, setCodeInput] = useState('')
   const [copied, setCopied] = useState(false)
   const [confirming, setConfirming] = useState<{ userId: string; action: ConfirmableAction } | null>(null)
   const confirmTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [editingName, setEditingName] = useState(false)
+  const [nameInput, setNameInput] = useState('')
+
+  const startEditingName = () => {
+    setNameInput(displayName ?? '')
+    setEditingName(true)
+  }
+
+  const submitDisplayName = (event: FormEvent) => {
+    event.preventDefault()
+    const trimmed = nameInput.trim()
+    if (!trimmed || trimmed === displayName) {
+      setEditingName(false)
+      return
+    }
+    updateDisplayName.mutate(trimmed, { onSuccess: () => setEditingName(false) })
+  }
 
   const copyCode = () => {
     if (!publicId) return
@@ -108,7 +128,6 @@ export const FriendsTab = () => {
   if (!session) {
     return (
       <div className="w-full max-w-xl mx-auto mt-10">
-        <h2 className="text-muted text-sm mb-6 text-center">Friends</h2>
         <p className="text-center text-xs text-muted">Offline — friends are available once the game connects.</p>
       </div>
     )
@@ -118,38 +137,86 @@ export const FriendsTab = () => {
 
   return (
     <div className="w-full max-w-xl mx-auto mt-10">
-      <h2 className="text-muted text-sm mb-6 text-center">Friends</h2>
+      <div className="flex flex-row flex-wrap items-center justify-between gap-x-6 gap-y-3 rounded-lg border border-solid border-edge bg-surface px-4 py-3 mb-6">
+        <div className="flex flex-col gap-0.5 min-w-0">
+          <span className="text-[10px] text-muted uppercase tracking-widest">Your name</span>
+          {editingName ? (
+            <form onSubmit={submitDisplayName} className="flex flex-row flex-wrap items-center gap-2">
+              <input
+                value={nameInput}
+                onChange={(event) => setNameInput(event.target.value)}
+                aria-label="Display name"
+                autoFocus
+                maxLength={40}
+                className="w-40 min-w-0 rounded-lg border border-solid border-edge bg-canvas px-3 py-1.5 text-sm text-active focus:outline-none focus:border-accent transition-colors"
+              />
+              <button
+                type="submit"
+                disabled={updateDisplayName.isPending || !nameInput.trim()}
+                className={`${accentButtonClass} border border-solid border-edge`}
+              >
+                {updateDisplayName.isPending ? 'Saving…' : 'Save'}
+              </button>
+              <button type="button" onClick={() => setEditingName(false)} className={ghostButtonClass}>
+                Cancel
+              </button>
+            </form>
+          ) : (
+            <button type="button" onClick={startEditingName} className="group flex flex-row items-center gap-1.5 cursor-pointer max-w-full">
+              <span className="text-lg font-bold text-active truncate">{displayName ?? '········'}</span>
+              <svg
+                className="w-3.5 h-3.5 shrink-0 text-muted group-hover:text-active transition-colors"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.5-9.5a2.121 2.121 0 013 3L12 16l-4 1 1-4 9.5-9.5z"
+                />
+              </svg>
+            </button>
+          )}
+          {updateDisplayName.isError && <StatusLine tone="error">{updateDisplayNameErrorMessage(updateDisplayName.error)}</StatusLine>}
+        </div>
 
-      <button
-        type="button"
-        onClick={copyCode}
-        disabled={!publicId}
-        title="Copy your friend code"
-        className="group w-full flex flex-col items-center gap-1.5 rounded-lg border border-solid border-edge bg-surface px-4 py-5 mb-4 transition-colors cursor-pointer hover:border-accent/40 disabled:cursor-default"
-      >
-        <span className="text-[10px] text-muted uppercase tracking-widest">Your friend code</span>
-        <span data-testid="friend-code" className="text-2xl font-bold text-accent tracking-[0.3em] tabular-nums -mr-[0.3em]">
-          {publicId ?? '········'}
-        </span>
-        <span className={`flex flex-row items-center gap-1 text-xs transition-colors ${copied ? 'text-correct' : 'text-muted group-hover:text-active'}`}>
-          {copied ? (
-            <>
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" aria-hidden="true">
+        <button
+          type="button"
+          onClick={copyCode}
+          disabled={!publicId}
+          title="Copy your friend code"
+          className="group flex flex-col items-start sm:items-end gap-0.5 cursor-pointer disabled:cursor-default"
+        >
+          <span className={`text-[10px] uppercase tracking-widest transition-colors ${copied ? 'text-correct' : 'text-muted'}`}>
+            {copied ? 'Copied' : 'Your code'}
+          </span>
+          <span className="flex flex-row items-center gap-1.5">
+            <span data-testid="friend-code" className="text-lg font-bold text-accent tracking-[0.2em] tabular-nums">
+              {publicId ?? '········'}
+            </span>
+            {copied ? (
+              <svg className="w-4 h-4 text-correct" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
-              Copied to clipboard
-            </>
-          ) : (
-            <>
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
+            ) : (
+              <svg
+                className="w-4 h-4 text-muted group-hover:text-active transition-colors"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
                 <rect x="9" y="9" width="11" height="11" rx="2" />
                 <path d="M5 15V5a2 2 0 012-2h10" />
               </svg>
-              Click to copy — share it with a friend
-            </>
-          )}
-        </span>
-      </button>
+            )}
+          </span>
+        </button>
+      </div>
 
       <form onSubmit={submitAddFriend} className="flex flex-row gap-2">
         <input
@@ -173,15 +240,20 @@ export const FriendsTab = () => {
       </form>
       <div className="min-h-6 pt-1.5 mb-4">
         {addFriend.isSuccess && <StatusLine tone="correct">Friend request sent — they&apos;ll see it on their Friends tab.</StatusLine>}
-        {addFriend.isError && <StatusLine tone="error">Couldn&apos;t send the request — check the code and try again.</StatusLine>}
+        {addFriend.isError && <StatusLine tone="error">{addFriendErrorMessage(addFriend.error)}</StatusLine>}
       </div>
 
-      {(incomingRequests.data ?? []).length > 0 && (
+      {incomingRequests.isFetching ? (
+        <section className="mb-8">
+          <SectionHeading label="Requests" />
+          <StatusLine tone="muted">Loading…</StatusLine>
+        </section>
+      ) : (incomingRequests.data ?? []).length > 0 && (
         <section className="mb-8">
           <SectionHeading label="Requests" count={incomingRequests.data!.length} />
           <ul className="flex flex-col gap-2">
             {incomingRequests.data!.map((requester) => (
-              <li key={requester.userId} className={rowClass}>
+              <li key={requester.userId} className={`${rowClass} border-l-2 border-l-accent`}>
                 <p className="text-sm text-active">{requester.displayName}</p>
                 <span className="text-[10px] text-muted">wants to be friends</span>
                 <div className="ml-auto flex flex-row gap-1">
@@ -214,7 +286,7 @@ export const FriendsTab = () => {
         {friends.isError && <StatusLine tone="muted">Couldn&apos;t load your friends — try again later.</StatusLine>}
 
         {friends.isSuccess && friendCount === 0 && (
-          <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-edge px-4 py-8 text-center">
+          <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-edge px-4 py-10 text-center">
             <svg className="w-6 h-6 text-muted" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24" aria-hidden="true">
               <path
                 strokeLinecap="round"
@@ -256,7 +328,12 @@ export const FriendsTab = () => {
         </ul>
       </section>
 
-      {(blockedUsers.data ?? []).length > 0 && (
+      {blockedUsers.isFetching ? (
+        <section>
+          <SectionHeading label="Blocked" />
+          <StatusLine tone="muted">Loading…</StatusLine>
+        </section>
+      ) : (blockedUsers.data ?? []).length > 0 && (
         <section>
           <SectionHeading label="Blocked" count={blockedUsers.data!.length} />
           <ul className="flex flex-col gap-2">

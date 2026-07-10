@@ -22,7 +22,6 @@ export const StatsTab = ({ session }: Props) => {
 
   return (
     <div className="w-full max-w-md mx-auto mt-10">
-      <h2 className="text-muted text-sm mb-6 text-center">Stats</h2>
       {!isLoggedIn && (
         <p className="text-center text-xs text-muted mb-6">Offline — stats are stored on this device only.</p>
       )}

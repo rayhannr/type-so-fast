@@ -36,8 +36,6 @@ export const Leaderboard = ({ currentUserId }: Props) => {
 
   return (
     <div className="w-full max-w-2xl mx-auto mt-10">
-      <h2 className="text-muted text-sm mb-6 text-center">Global Leaderboard</h2>
-
       <div className="flex flex-col items-center gap-2 mb-8">
         <div className="flex flex-row justify-center gap-2" aria-label="Metric filter">
           {METRICS.map((m) => (

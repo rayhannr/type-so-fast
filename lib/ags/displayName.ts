@@ -19,6 +19,12 @@ export const getOrCreateDisplayName = async (accessToken: string, localNameHint?
   return displayName
 }
 
+export const updateDisplayName = async (accessToken: string, displayName: string): Promise<string> => {
+  const usersApi = UsersApi(createSdk(accessToken))
+  await usersApi.patchUserMe_v3({ displayName })
+  return displayName
+}
+
 export interface UserSummary {
   userId: string
   displayName: string

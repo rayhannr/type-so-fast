@@ -27,6 +27,25 @@ export const useAddFriendMutation = (session: AgsSession | null) =>
     mutationFn: (publicId: string) => axios.post('/api/friends', { publicId }, { headers: authHeaders(session!) }),
   })
 
+// AGS Lobby friend-request error codes:
+// https://docs.accelbyte.io/gaming-services/knowledge-base/lobby-error-codes/
+const addFriendErrorMessages: Record<number, string> = {
+  11970: "That's your own code — share it with a friend instead.",
+  11973: "You've already sent this player a request — waiting for them to accept.",
+  11974: 'This player already sent you a request — accept it under Requests.',
+  11703: "You're already friends with this player.",
+  11590: 'Your friend list is full.',
+  11591: 'Their friend list is full.',
+}
+
+export const addFriendErrorMessage = (error: unknown): string => {
+  if (axios.isAxiosError(error)) {
+    const errorCode = (error.response?.data as { errorCode?: number } | undefined)?.errorCode
+    if (errorCode !== undefined && addFriendErrorMessages[errorCode]) return addFriendErrorMessages[errorCode]
+  }
+  return "Couldn't send the request — check the code and try again."
+}
+
 export const useAcceptFriendRequestMutation = (session: AgsSession | null) => {
   const queryClient = useQueryClient()
   return useMutation({
