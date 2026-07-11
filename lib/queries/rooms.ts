@@ -60,7 +60,9 @@ export const useJoinRoomMutation = (session: AgsSession | null) =>
 
 export const useStartRoomMutation = (session: AgsSession | null) =>
   useMutation({
-    mutationFn: (sessionId: string) => axios.post(`/api/rooms/${sessionId}/start`, {}, { headers: authHeaders(session!) }),
+    // the setup rides along so the route can embed it in the room:start broadcast
+    mutationFn: ({ sessionId, ...setup }: { sessionId: string } & Omit<RoomSessionAttributes, 'status'>) =>
+      axios.post(`/api/rooms/${sessionId}/start`, setup, { headers: authHeaders(session!) }),
   })
 
 export interface RoomProgress {

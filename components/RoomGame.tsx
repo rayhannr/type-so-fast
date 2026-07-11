@@ -101,37 +101,48 @@ export const RoomGame = () => {
   const raceStartRef = useRef<number | null>(null)
   const keystrokeRef = useRef<Keystroke>({ id: 0, char: '' })
 
-  // host seeds the shared word list once, when starting the race — joiners pick it up via the
-  // attributes read below, mirroring PvP's authority pattern (see lib/ags/session.ts)
+  // one-time seed guard: host seeds on start, joiners via room:start (or the attributes poll)
   const hasSeededWordsRef = useRef(false)
-  // sequenced, not concurrent: both write to the same AGS session via optimistic-concurrency
-  // PATCH (attributes vs joinability) — firing them together races on the session's version and
-  // can exhaust the single retry each write allows (see setSessionAttributes/lockRoom in
-  // lib/ags/session.ts), so the words/status write must land before lockRoom starts its own.
+  // /start's room:start broadcast is the shared start moment, so it must fire before the
+  // attributes carry status 'racing' — otherwise a joiner's poll can start them early. The two
+  // writes are also sequenced (not concurrent) to avoid racing on the session's version.
   const handleStart = async () => {
     if (!isHost || !sessionId) return
     hasSeededWordsRef.current = true
     const words = generateWords(mode, numberOfWords)
     dispatch({ type: 'RESTART', words, duration })
     try {
-      await setRoomAttributes.mutateAsync({ sessionId, attributes: { mode, duration, words, status: 'racing' } })
+      await startRoom.mutateAsync({ sessionId, words, duration, mode })
     } catch {
-      // surfaced to the host below via setRoomAttributes.isError — bail before locking the room
-      // so a failed word-list write doesn't leave joiners stuck with joins already closed
+      // surfaced via startRoom.isError — nothing started, so the host can retry
       return
     }
-    startRoom.mutate(sessionId)
+    // fallback record for clients that missed the broadcast and start via the attributes poll
+    setRoomAttributes.mutate({ sessionId, attributes: { mode, duration, words, status: 'racing' } })
   }
 
-  // joiners: seed the local reducer once the host's word list lands (via poll or room:start)
+  // joiners seed from the room:start broadcast — same event that starts the race, so the words
+  // can never lag behind the start the way the 2s attributes poll can
   useEffect(() => {
-    if (isHost || phase !== 'lobby' || !attributes?.words) return
-    dispatch({ type: 'RESTART', words: attributes.words, duration: attributes.duration! })
-  }, [isHost, phase, attributes?.words])
+    const setup = roomChannel.raceSetup
+    if (isHost || hasSeededWordsRef.current || !setup) return
+    hasSeededWordsRef.current = true
+    setDuration(setup.duration as Duration)
+    setMode(setup.mode)
+    dispatch({ type: 'RESTART', words: setup.words, duration: setup.duration })
+  }, [isHost, roomChannel.raceSetup])
 
-  // the host's own attribute write resolves locally before the room:start broadcast reaches
-  // anyone (including the host), so gate the host's own transition on that same broadcast too —
-  // otherwise the host's clock starts a network round-trip ahead of every joiner's
+  // fallback: seed from the attributes poll if the broadcast was missed
+  useEffect(() => {
+    if (isHost || hasSeededWordsRef.current || !attributes?.words) return
+    hasSeededWordsRef.current = true
+    setDuration(attributes.duration! as Duration)
+    setMode(attributes.mode as WordMode)
+    dispatch({ type: 'RESTART', words: attributes.words, duration: attributes.duration! })
+  }, [isHost, attributes?.words])
+
+  // the host waits for its own room:start broadcast too — flipping on the local attribute
+  // write would start its clock ahead of every joiner's
   useEffect(() => {
     if (phase === 'lobby' && ((attributes?.status === 'racing' && !isHost) || roomChannel.phase === 'racing')) {
       setPhase('racing')
@@ -151,9 +162,8 @@ export const RoomGame = () => {
     return () => clearInterval(intervalRef.current!)
   }, [phase])
 
-  // wall-clock elapsed, not `state.duration - state.timer` — the timer only advances once a
-  // second, while this recomputes on every keystroke, so a tick-based denominator can be
-  // momentarily too small right after a tick and spike the wpm we broadcast to opponents
+  // wall-clock, not the once-a-second timer tick — a tick-based denominator spikes the wpm
+  // broadcast when keystrokes land right after a tick
   const wallElapsed = raceStartRef.current ? (Date.now() - raceStartRef.current) / 1000 : 0
   const liveWpm = wallElapsed > 0 ? (state.correctKeystroke * 12) / wallElapsed : 0
   const progressPct = state.words.length > 0 ? Math.min(100, (state.correctWords / (wallElapsed * 0.8 + 1)) * 10) : 0

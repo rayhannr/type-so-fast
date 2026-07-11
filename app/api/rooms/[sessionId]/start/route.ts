@@ -1,4 +1,4 @@
-import { lockRoom, setSessionAttributes } from '@/lib/ags/session'
+import { lockRoom } from '@/lib/ags/session'
 import { getAuth } from '@/lib/api-auth'
 import { errorResponse } from '@/lib/api-error'
 import { trigger } from '@/lib/pusher'
@@ -11,9 +11,17 @@ export async function POST(request: Request, { params }: { params: Promise<{ ses
 
   try {
     const { sessionId } = await params
-    await lockRoom(auth.accessToken, sessionId)
-    await setSessionAttributes(auth.accessToken, sessionId, { status: 'racing' })
-    await trigger(`private-room-${sessionId}`, 'room:start', {})
+    // the race setup rides in the room:start payload — joiners can't rely on the 2s attributes
+    // poll having delivered the words by start time (the caller writes those after, as fallback)
+    const { words, duration, mode } = await request.json()
+    // best-effort: a room left joinable mid-race beats a match that never starts, since every
+    // client (host included) starts on the room:start broadcast
+    try {
+      await lockRoom(auth.accessToken, sessionId)
+    } catch (err) {
+      console.error(`[rooms/${sessionId}/start] lockRoom failed — starting unlocked:`, err)
+    }
+    await trigger(`private-room-${sessionId}`, 'room:start', { words, duration, mode })
     return Response.json({ ok: true })
   } catch (err) {
     return errorResponse(err, '[rooms/:sessionId/start] POST failed')

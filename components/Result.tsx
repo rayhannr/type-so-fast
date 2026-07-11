@@ -37,7 +37,8 @@ export const Result = ({ state, session, displayName, xpGain }: Props) => {
   const clearRecords = () => saveRecordsMutation.mutate([])
 
   const wpm = Math.round((state.correctKeystroke * 12) / state.duration)
-  const accuracy = ((state.correctKeystroke * 100) / (state.correctKeystroke + state.wrongKeystroke + state.correction)).toFixed(2)
+  const totalKeystrokes = state.correctKeystroke + state.wrongKeystroke + state.correction
+  const accuracy = totalKeystrokes > 0 ? ((state.correctKeystroke * 100) / totalKeystrokes).toFixed(2) : '0.00'
 
   return (
     <div className="w-full max-w-md mx-auto">

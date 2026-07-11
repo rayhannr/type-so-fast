@@ -62,26 +62,45 @@ export const getSession = async (accessToken: string, sessionId: string): Promis
 }
 
 // AGS uses optimistic concurrency on game sessions (a `version` field that must match the
-// current one or the PATCH 400s with VersionMismatch) — fetch the live version right before
-// writing and retry once if another client's write raced ahead of us.
+// current one or the PATCH 409s with VersionMismatch).
+const PATCH_SESSION_MAX_ATTEMPTS = 5
+
+// The VersionMismatch body names the winning version ("current session version : [5]") — retry
+// with that, since a GET right after another write can keep returning a stale version.
+const versionFromMismatchError = (err: unknown): number | null => {
+  if (!axios.isAxiosError(err) || err.response?.data?.name !== 'VersionMismatch') return null
+  const fromAttributes = Number(err.response.data.attributes?.version)
+  if (Number.isInteger(fromAttributes) && fromAttributes > 0) return fromAttributes
+  const fromMessage = /\[(\d+)\]/.exec(err.response.data.errorMessage ?? '')
+  return fromMessage ? Number(fromMessage[1]) : null
+}
+
 const patchSessionWithRetry = async (
   api: ReturnType<typeof GameSessionApi>,
   sessionId: string,
   buildPatch: (current: GameSessionResponse) => UpdateGameSessionRequest
 ): Promise<void> => {
+  // highest version reported by a VersionMismatch so far; beats a stale GET
+  let reportedVersion = 0
+
   const patchOnce = async (): Promise<void> => {
     const { data: current } = await api.getGamesession_BySessionId(sessionId)
-    await api.patchGamesession_BySessionId(sessionId, buildPatch(current))
+    const patch = buildPatch(current)
+    await api.patchGamesession_BySessionId(sessionId, {
+      ...patch,
+      version: Math.max(patch.version ?? 0, reportedVersion),
+    })
   }
 
-  try {
-    await patchOnce()
-  } catch (err) {
-    if (axios.isAxiosError(err) && err.response?.data?.name === 'VersionMismatch') {
+  for (let attempt = 1; attempt <= PATCH_SESSION_MAX_ATTEMPTS; attempt++) {
+    try {
       await patchOnce()
       return
+    } catch (err) {
+      const version = versionFromMismatchError(err)
+      if (version === null || attempt === PATCH_SESSION_MAX_ATTEMPTS) throw err
+      reportedVersion = Math.max(reportedVersion, version)
     }
-    throw err
   }
 }
 

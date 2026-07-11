@@ -4,15 +4,25 @@ import { useEffect, useRef, useState } from 'react'
 import Pusher from 'pusher-js'
 import { useSendRoomProgressMutation } from '@/lib/queries/rooms'
 import { AgsSession } from '@/lib/queries/shared'
+import { WordMode } from '@/lib/word-generators'
 
 export interface RoomOpponentProgress {
   wpm: number
   progress: number
 }
 
+// carried in the room:start broadcast so joiners get the words at the same instant the race
+// starts, instead of waiting on the 2s attributes poll
+interface RoomRaceSetup {
+  words: string[]
+  duration: number
+  mode: WordMode
+}
+
 interface RoomChannelState {
   roster: Set<string>
   phase: 'waiting' | 'racing'
+  raceSetup: RoomRaceSetup | null
   opponents: Record<string, RoomOpponentProgress>
   connected: boolean
   publishProgress: (wpm: number, progress: number) => void
@@ -26,6 +36,7 @@ interface RoomChannelState {
 export const useRoomChannel = (session: AgsSession | null, sessionId: string | null): RoomChannelState => {
   const [roster, setRoster] = useState<Set<string>>(new Set())
   const [phase, setPhase] = useState<'waiting' | 'racing'>('waiting')
+  const [raceSetup, setRaceSetup] = useState<RoomRaceSetup | null>(null)
   const [opponents, setOpponents] = useState<Record<string, RoomOpponentProgress>>({})
   const [connected, setConnected] = useState(false)
   const sendProgress = useSendRoomProgressMutation(session)
@@ -47,15 +58,23 @@ export const useRoomChannel = (session: AgsSession | null, sessionId: string | n
     channel.bind('pusher:subscription_succeeded', () => setConnected(true))
     channel.bind('pusher:subscription_error', () => setConnected(false))
     channel.bind('room:joined', ({ userId }: { userId: string }) => setRoster((prev) => new Set(prev).add(userId)))
-    channel.bind('room:start', () => setPhase('racing'))
+    channel.bind('room:start', (setup: RoomRaceSetup) => {
+      if (setup?.words?.length) setRaceSetup(setup)
+      setPhase('racing')
+    })
     channel.bind('room:progress', ({ userId, wpm, progress }: { userId: string; wpm: number; progress: number }) =>
       setOpponents((prev) => ({ ...prev, [userId]: { wpm, progress } }))
     )
 
+    // reset per-channel state so a new room doesn't inherit the previous race's
     return () => {
       pusher.unsubscribe(`private-room-${sessionId}`)
       pusher.disconnect()
       setConnected(false)
+      setRoster(new Set())
+      setPhase('waiting')
+      setRaceSetup(null)
+      setOpponents({})
     }
   }, [session, sessionId])
 
@@ -69,5 +88,5 @@ export const useRoomChannel = (session: AgsSession | null, sessionId: string | n
     sendProgress.mutate({ sessionId, wpm, progress })
   }
 
-  return { roster, phase, opponents, connected, publishProgress }
+  return { roster, phase, raceSetup, opponents, connected, publishProgress }
 }
