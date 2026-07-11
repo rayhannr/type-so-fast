@@ -8,6 +8,7 @@
 - Do not export a variable, function, constant, or type immediately when defining it.
 - Only add `export` once it is actually imported/used by another file.
 - Remove `export` keywords that are no longer used by any other file.
+- Never re-export something you import (`import { Foo } from './x'; export { Foo }` or `export { Foo } from './x'`). Every consumer imports a symbol from the module that defines it — no barrel files, no "canonical import site" indirection.
 
 # Control flow
 

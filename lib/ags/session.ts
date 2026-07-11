@@ -14,6 +14,7 @@ export interface SignalPayload {
 export interface PvpSessionAttributes {
   mode: string
   duration: number
+  language: string
   words: string[]
   authorityUserId: string
   // WebRTC signaling relayed through session attributes: AGS Lobby's websocket requires an
@@ -133,6 +134,7 @@ export const leaveSession = async (accessToken: string, sessionId: string): Prom
 export interface RoomSessionAttributes {
   mode: string
   duration: number
+  language: string
   words: string[]
   // Lobby vs race phase for joiners; AGS-level joinability is locked separately (see lockRoom).
   status: 'waiting' | 'racing'

@@ -3,7 +3,7 @@ import { SoloGame } from '@/components/SoloGame'
 
 export const metadata: Metadata = {
   title: 'TypeSoFast!',
-  description: 'How fast can you type in Indonesian?',
+  description: 'How fast can you type?',
 }
 
 export default function Home() {

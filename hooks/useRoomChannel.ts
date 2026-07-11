@@ -5,6 +5,7 @@ import Pusher from 'pusher-js'
 import { useSendRoomProgressMutation } from '@/lib/queries/rooms'
 import { AgsSession } from '@/lib/queries/shared'
 import { WordMode } from '@/lib/word-generators'
+import { Language } from '@/constants/words'
 
 export interface RoomOpponentProgress {
   wpm: number
@@ -17,6 +18,7 @@ interface RoomRaceSetup {
   words: string[]
   duration: number
   mode: WordMode
+  language: Language
 }
 
 interface RoomChannelState {

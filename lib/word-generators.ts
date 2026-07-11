@@ -1,4 +1,4 @@
-import { indonesianWords, shuffleWord } from '@/constants/words'
+import { wordsByLanguage, shuffleWord, Language } from '@/constants/words'
 
 export type WordMode = 'words' | 'numbers' | 'punctuation'
 
@@ -36,14 +36,14 @@ const withPunctuation = (words: string[]): string[] => {
   })
 }
 
-export const generateWords = (mode: WordMode, count: number): string[] => {
+export const generateWords = (mode: WordMode, count: number, language: Language = 'indonesian'): string[] => {
   switch (mode) {
     case 'numbers':
       return Array.from({ length: count }, randomNumberToken)
     case 'punctuation':
-      return withPunctuation(shuffleWord(indonesianWords, count))
+      return withPunctuation(shuffleWord(wordsByLanguage[language], count))
     case 'words':
     default:
-      return shuffleWord(indonesianWords, count)
+      return shuffleWord(wordsByLanguage[language], count)
   }
 }

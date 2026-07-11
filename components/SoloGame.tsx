@@ -2,6 +2,7 @@
 
 import { useEffect, useReducer, useState, useRef, useCallback } from 'react'
 import { generateWords, WordMode } from '@/lib/word-generators'
+import { Language } from '@/constants/words'
 
 import { WordContainer } from './WordContainer'
 import { Input } from './Input'
@@ -12,6 +13,7 @@ import { AchievementToast } from './AchievementToast'
 import { TypingHands } from './TypingHands'
 import { DurationSelector, Duration } from './DurationSelector'
 import { ModeSelector } from './ModeSelector'
+import { LanguageSelector } from './LanguageSelector'
 
 import { useAgsSessionContext } from '@/lib/ags/AgsSessionContext'
 import { useGameEndSync } from '@/hooks/useGameEndSync'
@@ -25,6 +27,7 @@ export const SoloGame = () => {
   const [state, dispatch] = useReducer(gameReducer, [], () => createInitialState([]))
   const [duration, setDuration] = useState<Duration>(60)
   const [mode, setMode] = useState<WordMode>('words')
+  const [language, setLanguage] = useState<Language>('indonesian')
   const [hasStarted, setHasStarted] = useState(false)
 
   const { session, displayName } = useAgsSessionContext()
@@ -47,7 +50,7 @@ export const SoloGame = () => {
 
   // words are generated client-side only (random), so the initial fill happens in an effect
   useEffect(() => {
-    dispatch({ type: 'RESTART', words: generateWords('words', numberOfWords), duration: 60 })
+    dispatch({ type: 'RESTART', words: generateWords('words', numberOfWords, language), duration: 60 })
   }, [])
 
   useEffect(() => {
@@ -79,16 +82,16 @@ export const SoloGame = () => {
     clearInterval(intervalRef.current!)
     hasStartedRef.current = false
     setHasStarted(false)
-    dispatch({ type: 'RESTART', words: generateWords(mode, numberOfWords), duration })
+    dispatch({ type: 'RESTART', words: generateWords(mode, numberOfWords, language), duration })
     inputRef.current?.focus()
-  }, [mode, duration])
+  }, [mode, duration, language])
 
   const changeDuration = (nextDuration: Duration) => {
     if (hasStarted) return
     setDuration(nextDuration)
     clearInterval(intervalRef.current!)
     hasStartedRef.current = false
-    dispatch({ type: 'RESTART', words: generateWords(mode, numberOfWords), duration: nextDuration })
+    dispatch({ type: 'RESTART', words: generateWords(mode, numberOfWords, language), duration: nextDuration })
   }
 
   const changeMode = (nextMode: WordMode) => {
@@ -96,7 +99,15 @@ export const SoloGame = () => {
     setMode(nextMode)
     clearInterval(intervalRef.current!)
     hasStartedRef.current = false
-    dispatch({ type: 'RESTART', words: generateWords(nextMode, numberOfWords), duration })
+    dispatch({ type: 'RESTART', words: generateWords(nextMode, numberOfWords, language), duration })
+  }
+
+  const changeLanguage = (nextLanguage: Language) => {
+    if (hasStarted) return
+    setLanguage(nextLanguage)
+    clearInterval(intervalRef.current!)
+    hasStartedRef.current = false
+    dispatch({ type: 'RESTART', words: generateWords(mode, numberOfWords, nextLanguage), duration })
   }
 
   useTabRestart(restartHandler, inputRef)
@@ -114,6 +125,7 @@ export const SoloGame = () => {
           <div className="flex flex-col items-center gap-2 mb-6">
             <DurationSelector active={duration} disabled={hasStarted} onChange={changeDuration} />
             <ModeSelector active={mode} disabled={hasStarted} onChange={changeMode} />
+            <LanguageSelector active={language} disabled={hasStarted} onChange={changeLanguage} />
           </div>
           <div className="flex flex-row items-center justify-between mb-4">
             <Timer timer={state.timer} />

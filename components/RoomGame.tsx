@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useReducer, useRef, useState, useCallback, FormEvent } from 'react'
 import { generateWords, WordMode } from '@/lib/word-generators'
+import { Language } from '@/constants/words'
 
 import { WordContainer } from './WordContainer'
 import { Input } from './Input'
@@ -12,6 +13,7 @@ import { AchievementToast } from './AchievementToast'
 import { TypingHands } from './TypingHands'
 import { DurationSelector, Duration } from './DurationSelector'
 import { ModeSelector } from './ModeSelector'
+import { LanguageSelector } from './LanguageSelector'
 
 import { useAgsSessionContext } from '@/lib/ags/AgsSessionContext'
 import { useGameEndSync } from '@/hooks/useGameEndSync'
@@ -36,6 +38,7 @@ export const RoomGame = () => {
 
   const [duration, setDuration] = useState<Duration>(60)
   const [mode, setMode] = useState<WordMode>('words')
+  const [language, setLanguage] = useState<Language>('indonesian')
   const [phase, setPhase] = useState<Phase>('entry')
   const [sessionId, setSessionId] = useState('')
   const [codeInput, setCodeInput] = useState('')
@@ -103,16 +106,16 @@ export const RoomGame = () => {
   const handleStart = async () => {
     if (!isHost || !sessionId) return
     hasSeededWordsRef.current = true
-    const words = generateWords(mode, numberOfWords)
+    const words = generateWords(mode, numberOfWords, language)
     dispatch({ type: 'RESTART', words, duration })
     try {
-      await startRoom.mutateAsync({ sessionId, words, duration, mode })
+      await startRoom.mutateAsync({ sessionId, words, duration, mode, language })
     } catch {
       // surfaced via startRoom.isError — nothing started, so the host can retry
       return
     }
     // fallback record for clients that missed the broadcast and start via the attributes poll
-    setRoomAttributes.mutate({ sessionId, attributes: { mode, duration, words, status: 'racing' } })
+    setRoomAttributes.mutate({ sessionId, attributes: { mode, duration, language, words, status: 'racing' } })
   }
 
   // joiners seed from the room:start broadcast — same event that starts the race, so the words
@@ -123,6 +126,7 @@ export const RoomGame = () => {
     hasSeededWordsRef.current = true
     setDuration(setup.duration as Duration)
     setMode(setup.mode)
+    setLanguage(setup.language)
     dispatch({ type: 'RESTART', words: setup.words, duration: setup.duration })
   }, [isHost, roomChannel.raceSetup])
 
@@ -132,6 +136,7 @@ export const RoomGame = () => {
     hasSeededWordsRef.current = true
     setDuration(attributes.duration! as Duration)
     setMode(attributes.mode as WordMode)
+    setLanguage(attributes.language as Language)
     dispatch({ type: 'RESTART', words: attributes.words, duration: attributes.duration! })
   }, [isHost, attributes?.words])
 
@@ -209,6 +214,7 @@ export const RoomGame = () => {
         <div className="flex flex-col items-center gap-2 mb-8">
           <DurationSelector active={duration} disabled={false} onChange={setDuration} />
           <ModeSelector active={mode} disabled={false} onChange={setMode} />
+          <LanguageSelector active={language} disabled={false} onChange={setLanguage} />
         </div>
         <div className="flex flex-col items-center gap-6">
           <button

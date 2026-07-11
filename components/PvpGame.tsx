@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useReducer, useRef, useState, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { generateWords, WordMode } from '@/lib/word-generators'
+import { Language } from '@/constants/words'
 
 import { WordContainer } from './WordContainer'
 import { Input } from './Input'
@@ -13,6 +14,7 @@ import { AchievementToast } from './AchievementToast'
 import { TypingHands } from './TypingHands'
 import { DurationSelector, Duration } from './DurationSelector'
 import { ModeSelector } from './ModeSelector'
+import { LanguageSelector } from './LanguageSelector'
 
 import { useAgsSessionContext } from '@/lib/ags/AgsSessionContext'
 import { useGameEndSync } from '@/hooks/useGameEndSync'
@@ -40,6 +42,7 @@ export const PvpGame = () => {
 
   const [duration, setDuration] = useState<Duration>(60)
   const [mode, setMode] = useState<WordMode>('words')
+  const [language, setLanguage] = useState<Language>('indonesian')
   const [phase, setPhase] = useState<Phase>(joinSessionId ? 'connecting' : 'idle')
   const [ticketId, setTicketId] = useState<string | null>(null)
   const [sessionId, setSessionId] = useState(joinSessionId ?? '')
@@ -110,11 +113,11 @@ export const PvpGame = () => {
   useEffect(() => {
     if (phase !== 'connecting' || !pvpSession.data || !isAuthority || attributes?.words || hasSeededWordsRef.current) return
     hasSeededWordsRef.current = true
-    const words = generateWords(mode, numberOfWords)
+    const words = generateWords(mode, numberOfWords, language)
     dispatch({ type: 'RESTART', words, duration })
     setSessionAttributes.mutate({
       sessionId,
-      attributes: { mode, duration, words, authorityUserId: session!.userId },
+      attributes: { mode, duration, language, words, authorityUserId: session!.userId },
     })
   }, [phase, pvpSession.data, isAuthority, attributes?.words])
 
@@ -212,6 +215,7 @@ export const PvpGame = () => {
         <div className="flex flex-col items-center gap-2 mb-8">
           <DurationSelector active={duration} disabled={false} onChange={setDuration} />
           <ModeSelector active={mode} disabled={false} onChange={setMode} />
+          <LanguageSelector active={language} disabled={false} onChange={setLanguage} />
         </div>
         {timedOut && <p className="text-error text-sm mb-4">No opponent found within 60s. Try again?</p>}
         <button

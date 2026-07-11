@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { indonesianWords } from '@/constants/words'
+import { wordsByLanguage } from '@/constants/words'
 import { generateWords } from './word-generators'
 
 const NUMBER_WORDS = ['nol', 'satu', 'dua', 'tiga', 'empat', 'lima', 'enam', 'tujuh', 'delapan', 'sembilan', 'sepuluh']
@@ -37,11 +37,27 @@ describe('generateWords: numbers mode', () => {
 })
 
 describe('generateWords: words mode', () => {
-  it('returns only words drawn from the known Indonesian word list', () => {
+  it('defaults to the Indonesian word list when no language is given', () => {
     const words = generateWords('words', 15)
     expect(words).toHaveLength(15)
     for (const word of words) {
-      expect(indonesianWords).toContain(word)
+      expect(wordsByLanguage.indonesian).toContain(word)
+    }
+  })
+
+  it('draws from the Indonesian word list when explicitly requested', () => {
+    const words = generateWords('words', 15, 'indonesian')
+    expect(words).toHaveLength(15)
+    for (const word of words) {
+      expect(wordsByLanguage.indonesian).toContain(word)
+    }
+  })
+
+  it('draws from the English word list when requested', () => {
+    const words = generateWords('words', 15, 'english')
+    expect(words).toHaveLength(15)
+    for (const word of words) {
+      expect(wordsByLanguage.english).toContain(word)
     }
   })
 })
@@ -52,7 +68,7 @@ describe('generateWords: default mode (no mode string matched)', () => {
     const words = generateWords('unknown' as never, 15)
     expect(words).toHaveLength(15)
     for (const word of words) {
-      expect(indonesianWords).toContain(word)
+      expect(wordsByLanguage.indonesian).toContain(word)
     }
   })
 })

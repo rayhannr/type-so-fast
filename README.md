@@ -1,6 +1,6 @@
 # TypeSoFast!
 
-TypeSoFast is a 10fastfingers clone for you to test your typing speed in Indonesian, built with Next.js and TypeScript.
+TypeSoFast is a 10fastfingers clone for you to test your typing speed in Indonesian or English, built with Next.js and TypeScript.
 
 ## Modes
 

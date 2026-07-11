@@ -2,6 +2,7 @@
 
 import { useEffect, useReducer, useState, useRef, useCallback } from 'react'
 import { generateWords } from '@/lib/word-generators'
+import { Language } from '@/constants/words'
 
 import { WordContainer } from './WordContainer'
 import { Input } from './Input'
@@ -12,6 +13,7 @@ import { AchievementToast } from './AchievementToast'
 import { TypingHands } from './TypingHands'
 import { DurationSelector, Duration } from './DurationSelector'
 import { DifficultySelector } from './DifficultySelector'
+import { LanguageSelector } from './LanguageSelector'
 import { Difficulty } from '@/lib/botDifficulty'
 
 import { useAgsSessionContext } from '@/lib/ags/AgsSessionContext'
@@ -33,6 +35,7 @@ export const PvcGame = () => {
   const [raceWords, setRaceWords] = useState<string[]>([])
   const [duration, setDuration] = useState<Duration>(60)
   const [difficulty, setDifficulty] = useState<Difficulty>('medium')
+  const [language, setLanguage] = useState<Language>('indonesian')
   const [hasStarted, setHasStarted] = useState(false)
 
   const { session, displayName } = useAgsSessionContext()
@@ -67,8 +70,8 @@ export const PvcGame = () => {
   const hasStartedRef = useRef<boolean>(false)
   const inputRef = useRef<HTMLInputElement | null>(null)
 
-  const startRound = (nextDuration: Duration) => {
-    const words = generateWords('words', numberOfWords)
+  const startRound = (nextDuration: Duration, nextLanguage: Language = language) => {
+    const words = generateWords('words', numberOfWords, nextLanguage)
     dispatch({ type: 'RESTART', words, duration: nextDuration })
     setRaceWords(words)
   }
@@ -125,6 +128,14 @@ export const PvcGame = () => {
     setDifficulty(nextDifficulty)
   }
 
+  const changeLanguage = (nextLanguage: Language) => {
+    if (hasStarted) return
+    setLanguage(nextLanguage)
+    clearInterval(intervalRef.current!)
+    hasStartedRef.current = false
+    startRound(duration, nextLanguage)
+  }
+
   useTabRestart(restartHandler, inputRef)
 
   const elapsed = state.duration - state.timer
@@ -140,6 +151,7 @@ export const PvcGame = () => {
           <div className="flex flex-col items-center gap-2 mb-6">
             <DurationSelector active={duration} disabled={hasStarted} onChange={changeDuration} />
             <DifficultySelector active={difficulty} disabled={hasStarted} onChange={changeDifficulty} />
+            <LanguageSelector active={language} disabled={hasStarted} onChange={changeLanguage} />
           </div>
           <div className="flex flex-row items-center justify-between mb-4">
             <Timer timer={state.timer} />
