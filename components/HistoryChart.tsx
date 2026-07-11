@@ -1,9 +1,7 @@
 'use client'
 
-import { useMemo, useState } from 'react'
-import { KeyboardEvent, PointerEvent } from 'react'
-import { GameHistoryEntry } from '@/lib/progress'
-import { HISTORY_LIMIT } from '@/lib/progress'
+import { useMemo, useState, KeyboardEvent, PointerEvent } from 'react'
+import { GameHistoryEntry, HISTORY_LIMIT } from '@/lib/progress'
 
 interface Props {
   history: GameHistoryEntry[]

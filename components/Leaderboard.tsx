@@ -3,11 +3,11 @@
 import { useState } from 'react'
 import { useLeaderboardQuery } from '@/lib/queries/leaderboard'
 import { LeaderboardMetric, LeaderboardRange } from '@/lib/ags/leaderboard'
-import { DURATIONS } from './DurationSelector'
-import { Duration } from './DurationSelector'
+import { DURATIONS, Duration } from './DurationSelector'
 import { ModeSelector } from './ModeSelector'
 import { WordMode } from '@/lib/word-generators'
 import { Podium3D } from './Podium3D'
+import { SelectorButtons } from './SelectorButtons'
 
 interface Props {
   currentUserId: string | null
@@ -15,6 +15,7 @@ interface Props {
 
 const RANGES: LeaderboardRange[] = ['alltime', 'weekly']
 const METRICS: LeaderboardMetric[] = ['wpm', 'xp']
+const DURATION_FILTERS: (Duration | 'all')[] = ['all', ...DURATIONS]
 
 export const Leaderboard = ({ currentUserId }: Props) => {
   const [metric, setMetric] = useState<LeaderboardMetric>('wpm')
@@ -37,68 +38,34 @@ export const Leaderboard = ({ currentUserId }: Props) => {
   return (
     <div className="w-full max-w-2xl mx-auto mt-10">
       <div className="flex flex-col items-center gap-2 mb-8">
-        <div className="flex flex-row justify-center gap-2" aria-label="Metric filter">
-          {METRICS.map((m) => (
-            <button
-              key={m}
-              type="button"
-              onClick={() => setMetric(m)}
-              aria-current={metric === m ? 'true' : undefined}
-              className={`px-2.5 py-1 text-xs rounded-md transition-colors cursor-pointer ${
-                metric === m ? 'text-accent bg-surface' : 'text-muted hover:text-active'
-              }`}
-            >
-              {m === 'wpm' ? 'WPM' : 'XP'}
-            </button>
-          ))}
-        </div>
+        <SelectorButtons
+          options={METRICS}
+          active={metric}
+          onChange={setMetric}
+          ariaLabel="Metric filter"
+          getLabel={(m) => (m === 'wpm' ? 'WPM' : 'XP')}
+        />
 
         {metric === 'wpm' && (
           <>
-            <div className="flex flex-row justify-center gap-2" aria-label="Duration filter">
-              <button
-                type="button"
-                onClick={() => setDuration('all')}
-                aria-current={duration === 'all' ? 'true' : undefined}
-                className={`px-2.5 py-1 text-xs rounded-md transition-colors cursor-pointer ${
-                  duration === 'all' ? 'text-accent bg-surface' : 'text-muted hover:text-active'
-                }`}
-              >
-                All
-              </button>
-              {DURATIONS.map((d) => (
-                <button
-                  key={d}
-                  type="button"
-                  onClick={() => setDuration(d)}
-                  aria-current={duration === d ? 'true' : undefined}
-                  className={`px-2.5 py-1 text-xs rounded-md transition-colors cursor-pointer ${
-                    duration === d ? 'text-accent bg-surface' : 'text-muted hover:text-active'
-                  }`}
-                >
-                  {d}s
-                </button>
-              ))}
-            </div>
+            <SelectorButtons
+              options={DURATION_FILTERS}
+              active={duration}
+              onChange={setDuration}
+              ariaLabel="Duration filter"
+              getLabel={(d) => (d === 'all' ? 'All' : `${d}s`)}
+            />
 
             {duration === 'all' && (
               <>
                 <ModeSelector active={mode} disabled={false} onChange={setMode} />
-                <div className="flex flex-row justify-center gap-2" aria-label="Time range filter">
-                  {RANGES.map((r) => (
-                    <button
-                      key={r}
-                      type="button"
-                      onClick={() => setRange(r)}
-                      aria-current={range === r ? 'true' : undefined}
-                      className={`px-2.5 py-1 text-xs rounded-md transition-colors cursor-pointer ${
-                        range === r ? 'text-accent bg-surface' : 'text-muted hover:text-active'
-                      }`}
-                    >
-                      {r === 'alltime' ? 'All-time' : 'This week'}
-                    </button>
-                  ))}
-                </div>
+                <SelectorButtons
+                  options={RANGES}
+                  active={range}
+                  onChange={setRange}
+                  ariaLabel="Time range filter"
+                  getLabel={(r) => (r === 'alltime' ? 'All-time' : 'This week')}
+                />
               </>
             )}
           </>

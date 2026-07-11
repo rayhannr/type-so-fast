@@ -1,7 +1,6 @@
 'use client'
 
-import { useEffect, useReducer, useState, useMemo, useRef, useCallback } from 'react'
-import { ChangeEvent, InputEvent, KeyboardEvent } from 'react'
+import { useEffect, useReducer, useState, useRef, useCallback } from 'react'
 import { generateWords } from '@/lib/word-generators'
 
 import { WordContainer } from './WordContainer'
@@ -11,16 +10,15 @@ import { Timer } from './Timer'
 import { RestartButton } from './RestartButton'
 import { AchievementToast } from './AchievementToast'
 import { TypingHands } from './TypingHands'
-import { Keystroke } from './TypingHands'
-import { DurationSelector } from './DurationSelector'
-import { Duration } from './DurationSelector'
+import { DurationSelector, Duration } from './DurationSelector'
 import { DifficultySelector } from './DifficultySelector'
 import { Difficulty } from '@/lib/botDifficulty'
 
 import { useAgsSessionContext } from '@/lib/ags/AgsSessionContext'
 import { useGameEndSync } from '@/hooks/useGameEndSync'
 import { useBotTypist } from '@/hooks/useBotTypist'
-import { playKeyClick, playErrorBuzz, playWordChime } from '@/lib/sounds'
+import { useTypingInput } from '@/hooks/useTypingInput'
+import { useTabRestart } from '@/hooks/useTabRestart'
 import { gameReducer, createInitialState } from '@/lib/gameReducer'
 
 const numberOfWords = 400
@@ -36,11 +34,9 @@ export const PvcGame = () => {
   const [duration, setDuration] = useState<Duration>(60)
   const [difficulty, setDifficulty] = useState<Difficulty>('medium')
   const [hasStarted, setHasStarted] = useState(false)
-  const [capsLockOn, setCapsLockOn] = useState(false)
 
   const { session, displayName } = useAgsSessionContext()
 
-  const currentWord: string = useMemo(() => state.words[0], [state.words])
   const isGameOver = state.timer === 0
 
   const bot = useBotTypist({ words: raceWords, difficulty, active: hasStarted && !isGameOver, duration })
@@ -70,7 +66,6 @@ export const PvcGame = () => {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const hasStartedRef = useRef<boolean>(false)
   const inputRef = useRef<HTMLInputElement | null>(null)
-  const keystrokeRef = useRef<Keystroke>({ id: 0, char: '' })
 
   const startRound = (nextDuration: Duration) => {
     const words = generateWords('words', numberOfWords)
@@ -87,7 +82,10 @@ export const PvcGame = () => {
     inputRef.current?.focus()
   }, [])
 
-  const timerHandler = () => {
+  const onFirstKeystroke = () => {
+    if (hasStartedRef.current) return
+    hasStartedRef.current = true
+    setHasStarted(true)
     let timesLeft: number = state.timer
     intervalRef.current = setInterval(() => {
       timesLeft -= 1
@@ -100,49 +98,11 @@ export const PvcGame = () => {
     }, 1000)
   }
 
-  const changeHandler = (event: ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value
-    if (value.endsWith(' ') && value.slice(0, -1) === currentWord) playWordChime()
-    dispatch({ type: 'INPUT_CHANGE', value, currentWord })
-  }
-
-  const inputHandler = (event: InputEvent<HTMLInputElement>) => {
-    // the InputEvent type declares `data` on the synthetic event, but at runtime
-    // React still only populates it on the underlying native event
-    const currentKey = event.nativeEvent.data
-    if (currentKey?.length === 1) {
-      keystrokeRef.current = { id: keystrokeRef.current.id + 1, char: currentKey }
-
-      if (currentKey !== ' ') {
-        if (!hasStartedRef.current) {
-          hasStartedRef.current = true
-          setHasStarted(true)
-          timerHandler()
-        }
-
-        if (state.isInputCorrect) playKeyClick()
-        else playErrorBuzz()
-
-        // past the word's end the player should have pressed space, so the miss lands there
-        const position = state.wordInput.length
-        const expectedChar = currentWord && position < currentWord.length ? currentWord[position] : ' '
-        dispatch({
-          type: 'KEYSTROKE',
-          correct: state.isInputCorrect,
-          missedChar: currentKey === expectedChar ? undefined : expectedChar,
-        })
-      }
-    }
-
-    if (event.nativeEvent.inputType === 'deleteContentBackward') {
-      keystrokeRef.current = { id: keystrokeRef.current.id + 1, char: '\b' }
-      dispatch({ type: 'BACKSPACE' })
-    }
-  }
-
-  const keyDownHandler = (event: KeyboardEvent<HTMLInputElement>) => {
-    setCapsLockOn(event.getModifierState('CapsLock'))
-  }
+  const { keystrokeRef, capsLockOn, changeHandler, inputHandler, keyDownHandler } = useTypingInput(
+    state,
+    dispatch,
+    onFirstKeystroke
+  )
 
   const restartHandler = useCallback(() => {
     clearInterval(intervalRef.current!)
@@ -165,31 +125,7 @@ export const PvcGame = () => {
     setDifficulty(nextDifficulty)
   }
 
-  useEffect(() => {
-    const handleGlobalKeyDown = (event: globalThis.KeyboardEvent) => {
-      if (event.key === 'Tab') {
-        event.preventDefault()
-        restartHandler()
-        return
-      }
-
-      // focusing here (before the browser's default insert action runs) means the
-      // keystroke that triggered this still lands in the input, so typing works
-      // without clicking into it first
-      const active = document.activeElement
-      const isEditableElsewhere =
-        active instanceof HTMLElement &&
-        active !== inputRef.current &&
-        (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable)
-      if (isEditableElsewhere) return
-
-      if (/^[a-zA-Z0-9]$/.test(event.key) && document.activeElement !== inputRef.current) {
-        inputRef.current?.focus()
-      }
-    }
-    window.addEventListener('keydown', handleGlobalKeyDown)
-    return () => window.removeEventListener('keydown', handleGlobalKeyDown)
-  }, [restartHandler])
+  useTabRestart(restartHandler, inputRef)
 
   const elapsed = state.duration - state.timer
   const liveWpm = elapsed > 0 ? (state.correctKeystroke * 12) / elapsed : 0

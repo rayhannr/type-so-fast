@@ -1,5 +1,5 @@
-import { WORD_MODES } from '@/lib/word-generators'
-import { WordMode } from '@/lib/word-generators'
+import { WORD_MODES, WordMode } from '@/lib/word-generators'
+import { SelectorButtons } from './SelectorButtons'
 
 const MODE_LABELS: Record<WordMode, string> = {
   words: 'Words',
@@ -14,20 +14,12 @@ type Props = {
 }
 
 export const ModeSelector = ({ active, disabled, onChange }: Props) => (
-  <div className="flex flex-row justify-center gap-2" aria-label="Word mode">
-    {WORD_MODES.map((mode) => (
-      <button
-        key={mode}
-        type="button"
-        disabled={disabled}
-        onClick={() => onChange(mode)}
-        aria-current={active === mode ? 'true' : undefined}
-        className={`px-2.5 py-1 text-xs rounded-md transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 ${
-          active === mode ? 'text-accent bg-surface' : 'text-muted hover:text-active'
-        }`}
-      >
-        {MODE_LABELS[mode]}
-      </button>
-    ))}
-  </div>
+  <SelectorButtons
+    options={WORD_MODES}
+    active={active}
+    disabled={disabled}
+    onChange={onChange}
+    ariaLabel="Word mode"
+    getLabel={(mode) => MODE_LABELS[mode]}
+  />
 )

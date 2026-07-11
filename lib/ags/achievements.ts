@@ -85,11 +85,17 @@ export const getUnlockedAchievements = async (userId: string, accessToken: strin
   return toUnlocked(data.data)
 }
 
-export const unlockPerfectionistIfEligible = async (userId: string, accessToken: string, accuracy: number): Promise<void> => {
-  if (accuracy < 100) return
+// unlocks each code for the user; one code failing shouldn't block the others from unlocking
+const unlockCodes = async (userId: string, accessToken: string, codes: string[]): Promise<void> => {
+  if (codes.length === 0) return
   const sdk = createSdk(accessToken)
   const userAchievementsApi = UserAchievementsApi(sdk)
-  await userAchievementsApi.updateUnlock_ByUserId_ByAchievementCode(userId, ACHIEVEMENT_PERFECTIONIST)
+  await Promise.all(codes.map((code) => userAchievementsApi.updateUnlock_ByUserId_ByAchievementCode(userId, code).catch(() => {})))
+}
+
+export const unlockPerfectionistIfEligible = async (userId: string, accessToken: string, accuracy: number): Promise<void> => {
+  if (accuracy < 100) return
+  await unlockCodes(userId, accessToken, [ACHIEVEMENT_PERFECTIONIST])
 }
 
 export const unlockStreakAchievementsIfEligible = async (
@@ -97,17 +103,8 @@ export const unlockStreakAchievementsIfEligible = async (
   accessToken: string,
   streak: number
 ): Promise<void> => {
-  const eligible = STREAK_ACHIEVEMENTS.filter((achievement) => streak >= achievement.days)
-  if (eligible.length === 0) return
-
-  const sdk = createSdk(accessToken)
-  const userAchievementsApi = UserAchievementsApi(sdk)
-  await Promise.all(
-    eligible.map((achievement) =>
-      // one milestone failing shouldn't block the others from unlocking
-      userAchievementsApi.updateUnlock_ByUserId_ByAchievementCode(userId, achievement.code).catch(() => { })
-    )
-  )
+  const eligible = STREAK_ACHIEVEMENTS.filter((achievement) => streak >= achievement.days).map((achievement) => achievement.code)
+  await unlockCodes(userId, accessToken, eligible)
 }
 
 export const unlockPerfectStreakIfEligible = async (
@@ -115,16 +112,10 @@ export const unlockPerfectStreakIfEligible = async (
   accessToken: string,
   perfectStreak: number
 ): Promise<void> => {
-  const eligible = PERFECT_STREAK_ACHIEVEMENTS.filter((achievement) => perfectStreak >= achievement.games)
-  if (eligible.length === 0) return
-
-  const sdk = createSdk(accessToken)
-  const userAchievementsApi = UserAchievementsApi(sdk)
-  await Promise.all(
-    eligible.map((achievement) =>
-      userAchievementsApi.updateUnlock_ByUserId_ByAchievementCode(userId, achievement.code).catch(() => { })
-    )
+  const eligible = PERFECT_STREAK_ACHIEVEMENTS.filter((achievement) => perfectStreak >= achievement.games).map(
+    (achievement) => achievement.code
   )
+  await unlockCodes(userId, accessToken, eligible)
 }
 
 export const unlockVarietyIfEligible = async (
@@ -136,13 +127,7 @@ export const unlockVarietyIfEligible = async (
   const eligible: string[] = []
   if (WORD_MODES.every((mode) => modesPlayed.includes(mode))) eligible.push(ACHIEVEMENT_MODE_EXPLORER)
   if (DURATIONS.every((duration) => durationsPlayed.includes(duration))) eligible.push(ACHIEVEMENT_TIME_TRAVELER)
-  if (eligible.length === 0) return
-
-  const sdk = createSdk(accessToken)
-  const userAchievementsApi = UserAchievementsApi(sdk)
-  await Promise.all(
-    eligible.map((code) => userAchievementsApi.updateUnlock_ByUserId_ByAchievementCode(userId, code).catch(() => { }))
-  )
+  await unlockCodes(userId, accessToken, eligible)
 }
 
 export const unlockPvcAchievementsIfEligible = async (
@@ -159,11 +144,7 @@ export const unlockPvcAchievementsIfEligible = async (
   PVC_STREAK_ACHIEVEMENTS.filter((a) => context.pvcProgress.legendWinStreak >= a.streak).forEach((a) => eligible.push(a.code))
   PVC_WIN_MILESTONES.filter((a) => totalWins >= a.wins).forEach((a) => eligible.push(a.code))
 
-  const sdk = createSdk(accessToken)
-  const userAchievementsApi = UserAchievementsApi(sdk)
-  await Promise.all(
-    eligible.map((code) => userAchievementsApi.updateUnlock_ByUserId_ByAchievementCode(userId, code).catch(() => {}))
-  )
+  await unlockCodes(userId, accessToken, eligible)
 }
 
 export const unlockPvpAchievementsIfEligible = async (
@@ -178,11 +159,7 @@ export const unlockPvpAchievementsIfEligible = async (
   PVP_STREAK_ACHIEVEMENTS.filter((a) => context.pvpProgress.winStreak >= a.streak).forEach((a) => eligible.push(a.code))
   PVP_WIN_MILESTONES.filter((a) => context.pvpProgress.wins >= a.wins).forEach((a) => eligible.push(a.code))
 
-  const sdk = createSdk(accessToken)
-  const userAchievementsApi = UserAchievementsApi(sdk)
-  await Promise.all(
-    eligible.map((code) => userAchievementsApi.updateUnlock_ByUserId_ByAchievementCode(userId, code).catch(() => {}))
-  )
+  await unlockCodes(userId, accessToken, eligible)
 }
 
 export const unlockRoomAchievementsIfEligible = async (
@@ -197,11 +174,7 @@ export const unlockRoomAchievementsIfEligible = async (
   ROOM_STREAK_ACHIEVEMENTS.filter((a) => context.roomProgress.winStreak >= a.streak).forEach((a) => eligible.push(a.code))
   ROOM_WIN_MILESTONES.filter((a) => context.roomProgress.wins >= a.wins).forEach((a) => eligible.push(a.code))
 
-  const sdk = createSdk(accessToken)
-  const userAchievementsApi = UserAchievementsApi(sdk)
-  await Promise.all(
-    eligible.map((code) => userAchievementsApi.updateUnlock_ByUserId_ByAchievementCode(userId, code).catch(() => {}))
-  )
+  await unlockCodes(userId, accessToken, eligible)
 }
 
 export interface AchievementInfo {
@@ -242,8 +215,6 @@ export const diffNewlyUnlocked = async (
   previousCodes: string[]
 ): Promise<UnlockedAchievement[]> => {
   const previouslyUnlocked = new Set(previousCodes)
-  const sdk = createSdk(accessToken)
-  const userAchievementsApi = UserAchievementsApi(sdk)
-  const { data } = await userAchievementsApi.getAchievements_ByUserId(userId, { preferUnlocked: true, limit: 100 })
-  return toUnlocked(data.data).filter((item) => !previouslyUnlocked.has(item.achievementCode))
+  const unlocked = await getUnlockedAchievements(userId, accessToken)
+  return unlocked.filter((item) => !previouslyUnlocked.has(item.achievementCode))
 }

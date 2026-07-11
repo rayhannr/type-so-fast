@@ -1,8 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { CaretTrail } from './CaretTrail'
-import { CaretPosition } from './CaretTrail'
+import { CaretTrail, CaretPosition } from './CaretTrail'
 
 type Props = {
   words: string[]

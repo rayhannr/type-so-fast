@@ -1,9 +1,7 @@
 'use client'
 
-import { useEffect, useReducer, useState, useMemo, useRef, useCallback } from 'react'
-import { ChangeEvent, InputEvent, KeyboardEvent } from 'react'
-import { generateWords } from '@/lib/word-generators'
-import { WordMode } from '@/lib/word-generators'
+import { useEffect, useReducer, useState, useRef, useCallback } from 'react'
+import { generateWords, WordMode } from '@/lib/word-generators'
 
 import { WordContainer } from './WordContainer'
 import { Input } from './Input'
@@ -12,14 +10,13 @@ import { Timer } from './Timer'
 import { RestartButton } from './RestartButton'
 import { AchievementToast } from './AchievementToast'
 import { TypingHands } from './TypingHands'
-import { Keystroke } from './TypingHands'
-import { DurationSelector } from './DurationSelector'
-import { Duration } from './DurationSelector'
+import { DurationSelector, Duration } from './DurationSelector'
 import { ModeSelector } from './ModeSelector'
 
 import { useAgsSessionContext } from '@/lib/ags/AgsSessionContext'
 import { useGameEndSync } from '@/hooks/useGameEndSync'
-import { playKeyClick, playErrorBuzz, playWordChime } from '@/lib/sounds'
+import { useTypingInput } from '@/hooks/useTypingInput'
+import { useTabRestart } from '@/hooks/useTabRestart'
 import { gameReducer, createInitialState } from '@/lib/gameReducer'
 
 const numberOfWords = 400
@@ -29,7 +26,6 @@ export const SoloGame = () => {
   const [duration, setDuration] = useState<Duration>(60)
   const [mode, setMode] = useState<WordMode>('words')
   const [hasStarted, setHasStarted] = useState(false)
-  const [capsLockOn, setCapsLockOn] = useState(false)
 
   const { session, displayName } = useAgsSessionContext()
 
@@ -45,12 +41,9 @@ export const SoloGame = () => {
     displayName,
   })
 
-  const currentWord: string = useMemo(() => state.words[0], [state.words])
-
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const hasStartedRef = useRef<boolean>(false)
   const inputRef = useRef<HTMLInputElement | null>(null)
-  const keystrokeRef = useRef<Keystroke>({ id: 0, char: '' })
 
   // words are generated client-side only (random), so the initial fill happens in an effect
   useEffect(() => {
@@ -61,7 +54,10 @@ export const SoloGame = () => {
     inputRef.current?.focus()
   }, [])
 
-  const timerHandler = () => {
+  const onFirstKeystroke = () => {
+    if (hasStartedRef.current) return
+    hasStartedRef.current = true
+    setHasStarted(true)
     let timesLeft: number = state.timer
     intervalRef.current = setInterval(() => {
       timesLeft -= 1
@@ -73,49 +69,11 @@ export const SoloGame = () => {
     }, 1000)
   }
 
-  const changeHandler = (event: ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value
-    if (value.endsWith(' ') && value.slice(0, -1) === currentWord) playWordChime()
-    dispatch({ type: 'INPUT_CHANGE', value, currentWord })
-  }
-
-  const inputHandler = (event: InputEvent<HTMLInputElement>) => {
-    // the InputEvent type declares `data` on the synthetic event, but at runtime
-    // React still only populates it on the underlying native event
-    const currentKey = event.nativeEvent.data
-    if (currentKey?.length === 1) {
-      keystrokeRef.current = { id: keystrokeRef.current.id + 1, char: currentKey }
-
-      if (currentKey !== ' ') {
-        if (!hasStartedRef.current) {
-          hasStartedRef.current = true
-          setHasStarted(true)
-          timerHandler()
-        }
-
-        if (state.isInputCorrect) playKeyClick()
-        else playErrorBuzz()
-
-        // past the word's end the player should have pressed space, so the miss lands there
-        const position = state.wordInput.length
-        const expectedChar = currentWord && position < currentWord.length ? currentWord[position] : ' '
-        dispatch({
-          type: 'KEYSTROKE',
-          correct: state.isInputCorrect,
-          missedChar: currentKey === expectedChar ? undefined : expectedChar,
-        })
-      }
-    }
-
-    if (event.nativeEvent.inputType === 'deleteContentBackward') {
-      keystrokeRef.current = { id: keystrokeRef.current.id + 1, char: '\b' }
-      dispatch({ type: 'BACKSPACE' })
-    }
-  }
-
-  const keyDownHandler = (event: KeyboardEvent<HTMLInputElement>) => {
-    setCapsLockOn(event.getModifierState('CapsLock'))
-  }
+  const { keystrokeRef, capsLockOn, changeHandler, inputHandler, keyDownHandler } = useTypingInput(
+    state,
+    dispatch,
+    onFirstKeystroke
+  )
 
   const restartHandler = useCallback(() => {
     clearInterval(intervalRef.current!)
@@ -141,31 +99,7 @@ export const SoloGame = () => {
     dispatch({ type: 'RESTART', words: generateWords(nextMode, numberOfWords), duration })
   }
 
-  useEffect(() => {
-    const handleGlobalKeyDown = (event: globalThis.KeyboardEvent) => {
-      if (event.key === 'Tab') {
-        event.preventDefault()
-        restartHandler()
-        return
-      }
-
-      // focusing here (before the browser's default insert action runs) means the
-      // keystroke that triggered this still lands in the input, so typing works
-      // without clicking into it first
-      const active = document.activeElement
-      const isEditableElsewhere =
-        active instanceof HTMLElement &&
-        active !== inputRef.current &&
-        (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable)
-      if (isEditableElsewhere) return
-
-      if (/^[a-zA-Z0-9]$/.test(event.key) && document.activeElement !== inputRef.current) {
-        inputRef.current?.focus()
-      }
-    }
-    window.addEventListener('keydown', handleGlobalKeyDown)
-    return () => window.removeEventListener('keydown', handleGlobalKeyDown)
-  }, [restartHandler])
+  useTabRestart(restartHandler, inputRef)
 
   const elapsed = state.duration - state.timer
   const liveWpm = elapsed > 0 ? (state.correctKeystroke * 12) / elapsed : 0

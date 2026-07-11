@@ -1,9 +1,7 @@
 'use client'
 
-import { useEffect, useMemo, useReducer, useRef, useState, useCallback } from 'react'
-import { ChangeEvent, FormEvent, InputEvent, KeyboardEvent } from 'react'
-import { generateWords } from '@/lib/word-generators'
-import { WordMode } from '@/lib/word-generators'
+import { useEffect, useMemo, useReducer, useRef, useState, useCallback, FormEvent } from 'react'
+import { generateWords, WordMode } from '@/lib/word-generators'
 
 import { WordContainer } from './WordContainer'
 import { Input } from './Input'
@@ -12,15 +10,13 @@ import { Timer } from './Timer'
 import { RestartButton } from './RestartButton'
 import { AchievementToast } from './AchievementToast'
 import { TypingHands } from './TypingHands'
-import { Keystroke } from './TypingHands'
-import { DurationSelector } from './DurationSelector'
-import { Duration } from './DurationSelector'
+import { DurationSelector, Duration } from './DurationSelector'
 import { ModeSelector } from './ModeSelector'
 
 import { useAgsSessionContext } from '@/lib/ags/AgsSessionContext'
 import { useGameEndSync } from '@/hooks/useGameEndSync'
 import { useRoomChannel } from '@/hooks/useRoomChannel'
-import { playKeyClick, playErrorBuzz, playWordChime } from '@/lib/sounds'
+import { useTypingInput } from '@/hooks/useTypingInput'
 import { gameReducer, createInitialState } from '@/lib/gameReducer'
 import {
   useCreateRoomMutation,
@@ -44,7 +40,6 @@ export const RoomGame = () => {
   const [sessionId, setSessionId] = useState('')
   const [codeInput, setCodeInput] = useState('')
   const [joinError, setJoinError] = useState<string | null>(null)
-  const [capsLockOn, setCapsLockOn] = useState(false)
 
   const [state, dispatch] = useReducer(gameReducer, [], () => createInitialState([]))
   const createRoom = useCreateRoomMutation(session)
@@ -99,7 +94,6 @@ export const RoomGame = () => {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const inputRef = useRef<HTMLInputElement | null>(null)
   const raceStartRef = useRef<number | null>(null)
-  const keystrokeRef = useRef<Keystroke>({ id: 0, char: '' })
 
   // one-time seed guard: host seeds on start, joiners via room:start (or the attributes poll)
   const hasSeededWordsRef = useRef(false)
@@ -207,39 +201,7 @@ export const RoomGame = () => {
     dispatch({ type: 'RESTART', words: [], duration })
   }, [duration])
 
-  const changeHandler = (event: ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value
-    const currentWord = state.words[0]
-    if (value.endsWith(' ') && value.slice(0, -1) === currentWord) playWordChime()
-    dispatch({ type: 'INPUT_CHANGE', value, currentWord })
-  }
-
-  const inputHandler = (event: InputEvent<HTMLInputElement>) => {
-    const currentWord = state.words[0]
-    const currentKey = event.nativeEvent.data
-    if (currentKey?.length === 1) {
-      keystrokeRef.current = { id: keystrokeRef.current.id + 1, char: currentKey }
-      if (currentKey !== ' ') {
-        if (state.isInputCorrect) playKeyClick()
-        else playErrorBuzz()
-        const position = state.wordInput.length
-        const expectedChar = currentWord && position < currentWord.length ? currentWord[position] : ' '
-        dispatch({
-          type: 'KEYSTROKE',
-          correct: state.isInputCorrect,
-          missedChar: currentKey === expectedChar ? undefined : expectedChar,
-        })
-      }
-    }
-    if (event.nativeEvent.inputType === 'deleteContentBackward') {
-      keystrokeRef.current = { id: keystrokeRef.current.id + 1, char: '\b' }
-      dispatch({ type: 'BACKSPACE' })
-    }
-  }
-
-  const keyDownHandler = (event: KeyboardEvent<HTMLInputElement>) => {
-    setCapsLockOn(event.getModifierState('CapsLock'))
-  }
+  const { keystrokeRef, capsLockOn, changeHandler, inputHandler, keyDownHandler } = useTypingInput(state, dispatch)
 
   if (phase === 'entry') {
     return (

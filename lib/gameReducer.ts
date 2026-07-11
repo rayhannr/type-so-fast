@@ -1,6 +1,11 @@
 import { WpmSample } from '@/components/SpeedCurve'
 import { WordStat } from '@/components/AccuracyBreakdown'
 
+export interface Keystroke {
+  id: number
+  char: string
+}
+
 export interface GameState {
   words: string[]
   wordInput: string

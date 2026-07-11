@@ -3,156 +3,65 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { GameHistoryEntry, StreakData, ProgressionData, PvcData, PvpData, RoomData } from '@/lib/progress'
 import { authHeaders, readLocal, writeLocal, AgsSession } from './shared'
 
-export const useRecordsQuery = (session: AgsSession | null) =>
-  useQuery({
-    queryKey: ['records', session?.userId ?? 'local'],
-    queryFn: () =>
-      session
-        ? axios.get<number[]>('/api/records', { headers: authHeaders(session) }).then((res) => res.data)
-        : Promise.resolve(readLocal<number[]>('bestRecords', [])),
-    initialData: session ? undefined : () => readLocal<number[]>('bestRecords', []),
-  })
+// a cloud-save resource is read from `url` and cached under `queryKey` when signed in, or
+// falls back to `localStorageKey` in localStorage otherwise; `bodyKey` is the field name the
+// PUT endpoint expects the value under
+const makeCloudSaveResource = <T,>(queryKey: string, url: string, localStorageKey: string, defaultValue: T, bodyKey: string) => {
+  const useResourceQuery = (session: AgsSession | null) =>
+    useQuery({
+      queryKey: [queryKey, session?.userId ?? 'local'],
+      queryFn: () =>
+        session
+          ? axios.get<T>(url, { headers: authHeaders(session) }).then((res) => res.data)
+          : Promise.resolve(readLocal<T>(localStorageKey, defaultValue)),
+      initialData: session ? undefined : () => readLocal<T>(localStorageKey, defaultValue),
+    })
 
-export const useSaveRecordsMutation = (session: AgsSession | null) => {
-  const queryClient = useQueryClient()
-  const key = ['records', session?.userId ?? 'local']
-  return useMutation({
-    mutationFn: async (records: number[]) => {
-      if (session) await axios.put('/api/records', { records }, { headers: authHeaders(session) })
-      else writeLocal('bestRecords', records)
-    },
-    onSuccess: (_, records) => queryClient.setQueryData(key, records),
-  })
+  const useSaveMutation = (session: AgsSession | null) => {
+    const queryClient = useQueryClient()
+    const key = [queryKey, session?.userId ?? 'local']
+    return useMutation({
+      mutationFn: async (value: T) => {
+        if (session) await axios.put(url, { [bodyKey]: value }, { headers: authHeaders(session) })
+        else writeLocal(localStorageKey, value)
+      },
+      onSuccess: (_, value) => queryClient.setQueryData(key, value),
+    })
+  }
+
+  return { useResourceQuery, useSaveMutation }
 }
 
-export const useHistoryQuery = (session: AgsSession | null) =>
-  useQuery({
-    queryKey: ['history', session?.userId ?? 'local'],
-    queryFn: () =>
-      session
-        ? axios.get<GameHistoryEntry[]>('/api/history', { headers: authHeaders(session) }).then((res) => res.data)
-        : Promise.resolve(readLocal<GameHistoryEntry[]>('gameHistory', [])),
-    initialData: session ? undefined : () => readLocal<GameHistoryEntry[]>('gameHistory', []),
-  })
+const recordsResource = makeCloudSaveResource<number[]>('records', '/api/records', 'bestRecords', [], 'records')
+export const useRecordsQuery = recordsResource.useResourceQuery
+export const useSaveRecordsMutation = recordsResource.useSaveMutation
 
-export const useSaveHistoryMutation = (session: AgsSession | null) => {
-  const queryClient = useQueryClient()
-  const key = ['history', session?.userId ?? 'local']
-  return useMutation({
-    mutationFn: async (entries: GameHistoryEntry[]) => {
-      if (session) await axios.put('/api/history', { entries }, { headers: authHeaders(session) })
-      else writeLocal('gameHistory', entries)
-    },
-    onSuccess: (_, entries) => queryClient.setQueryData(key, entries),
-  })
-}
+const historyResource = makeCloudSaveResource<GameHistoryEntry[]>('history', '/api/history', 'gameHistory', [], 'entries')
+export const useHistoryQuery = historyResource.useResourceQuery
+export const useSaveHistoryMutation = historyResource.useSaveMutation
 
-export const useStreakQuery = (session: AgsSession | null) =>
-  useQuery({
-    queryKey: ['streak', session?.userId ?? 'local'],
-    queryFn: () =>
-      session
-        ? axios.get<StreakData | null>('/api/streak', { headers: authHeaders(session) }).then((res) => res.data)
-        : Promise.resolve(readLocal<StreakData | null>('dailyStreak', null)),
-    initialData: session ? undefined : () => readLocal<StreakData | null>('dailyStreak', null),
-  })
+const streakResource = makeCloudSaveResource<StreakData | null>('streak', '/api/streak', 'dailyStreak', null, 'streak')
+export const useStreakQuery = streakResource.useResourceQuery
+export const useSaveStreakMutation = streakResource.useSaveMutation
 
-export const useSaveStreakMutation = (session: AgsSession | null) => {
-  const queryClient = useQueryClient()
-  const key = ['streak', session?.userId ?? 'local']
-  return useMutation({
-    mutationFn: async (streak: StreakData) => {
-      if (session) await axios.put('/api/streak', { streak }, { headers: authHeaders(session) })
-      else writeLocal('dailyStreak', streak)
-    },
-    onSuccess: (_, streak) => queryClient.setQueryData(key, streak),
-  })
-}
+const progressionResource = makeCloudSaveResource<ProgressionData | null>(
+  'progression',
+  '/api/progression',
+  'progression',
+  null,
+  'progression'
+)
+export const useProgressionQuery = progressionResource.useResourceQuery
+export const useSaveProgressionMutation = progressionResource.useSaveMutation
 
-export const useProgressionQuery = (session: AgsSession | null) =>
-  useQuery({
-    queryKey: ['progression', session?.userId ?? 'local'],
-    queryFn: () =>
-      session
-        ? axios.get<ProgressionData | null>('/api/progression', { headers: authHeaders(session) }).then((res) => res.data)
-        : Promise.resolve(readLocal<ProgressionData | null>('progression', null)),
-    initialData: session ? undefined : () => readLocal<ProgressionData | null>('progression', null),
-  })
+const pvcProgressResource = makeCloudSaveResource<PvcData | null>('pvcProgress', '/api/pvc-progress', 'pvcProgress', null, 'pvc')
+export const usePvcProgressQuery = pvcProgressResource.useResourceQuery
+export const useSavePvcProgressMutation = pvcProgressResource.useSaveMutation
 
-export const useSaveProgressionMutation = (session: AgsSession | null) => {
-  const queryClient = useQueryClient()
-  const key = ['progression', session?.userId ?? 'local']
-  return useMutation({
-    mutationFn: async (progression: ProgressionData) => {
-      if (session) await axios.put('/api/progression', { progression }, { headers: authHeaders(session) })
-      else writeLocal('progression', progression)
-    },
-    onSuccess: (_, progression) => queryClient.setQueryData(key, progression),
-  })
-}
+const pvpProgressResource = makeCloudSaveResource<PvpData | null>('pvpProgress', '/api/pvp-progress', 'pvpProgress', null, 'pvp')
+export const usePvpProgressQuery = pvpProgressResource.useResourceQuery
+export const useSavePvpProgressMutation = pvpProgressResource.useSaveMutation
 
-export const usePvcProgressQuery = (session: AgsSession | null) =>
-  useQuery({
-    queryKey: ['pvcProgress', session?.userId ?? 'local'],
-    queryFn: () =>
-      session
-        ? axios.get<PvcData | null>('/api/pvc-progress', { headers: authHeaders(session) }).then((res) => res.data)
-        : Promise.resolve(readLocal<PvcData | null>('pvcProgress', null)),
-    initialData: session ? undefined : () => readLocal<PvcData | null>('pvcProgress', null),
-  })
-
-export const useSavePvcProgressMutation = (session: AgsSession | null) => {
-  const queryClient = useQueryClient()
-  const key = ['pvcProgress', session?.userId ?? 'local']
-  return useMutation({
-    mutationFn: async (pvc: PvcData) => {
-      if (session) await axios.put('/api/pvc-progress', { pvc }, { headers: authHeaders(session) })
-      else writeLocal('pvcProgress', pvc)
-    },
-    onSuccess: (_, pvc) => queryClient.setQueryData(key, pvc),
-  })
-}
-
-export const usePvpProgressQuery = (session: AgsSession | null) =>
-  useQuery({
-    queryKey: ['pvpProgress', session?.userId ?? 'local'],
-    queryFn: () =>
-      session
-        ? axios.get<PvpData | null>('/api/pvp-progress', { headers: authHeaders(session) }).then((res) => res.data)
-        : Promise.resolve(readLocal<PvpData | null>('pvpProgress', null)),
-    initialData: session ? undefined : () => readLocal<PvpData | null>('pvpProgress', null),
-  })
-
-export const useSavePvpProgressMutation = (session: AgsSession | null) => {
-  const queryClient = useQueryClient()
-  const key = ['pvpProgress', session?.userId ?? 'local']
-  return useMutation({
-    mutationFn: async (pvp: PvpData) => {
-      if (session) await axios.put('/api/pvp-progress', { pvp }, { headers: authHeaders(session) })
-      else writeLocal('pvpProgress', pvp)
-    },
-    onSuccess: (_, pvp) => queryClient.setQueryData(key, pvp),
-  })
-}
-
-export const useRoomProgressQuery = (session: AgsSession | null) =>
-  useQuery({
-    queryKey: ['roomProgress', session?.userId ?? 'local'],
-    queryFn: () =>
-      session
-        ? axios.get<RoomData | null>('/api/room-progress', { headers: authHeaders(session) }).then((res) => res.data)
-        : Promise.resolve(readLocal<RoomData | null>('roomProgress', null)),
-    initialData: session ? undefined : () => readLocal<RoomData | null>('roomProgress', null),
-  })
-
-export const useSaveRoomProgressMutation = (session: AgsSession | null) => {
-  const queryClient = useQueryClient()
-  const key = ['roomProgress', session?.userId ?? 'local']
-  return useMutation({
-    mutationFn: async (room: RoomData) => {
-      if (session) await axios.put('/api/room-progress', { room }, { headers: authHeaders(session) })
-      else writeLocal('roomProgress', room)
-    },
-    onSuccess: (_, room) => queryClient.setQueryData(key, room),
-  })
-}
+const roomProgressResource = makeCloudSaveResource<RoomData | null>('roomProgress', '/api/room-progress', 'roomProgress', null, 'room')
+export const useRoomProgressQuery = roomProgressResource.useResourceQuery
+export const useSaveRoomProgressMutation = roomProgressResource.useSaveMutation

@@ -1,7 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
-import { RefObject } from 'react'
+import { useEffect, useRef, RefObject } from 'react'
 import {
   AmbientLight,
   BoxGeometry,
@@ -14,11 +13,7 @@ import {
   Scene,
   WebGLRenderer,
 } from 'three'
-
-export interface Keystroke {
-  id: number
-  char: string
-}
+import { Keystroke } from '@/lib/gameReducer'
 
 interface Props {
   keystrokeRef: RefObject<Keystroke>

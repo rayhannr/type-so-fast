@@ -58,7 +58,7 @@ export const useGameEndSync = ({
   room,
 }: GameEndParams) => {
   const [xpGain, setXpGain] = useState<XpGain | null>(null)
-  const [newAchievement, setNewAchievement] = useState<UnlockedAchievement | null>(null)
+  const [achievementQueue, setAchievementQueue] = useState<UnlockedAchievement[]>([])
   const hasSavedRef = useRef(false)
 
   const records = useRecordsQuery(session)
@@ -166,7 +166,7 @@ export const useGameEndSync = ({
             {
               onSuccess: (newlyUnlocked) => {
                 if (newlyUnlocked.length === 0) return
-                setNewAchievement(newlyUnlocked[0])
+                setAchievementQueue((queue) => queue.concat(newlyUnlocked))
               },
             }
           )
@@ -175,5 +175,9 @@ export const useGameEndSync = ({
     )
   }, [timer, correctKeystroke])
 
-  return { xpGain, newAchievement, dismissAchievement: () => setNewAchievement(null) }
+  return {
+    xpGain,
+    newAchievement: achievementQueue[0] ?? null,
+    dismissAchievement: () => setAchievementQueue((queue) => queue.slice(1)),
+  }
 }
