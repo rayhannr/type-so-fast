@@ -61,8 +61,24 @@ export const TypingHands = ({ keystrokeRef, gameOver }: Props) => {
 
     const scene = new Scene()
     const camera = new PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 50)
-    camera.position.set(0, 6.5, 7)
-    camera.lookAt(0, 0, 0.3)
+
+    // the keyboard has a fixed world width, so on narrow (portrait-ish) viewports
+    // the horizontal FOV isn't wide enough to fit it — dolly the camera back along
+    // its view direction as the aspect drops below BASE_ASPECT so it keeps fitting
+    const BASE_ASPECT = 16 / 9
+    const CAMERA_TARGET = { x: 0, y: 0, z: 0.3 }
+    const CAMERA_OFFSET = { x: 0, y: 6.5, z: 6.7 }
+    const positionCamera = () => {
+      const aspect = window.innerWidth / window.innerHeight
+      const dolly = aspect < BASE_ASPECT ? BASE_ASPECT / aspect : 1
+      camera.position.set(
+        CAMERA_TARGET.x + CAMERA_OFFSET.x * dolly,
+        CAMERA_TARGET.y + CAMERA_OFFSET.y * dolly,
+        CAMERA_TARGET.z + CAMERA_OFFSET.z * dolly
+      )
+      camera.lookAt(CAMERA_TARGET.x, CAMERA_TARGET.y, CAMERA_TARGET.z)
+    }
+    positionCamera()
 
     const renderer = new WebGLRenderer({ alpha: true, antialias: true })
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
@@ -216,6 +232,7 @@ export const TypingHands = ({ keystrokeRef, gameOver }: Props) => {
     const resizeHandler = () => {
       camera.aspect = window.innerWidth / window.innerHeight
       camera.updateProjectionMatrix()
+      positionCamera()
       renderer.setSize(window.innerWidth, window.innerHeight)
     }
     window.addEventListener('resize', resizeHandler)
