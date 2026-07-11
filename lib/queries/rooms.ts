@@ -48,6 +48,7 @@ export const useSetRoomAttributesMutation = (session: AgsSession | null) => {
 const joinRoomErrorMessages: Record<number, string> = {
   20077: "That code isn't valid — double-check it and try again.", // JoinNotAllowedInvalidCode
   20052: 'Invalid or expired code — check with the host and try again.', // SessionCodeNotFound
+  20032: 'Join session is not allowed — Session is full',
 }
 
 export const joinRoomErrorMessage = (error: unknown): string =>
