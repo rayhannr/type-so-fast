@@ -1,7 +1,7 @@
 import { LeaderboardDataV3Api } from '@accelbyte/sdk-leaderboard'
-import { createSdk } from './sdk'
 import { Duration } from '@/components/DurationSelector'
 import { WordMode } from '@/lib/word-generators'
+import { createSdk } from './sdk'
 
 export const LEADERBOARD_CODE = 'wpm-alltime'
 export const XP_LEADERBOARD_CODE = 'xp-alltime'
@@ -14,20 +14,20 @@ const DURATION_LEADERBOARD_CODE: Record<Duration, string> = {
   15: 'wpm-15s',
   30: 'wpm-30s',
   60: 'wpm-60s',
-  120: 'wpm-120s',
+  120: 'wpm-120s'
 }
 
 const MODE_LEADERBOARD_CODE: Record<LeaderboardRange, Record<WordMode, string>> = {
   alltime: {
     words: 'wpm-alltime',
     numbers: 'wpm-alltime-numbers',
-    punctuation: 'wpm-alltime-punctuation',
+    punctuation: 'wpm-alltime-punctuation'
   },
   weekly: {
     words: 'wpm-weekly-words',
     numbers: 'wpm-weekly-numbers',
-    punctuation: 'wpm-weekly-punctuation',
-  },
+    punctuation: 'wpm-weekly-punctuation'
+  }
 }
 
 export const getDurationLeaderboardCode = (duration: Duration): string => DURATION_LEADERBOARD_CODE[duration]
@@ -48,7 +48,7 @@ const mapEntries = (data: { additionalData: Record<string, unknown>; point: numb
     rank: index + 1,
     userId: entry.userId,
     displayName: (entry.additionalData?.displayName as string | undefined) ?? entry.userId.slice(0, 8),
-    wpm: entry.point,
+    wpm: entry.point
   }))
 
 export const getTopLeaderboard = async (

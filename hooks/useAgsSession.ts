@@ -32,7 +32,7 @@ export const useAgsSession = (): AgsSessionState => {
     hasInitialized.current = true
 
     // AGS unavailable; game still works via localStorage fallbacks with session left null
-    loginMutation.mutate(getDeviceId(), { onSuccess: setSession, onError: () => { } })
+    loginMutation.mutate(getDeviceId(), { onSuccess: setSession, onError: () => {} })
   }, [])
 
   const displayName = useDisplayNameQuery(session)

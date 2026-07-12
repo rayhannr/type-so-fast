@@ -1,13 +1,13 @@
-import axios from 'axios'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import axios from 'axios'
 import { PersonalStats, GameResultStats } from '@/lib/ags/statistics'
 import { authHeaders, AgsSession } from './shared'
 
 export const useStatsQuery = (session: AgsSession | null) =>
   useQuery({
     queryKey: ['stats', session?.userId ?? ''],
-    queryFn: () => axios.get<PersonalStats>('/api/stats', { headers: authHeaders(session!) }).then((res) => res.data),
-    enabled: !!session,
+    queryFn: () => axios.get<PersonalStats>('/api/stats', { headers: authHeaders(session!) }).then(res => res.data),
+    enabled: !!session
   })
 
 // stats submission also moves the leaderboard, and the server computes the real
@@ -19,6 +19,6 @@ export const useSubmitStatsMutation = (session: AgsSession | null) => {
     onSuccess: () => {
       if (session) queryClient.invalidateQueries({ queryKey: ['stats', session.userId] })
       queryClient.invalidateQueries({ queryKey: ['leaderboard'] })
-    },
+    }
   })
 }

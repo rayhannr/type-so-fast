@@ -35,7 +35,7 @@ export const useTypingInput = (state: GameState, dispatch: Dispatch<GameAction>,
         dispatch({
           type: 'KEYSTROKE',
           correct: state.isInputCorrect,
-          missedChar: currentKey === expectedChar ? undefined : expectedChar,
+          missedChar: currentKey === expectedChar ? undefined : expectedChar
         })
       }
     }

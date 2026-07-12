@@ -1,12 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { AgsSession } from '@/lib/queries/shared'
-import { UnlockedAchievement } from '@/lib/ags/achievements'
-import { XpGain } from '@/components/Result'
 import { Duration } from '@/components/DurationSelector'
-import { WordMode } from '@/lib/word-generators'
-import { advanceStreak, advanceProgression, advancePvc, advancePvp, advanceRoom, levelFromXp, HISTORY_LIMIT } from '@/lib/progress'
+import { XpGain } from '@/components/Result'
+import { UnlockedAchievement } from '@/lib/ags/achievements'
 import { Difficulty } from '@/lib/botDifficulty'
-import { playFanfare } from '@/lib/sounds'
+import { advanceStreak, advanceProgression, advancePvc, advancePvp, advanceRoom, levelFromXp, HISTORY_LIMIT } from '@/lib/progress'
+import { useAchievementsQuery, useProcessAchievementsMutation } from '@/lib/queries/achievements'
 import {
   useRecordsQuery,
   useHistoryQuery,
@@ -21,10 +19,12 @@ import {
   useSaveProgressionMutation,
   useSavePvcProgressMutation,
   useSavePvpProgressMutation,
-  useSaveRoomProgressMutation,
+  useSaveRoomProgressMutation
 } from '@/lib/queries/cloudsave'
+import { AgsSession } from '@/lib/queries/shared'
 import { useSubmitStatsMutation } from '@/lib/queries/statistics'
-import { useAchievementsQuery, useProcessAchievementsMutation } from '@/lib/queries/achievements'
+import { playFanfare } from '@/lib/sounds'
+import { WordMode } from '@/lib/word-generators'
 
 interface GameEndParams {
   timer: number
@@ -55,7 +55,7 @@ export const useGameEndSync = ({
   displayName,
   pvc,
   pvp,
-  room,
+  room
 }: GameEndParams) => {
   const [xpGain, setXpGain] = useState<XpGain | null>(null)
   const [achievementQueue, setAchievementQueue] = useState<UnlockedAchievement[]>([])
@@ -111,13 +111,13 @@ export const useGameEndSync = ({
     const {
       progression: newProgression,
       earnedXp,
-      leveledUp,
+      leveledUp
     } = advanceProgression(progression.data ?? null, {
       wpm: userResult,
       accuracy,
       wordsTyped: correctWords,
       mode,
-      duration,
+      duration
     })
     setXpGain({ earned: earnedXp, totalXp: newProgression.xp, leveledUp })
 
@@ -145,7 +145,7 @@ export const useGameEndSync = ({
         duration,
         mode,
         xpEarned: earnedXp,
-        level: levelFromXp(newProgression.xp),
+        level: levelFromXp(newProgression.xp)
       },
       {
         // stat-tied achievements (first-game, speed tiers, level/volume milestones) unlock
@@ -161,16 +161,16 @@ export const useGameEndSync = ({
               durationsPlayed: newProgression.durationsPlayed,
               pvc: pvc && newPvcProgress ? { difficulty: pvc.difficulty, won: pvc.won, pvcProgress: newPvcProgress } : undefined,
               pvp: pvp && newPvpProgress ? { outcome: pvp.outcome, pvpProgress: newPvpProgress } : undefined,
-              room: room && newRoomProgress ? { won: room.won, fullHouse: room.fullHouse, roomProgress: newRoomProgress } : undefined,
+              room: room && newRoomProgress ? { won: room.won, fullHouse: room.fullHouse, roomProgress: newRoomProgress } : undefined
             },
             {
-              onSuccess: (newlyUnlocked) => {
+              onSuccess: newlyUnlocked => {
                 if (newlyUnlocked.length === 0) return
-                setAchievementQueue((queue) => queue.concat(newlyUnlocked))
-              },
+                setAchievementQueue(queue => queue.concat(newlyUnlocked))
+              }
             }
           )
-        },
+        }
       }
     )
   }, [timer, correctKeystroke])
@@ -178,6 +178,6 @@ export const useGameEndSync = ({
   return {
     xpGain,
     newAchievement: achievementQueue[0] ?? null,
-    dismissAchievement: () => setAchievementQueue((queue) => queue.slice(1)),
+    dismissAchievement: () => setAchievementQueue(queue => queue.slice(1))
   }
 }

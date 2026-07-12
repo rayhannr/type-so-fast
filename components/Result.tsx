@@ -1,14 +1,14 @@
-import { SpeedCurve } from './SpeedCurve'
-import { WpmBurst } from './WpmBurst'
-import { KeyHeatmap } from './KeyHeatmap'
-import { AccuracyBreakdown } from './AccuracyBreakdown'
-import { ShareCard } from './ShareCard'
-import { LevelBadge } from './LevelBadge'
+import { GameState } from '@/lib/gameReducer'
 import { levelFromXp } from '@/lib/progress'
 import { useRecordsQuery, useSaveRecordsMutation } from '@/lib/queries/cloudsave'
-import { useStatsQuery } from '@/lib/queries/statistics'
 import { AgsSession } from '@/lib/queries/shared'
-import { GameState } from '@/lib/gameReducer'
+import { useStatsQuery } from '@/lib/queries/statistics'
+import { AccuracyBreakdown } from './AccuracyBreakdown'
+import { KeyHeatmap } from './KeyHeatmap'
+import { LevelBadge } from './LevelBadge'
+import { ShareCard } from './ShareCard'
+import { SpeedCurve } from './SpeedCurve'
+import { WpmBurst } from './WpmBurst'
 
 export interface XpGain {
   earned: number

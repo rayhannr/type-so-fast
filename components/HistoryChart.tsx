@@ -13,14 +13,13 @@ const M = { top: 16, right: 16, bottom: 24, left: 32 }
 const PLOT_W = W - M.left - M.right
 const PLOT_H = H - M.top - M.bottom
 
-const formatDate = (timestamp: number) =>
-  new Date(timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+const formatDate = (timestamp: number) => new Date(timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 
 export const HistoryChart = ({ history }: Props) => {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null)
 
   const yMax = useMemo(() => {
-    const max = Math.max(0, ...history.map((entry) => entry.wpm))
+    const max = Math.max(0, ...history.map(entry => entry.wpm))
     return Math.max(40, Math.ceil(max / 20) * 20)
   }, [history])
 
@@ -34,7 +33,7 @@ export const HistoryChart = ({ history }: Props) => {
   const linePath = history.map((entry, i) => `${i === 0 ? 'M' : 'L'}${x(i)},${y(entry.wpm)}`).join(' ')
   const areaPath = `${linePath} L${x(history.length - 1)},${y(0)} L${x(0)},${y(0)} Z`
 
-  const yTicks = [0, 1, 2, 3, 4].map((i) => (yMax / 4) * i)
+  const yTicks = [0, 1, 2, 3, 4].map(i => (yMax / 4) * i)
   const lastPoint = history[history.length - 1]
 
   const indexFromClientX = (clientX: number, rect: DOMRect) => {
@@ -51,7 +50,7 @@ export const HistoryChart = ({ history }: Props) => {
     if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return
     event.preventDefault()
     const delta = event.key === 'ArrowLeft' ? -1 : 1
-    setHoverIndex((prev) => Math.min(history.length - 1, Math.max(0, (prev ?? history.length - 1) + delta)))
+    setHoverIndex(prev => Math.min(history.length - 1, Math.max(0, (prev ?? history.length - 1) + delta)))
   }
 
   const hovered = hoverIndex !== null ? history[hoverIndex] : null
@@ -70,10 +69,17 @@ export const HistoryChart = ({ history }: Props) => {
         onKeyDown={keyHandler}
         onBlur={() => setHoverIndex(null)}
       >
-        {yTicks.map((tick) => (
+        {yTicks.map(tick => (
           <g key={tick}>
             <line x1={M.left} x2={W - M.right} y1={y(tick)} y2={y(tick)} stroke="var(--border)" strokeWidth="1" />
-            <text x={M.left - 6} y={y(tick) + 3} textAnchor="end" fontSize="9" fill="var(--text-muted)" style={{ fontVariantNumeric: 'tabular-nums' }}>
+            <text
+              x={M.left - 6}
+              y={y(tick) + 3}
+              textAnchor="end"
+              fontSize="9"
+              fill="var(--text-muted)"
+              style={{ fontVariantNumeric: 'tabular-nums' }}
+            >
               {tick}
             </text>
           </g>
@@ -101,11 +107,10 @@ export const HistoryChart = ({ history }: Props) => {
           style={{
             left: `${(hoveredX / W) * 100}%`,
             top: 0,
-            transform: `translateX(${hoverIndex! > (history.length - 1) * 0.75 ? '-100%' : hoverIndex! < (history.length - 1) * 0.25 ? '0' : '-50%'})`,
+            transform: `translateX(${hoverIndex! > (history.length - 1) * 0.75 ? '-100%' : hoverIndex! < (history.length - 1) * 0.25 ? '0' : '-50%'})`
           }}
         >
-          <span className="font-bold">{hovered.wpm} WPM</span>{' '}
-          <span className="text-muted">on {formatDate(hovered.timestamp)}</span>
+          <span className="font-bold">{hovered.wpm} WPM</span> <span className="text-muted">on {formatDate(hovered.timestamp)}</span>
         </div>
       )}
 
@@ -118,7 +123,7 @@ export const HistoryChart = ({ history }: Props) => {
           </tr>
         </thead>
         <tbody>
-          {history.map((entry) => (
+          {history.map(entry => (
             <tr key={entry.timestamp}>
               <td>{formatDate(entry.timestamp)}</td>
               <td>{entry.wpm}</td>

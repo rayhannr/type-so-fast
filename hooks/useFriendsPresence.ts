@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import Pusher from 'pusher-js'
 import { PresenceChannel } from 'pusher-js'
+import { useEffect, useState } from 'react'
 import { AgsSession } from '@/lib/queries/shared'
 
 const PRESENCE_CHANNEL = 'presence-online-users'
@@ -20,8 +20,8 @@ export const useFriendsPresence = (session: AgsSession | null): Set<string> => {
       channelAuthorization: {
         endpoint: '/api/pusher/auth',
         transport: 'ajax',
-        headers: { Authorization: `Bearer ${session.accessToken}`, 'X-User-Id': session.userId },
-      },
+        headers: { Authorization: `Bearer ${session.accessToken}`, 'X-User-Id': session.userId }
+      }
     })
 
     const channel = pusher.subscribe(PRESENCE_CHANNEL) as PresenceChannel

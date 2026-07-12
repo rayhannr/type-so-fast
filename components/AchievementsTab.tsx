@@ -11,15 +11,11 @@ export const AchievementsTab = ({ session }: Props) => {
 
   return (
     <div className="w-full max-w-2xl mx-auto mt-10">
-      {!isLoggedIn && (
-        <p className="text-center text-xs text-muted mb-6">Offline — progress is tracked once the game connects.</p>
-      )}
+      {!isLoggedIn && <p className="text-center text-xs text-muted mb-6">Offline — progress is tracked once the game connects.</p>}
       {achievements.isFetching && <p className="text-center text-xs text-muted mb-6">Loading achievements…</p>}
-      {achievements.isError && (
-        <p className="text-center text-xs text-muted mb-6">Couldn&apos;t load achievements — try again later.</p>
-      )}
+      {achievements.isError && <p className="text-center text-xs text-muted mb-6">Couldn&apos;t load achievements — try again later.</p>}
       <ul className="flex flex-col gap-3">
-        {(achievements.data ?? []).map((achievement) => (
+        {(achievements.data ?? []).map(achievement => (
           <li
             key={achievement.code}
             className={`flex flex-row items-center gap-4 rounded-lg border border-solid border-edge bg-surface px-4 py-3 ${

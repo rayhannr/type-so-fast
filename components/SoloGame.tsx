@@ -1,24 +1,24 @@
 'use client'
 
 import { useEffect, useReducer, useState, useRef, useCallback } from 'react'
-import { generateWords, WordMode } from '@/lib/word-generators'
 import { Language } from '@/constants/words'
+import { generateWords, WordMode } from '@/lib/word-generators'
 
-import { WordContainer } from './WordContainer'
+import { AchievementToast } from './AchievementToast'
+import { DurationSelector, Duration } from './DurationSelector'
 import { Input } from './Input'
+import { LanguageSelector } from './LanguageSelector'
+import { ModeSelector } from './ModeSelector'
+import { RestartButton } from './RestartButton'
 import { Result } from './Result'
 import { Timer } from './Timer'
-import { RestartButton } from './RestartButton'
-import { AchievementToast } from './AchievementToast'
 import { TypingHands } from './TypingHands'
-import { DurationSelector, Duration } from './DurationSelector'
-import { ModeSelector } from './ModeSelector'
-import { LanguageSelector } from './LanguageSelector'
+import { WordContainer } from './WordContainer'
 
-import { useAgsSessionContext } from '@/lib/ags/AgsSessionContext'
 import { useGameEndSync } from '@/hooks/useGameEndSync'
-import { useTypingInput } from '@/hooks/useTypingInput'
 import { useTabRestart } from '@/hooks/useTabRestart'
+import { useTypingInput } from '@/hooks/useTypingInput'
+import { useAgsSessionContext } from '@/lib/ags/AgsSessionContext'
 import { gameReducer, createInitialState } from '@/lib/gameReducer'
 
 const numberOfWords = 400
@@ -41,7 +41,7 @@ export const SoloGame = () => {
     duration,
     mode,
     session,
-    displayName,
+    displayName
   })
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -72,11 +72,7 @@ export const SoloGame = () => {
     }, 1000)
   }
 
-  const { keystrokeRef, capsLockOn, changeHandler, inputHandler, keyDownHandler } = useTypingInput(
-    state,
-    dispatch,
-    onFirstKeystroke
-  )
+  const { keystrokeRef, capsLockOn, changeHandler, inputHandler, keyDownHandler } = useTypingInput(state, dispatch, onFirstKeystroke)
 
   const restartHandler = useCallback(() => {
     clearInterval(intervalRef.current!)

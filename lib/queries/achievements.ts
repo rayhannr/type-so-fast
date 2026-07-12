@@ -1,8 +1,8 @@
-import axios from 'axios'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import axios from 'axios'
 import { UnlockedAchievement, AchievementInfo } from '@/lib/ags/achievements'
-import { PvcData, PvpData, RoomData } from '@/lib/progress'
 import { Difficulty } from '@/lib/botDifficulty'
+import { PvcData, PvpData, RoomData } from '@/lib/progress'
 import { authHeaders, AgsSession } from './shared'
 
 export interface AchievementContext {
@@ -22,11 +22,10 @@ const achievementsKey = (userId: string) => ['achievements', userId] as const
 export const useAchievementsQuery = (session: AgsSession | null) => {
   const query = useQuery({
     queryKey: achievementsKey(session?.userId ?? ''),
-    queryFn: () =>
-      axios.get<UnlockedAchievement[]>('/api/achievements', { headers: authHeaders(session!) }).then((res) => res.data),
-    enabled: !!session,
+    queryFn: () => axios.get<UnlockedAchievement[]>('/api/achievements', { headers: authHeaders(session!) }).then(res => res.data),
+    enabled: !!session
   })
-  return { ...query, data: new Set(query.data?.map((a) => a.achievementCode) ?? []) }
+  return { ...query, data: new Set(query.data?.map(a => a.achievementCode) ?? []) }
 }
 
 // full display list (name/description/unlocked) fetched live from AGS's achievement
@@ -34,20 +33,17 @@ export const useAchievementsQuery = (session: AgsSession | null) => {
 export const useAchievementListQuery = (session: AgsSession | null) =>
   useQuery({
     queryKey: ['achievementList', session?.userId ?? ''],
-    queryFn: () =>
-      axios.get<AchievementInfo[]>('/api/achievements/list', { headers: authHeaders(session!) }).then((res) => res.data),
-    enabled: !!session,
+    queryFn: () => axios.get<AchievementInfo[]>('/api/achievements/list', { headers: authHeaders(session!) }).then(res => res.data),
+    enabled: !!session
   })
 
 export const useProcessAchievementsMutation = (session: AgsSession | null) => {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (context: AchievementContext) =>
-      axios
-        .post<UnlockedAchievement[]>('/api/achievements', context, { headers: authHeaders(session!) })
-        .then((res) => res.data),
-    onSuccess: (newlyUnlocked) => {
+      axios.post<UnlockedAchievement[]>('/api/achievements', context, { headers: authHeaders(session!) }).then(res => res.data),
+    onSuccess: newlyUnlocked => {
       if (session && newlyUnlocked.length > 0) queryClient.invalidateQueries({ queryKey: achievementsKey(session.userId) })
-    },
+    }
   })
 }

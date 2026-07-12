@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import Pusher from 'pusher-js'
 import { useQueryClient } from '@tanstack/react-query'
-import { incomingFriendRequestsKey } from '@/lib/queries/social'
+import Pusher from 'pusher-js'
+import { useEffect, useState } from 'react'
 import { AgsSession } from '@/lib/queries/shared'
+import { incomingFriendRequestsKey } from '@/lib/queries/social'
 
 export interface PendingInvite {
   inviterUserId: string
@@ -43,8 +43,8 @@ export const usePendingInvite = (session: AgsSession | null): PendingInviteState
       channelAuthorization: {
         endpoint: '/api/pusher/auth',
         transport: 'ajax',
-        headers: { Authorization: `Bearer ${session.accessToken}`, 'X-User-Id': session.userId },
-      },
+        headers: { Authorization: `Bearer ${session.accessToken}`, 'X-User-Id': session.userId }
+      }
     })
 
     const channel = pusher.subscribe(`private-user-${session.userId}`)
@@ -69,6 +69,6 @@ export const usePendingInvite = (session: AgsSession | null): PendingInviteState
     connected,
     dismissInvite: () => setInvite(null),
     dismissAcceptedInvite: () => setAcceptedInvite(null),
-    dismissDeclined: () => setDeclined(false),
+    dismissDeclined: () => setDeclined(false)
   }
 }

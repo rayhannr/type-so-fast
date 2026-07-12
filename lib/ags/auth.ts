@@ -17,11 +17,11 @@ export const loginWithDeviceId = async (deviceId: string): Promise<AgsSession> =
     `${process.env.ACCELBYTE_BASE_URL}/iam/v3/oauth/platforms/device/token`,
     new URLSearchParams({
       device_id: deviceId,
-      create_headless: 'true',
+      create_headless: 'true'
     }),
     {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      auth: { username: process.env.ACCELBYTE_CLIENT_ID!, password: '' },
+      auth: { username: process.env.ACCELBYTE_CLIENT_ID!, password: '' }
     }
   )
 

@@ -1,11 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { useLeaderboardQuery } from '@/lib/queries/leaderboard'
 import { LeaderboardMetric, LeaderboardRange } from '@/lib/ags/leaderboard'
+import { useLeaderboardQuery } from '@/lib/queries/leaderboard'
+import { WordMode } from '@/lib/word-generators'
 import { DURATIONS, Duration } from './DurationSelector'
 import { ModeSelector } from './ModeSelector'
-import { WordMode } from '@/lib/word-generators'
 import { Podium3D } from './Podium3D'
 import { SelectorButtons } from './SelectorButtons'
 
@@ -27,7 +27,7 @@ export const Leaderboard = ({ currentUserId }: Props) => {
     metric,
     duration: metric === 'xp' || duration === 'all' ? null : duration,
     mode,
-    range,
+    range
   })
   const isReady = !leaderboard.isFetching && !leaderboard.isError
   const entries = leaderboard.data ?? []
@@ -43,7 +43,7 @@ export const Leaderboard = ({ currentUserId }: Props) => {
           active={metric}
           onChange={setMetric}
           ariaLabel="Metric filter"
-          getLabel={(m) => (m === 'wpm' ? 'WPM' : 'XP')}
+          getLabel={m => (m === 'wpm' ? 'WPM' : 'XP')}
         />
 
         {metric === 'wpm' && (
@@ -53,7 +53,7 @@ export const Leaderboard = ({ currentUserId }: Props) => {
               active={duration}
               onChange={setDuration}
               ariaLabel="Duration filter"
-              getLabel={(d) => (d === 'all' ? 'All' : `${d}s`)}
+              getLabel={d => (d === 'all' ? 'All' : `${d}s`)}
             />
 
             {duration === 'all' && (
@@ -64,7 +64,7 @@ export const Leaderboard = ({ currentUserId }: Props) => {
                   active={range}
                   onChange={setRange}
                   ariaLabel="Time range filter"
-                  getLabel={(r) => (r === 'alltime' ? 'All-time' : 'This week')}
+                  getLabel={r => (r === 'alltime' ? 'All-time' : 'This week')}
                 />
               </>
             )}
@@ -74,13 +74,11 @@ export const Leaderboard = ({ currentUserId }: Props) => {
 
       {leaderboard.isFetching && <p className="text-center text-sm text-muted py-8">Loading...</p>}
       {leaderboard.isError && <p className="text-center text-sm text-muted py-8">Couldn&apos;t load the leaderboard — try again later.</p>}
-      {isReady && entries.length === 0 && (
-        <p className="text-center text-sm text-muted py-8">No scores yet — be the first!</p>
-      )}
+      {isReady && entries.length === 0 && <p className="text-center text-sm text-muted py-8">No scores yet — be the first!</p>}
 
       {isReady && entries.length > 0 && (
         <>
-          <Podium3D records={top3.map((entry) => entry.wpm)} labels={top3.map((entry) => entry.displayName)} />
+          <Podium3D records={top3.map(entry => entry.wpm)} labels={top3.map(entry => entry.displayName)} />
 
           {rest.length > 0 && (
             <table className="w-full mt-8 text-sm border-collapse">
@@ -92,7 +90,7 @@ export const Leaderboard = ({ currentUserId }: Props) => {
                 </tr>
               </thead>
               <tbody>
-                {rest.map((entry) => {
+                {rest.map(entry => {
                   const isCurrentUser = entry.userId === currentUserId
                   return (
                     <tr

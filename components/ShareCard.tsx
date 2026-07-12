@@ -49,7 +49,7 @@ const renderCard = ({ wpm, accuracy, duration, displayName }: Props): HTMLCanvas
   const stats: [string, string][] = [
     ['accuracy', `${accuracy}%`],
     ['duration', `${duration}s`],
-    ['date', new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })],
+    ['date', new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })]
   ]
   let x = 80
   for (const [label, value] of stats) {
@@ -73,7 +73,7 @@ const renderCard = ({ wpm, accuracy, duration, displayName }: Props): HTMLCanvas
 
 const toBlob = (canvas: HTMLCanvasElement): Promise<Blob> =>
   new Promise((resolve, reject) => {
-    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('toBlob failed'))), 'image/png')
+    canvas.toBlob(blob => (blob ? resolve(blob) : reject(new Error('toBlob failed'))), 'image/png')
   })
 
 export const ShareCard = (props: Props) => {

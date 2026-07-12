@@ -1,7 +1,7 @@
-import { HistoryChart } from './HistoryChart'
-import { useStatsQuery } from '@/lib/queries/statistics'
 import { useHistoryQuery, useStreakQuery } from '@/lib/queries/cloudsave'
 import { AgsSession } from '@/lib/queries/shared'
+import { useStatsQuery } from '@/lib/queries/statistics'
+import { HistoryChart } from './HistoryChart'
 
 interface Props {
   session: AgsSession | null
@@ -22,9 +22,7 @@ export const StatsTab = ({ session }: Props) => {
 
   return (
     <div className="w-full max-w-md mx-auto mt-10">
-      {!isLoggedIn && (
-        <p className="text-center text-xs text-muted mb-6">Offline — stats are stored on this device only.</p>
-      )}
+      {!isLoggedIn && <p className="text-center text-xs text-muted mb-6">Offline — stats are stored on this device only.</p>}
 
       <div className="flex flex-col items-center gap-2 mb-8">
         <div className="flex flex-row items-center justify-center gap-2">

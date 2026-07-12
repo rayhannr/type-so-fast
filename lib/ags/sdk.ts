@@ -7,8 +7,8 @@ export const createSdk = (accessToken?: string) => {
       namespace: process.env.ACCELBYTE_NAMESPACE!,
       clientId: process.env.ACCELBYTE_CLIENT_ID!,
       redirectURI: process.env.ACCELBYTE_BASE_URL!,
-      useSchemaValidation: false,
-    },
+      useSchemaValidation: false
+    }
   })
   if (accessToken) {
     sdk.setToken({ accessToken })

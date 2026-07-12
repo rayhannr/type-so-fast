@@ -1,5 +1,5 @@
-import { blockUser, listBlockedUsers } from '@/lib/ags/social'
 import { getUserSummaries } from '@/lib/ags/displayName'
+import { blockUser, listBlockedUsers } from '@/lib/ags/social'
 import { getAuth } from '@/lib/api-auth'
 import { errorResponse } from '@/lib/api-error'
 

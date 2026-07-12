@@ -13,7 +13,7 @@ import {
   Scene,
   Sprite,
   SpriteMaterial,
-  WebGLRenderer,
+  WebGLRenderer
 } from 'three'
 
 interface Props {
@@ -29,7 +29,7 @@ const MAX_COLUMN_HEIGHT = 2.2
 const COLUMN_STYLES = [
   { x: 0, color: 0xd9a520, delay: 0.5 },
   { x: -1.25, color: 0xb8bfc9, delay: 0.25 },
-  { x: 1.25, color: 0xc4763a, delay: 0 },
+  { x: 1.25, color: 0xc4763a, delay: 0 }
 ]
 
 const makeLabelSprite = (title: string, subtitle: string | undefined, color: string) => {
@@ -65,7 +65,7 @@ export const Podium3D = ({ records, labels }: Props) => {
   const [themeTick, setThemeTick] = useState(0)
 
   useEffect(() => {
-    const observer = new MutationObserver(() => setThemeTick((tick) => tick + 1))
+    const observer = new MutationObserver(() => setThemeTick(tick => tick + 1))
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
     return () => observer.disconnect()
   }, [])

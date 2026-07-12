@@ -28,7 +28,7 @@ export const WordContainer = ({ words, typedInput, wpm, wrongKeystroke, onFocusR
     const caretRect = caret.getBoundingClientRect()
     caretPosRef.current = {
       x: caretRect.left - containerRect.left + caretRect.width / 2,
-      y: caretRect.top - containerRect.top + caretRect.height / 2,
+      y: caretRect.top - containerRect.top + caretRect.height / 2
     }
   })
 

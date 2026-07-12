@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 import { usePendingInvite } from '@/hooks/usePendingInvite'
 import { useAcceptInviteMutation, useDeclineInviteMutation } from '@/lib/queries/matchInvites'
 import { AgsSession } from '@/lib/queries/shared'
@@ -32,10 +32,10 @@ export const PendingInviteBanner = ({ session }: Props) => {
   const handleAccept = () => {
     if (!invite) return
     acceptInvite.mutate(invite.inviterUserId, {
-      onSuccess: (pvpSession) => {
+      onSuccess: pvpSession => {
         dismissInvite()
         router.push(`/pvp?session=${pvpSession.id}`)
-      },
+      }
     })
   }
 

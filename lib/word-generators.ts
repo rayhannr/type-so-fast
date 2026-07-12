@@ -18,7 +18,7 @@ const capitalize = (word: string): string => word.charAt(0).toUpperCase() + word
 
 const withPunctuation = (words: string[]): string[] => {
   let capitalizeNext = true
-  return words.map((word) => {
+  return words.map(word => {
     let result = capitalizeNext ? capitalize(word) : word
     capitalizeNext = false
 

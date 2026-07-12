@@ -18,10 +18,10 @@ export const agsErrorMessage = (error: unknown, messages: Record<number, string>
 
 export const authHeaders = (session: AgsSession) => ({
   Authorization: `Bearer ${session.accessToken}`,
-  'X-User-Id': session.userId,
+  'X-User-Id': session.userId
 })
 
-export const readLocal = <T,>(key: string, fallback: T): T => {
+export const readLocal = <T>(key: string, fallback: T): T => {
   if (typeof window === 'undefined') return fallback
   const raw = localStorage.getItem(key)
   return raw ? JSON.parse(raw) : fallback

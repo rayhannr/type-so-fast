@@ -12,7 +12,7 @@ import {
   Points,
   Scene,
   ShaderMaterial,
-  WebGLRenderer,
+  WebGLRenderer
 } from 'three'
 
 export interface CaretPosition {
@@ -110,7 +110,7 @@ export const CaretTrail = ({ caretRef, wpm, wrongKeystroke }: Props) => {
       fragmentShader: FRAGMENT_SHADER,
       transparent: true,
       depthWrite: false,
-      blending: isLightTheme() ? NormalBlending : AdditiveBlending,
+      blending: isLightTheme() ? NormalBlending : AdditiveBlending
     })
     scene.add(new Points(geometry, material))
 

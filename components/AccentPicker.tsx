@@ -72,7 +72,7 @@ export const AccentPicker = ({ session }: Props) => {
     <div ref={containerRef} className="relative">
       <button
         type="button"
-        onClick={() => setOpen((prev) => !prev)}
+        onClick={() => setOpen(prev => !prev)}
         aria-label="Customize accent color"
         aria-expanded={open}
         className="text-muted hover:text-active transition-colors cursor-pointer p-1"
@@ -93,7 +93,7 @@ export const AccentPicker = ({ session }: Props) => {
         <div className="absolute right-0 top-full mt-2 z-20 bg-surface border border-solid border-edge rounded-lg p-3 shadow-lg w-44">
           <p className="text-xs text-muted mb-2">Accent color</p>
           <div className="grid grid-cols-6 gap-1.5 mb-3">
-            {PRESETS.map((color) => (
+            {PRESETS.map(color => (
               <button
                 key={color}
                 type="button"
@@ -108,17 +108,13 @@ export const AccentPicker = ({ session }: Props) => {
             <input
               type="text"
               value={hexInput}
-              onChange={(event) => setHexInput(event.target.value.trim())}
-              onKeyDown={(event) => event.key === 'Enter' && submitHex()}
+              onChange={event => setHexInput(event.target.value.trim())}
+              onKeyDown={event => event.key === 'Enter' && submitHex()}
               placeholder="#hex"
               maxLength={7}
               className="w-full min-w-0 text-xs text-active bg-canvas border border-solid border-edge rounded px-1.5 py-1 outline-none focus:border-accent"
             />
-            <button
-              type="button"
-              onClick={submitHex}
-              className="text-xs text-muted hover:text-accent transition-colors cursor-pointer"
-            >
+            <button type="button" onClick={submitHex} className="text-xs text-muted hover:text-accent transition-colors cursor-pointer">
               Set
             </button>
           </div>

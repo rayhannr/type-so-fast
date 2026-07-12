@@ -1,5 +1,5 @@
-import { WpmSample } from '@/components/SpeedCurve'
 import { WordStat } from '@/components/AccuracyBreakdown'
+import { WpmSample } from '@/components/SpeedCurve'
 
 export interface Keystroke {
   id: number
@@ -43,7 +43,7 @@ export const createInitialState = (words: string[], duration: number = 60): Game
   duration,
   wpmSamples: [],
   missMap: {},
-  wordStats: [],
+  wordStats: []
 })
 
 export const gameReducer = (state: GameState, action: GameAction): GameState => {
@@ -72,7 +72,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
         correctWords: inputWord === currentWord ? state.correctWords + 1 : state.correctWords,
         wrongWords: inputWord === currentWord ? state.wrongWords : state.wrongWords + 1,
         words: state.words.slice(1),
-        wordStats: state.wordStats.concat({ word: currentWord, correct: correctChars, attempted }),
+        wordStats: state.wordStats.concat({ word: currentWord, correct: correctChars, attempted })
       }
     }
     case 'KEYSTROKE': {

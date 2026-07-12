@@ -54,7 +54,7 @@ export const useRemotePlayer = ({ isOfferer, active, offer, answer, onOffer, onA
       channelRef.current = channel
       channel.addEventListener('open', () => setConnected(true))
       channel.addEventListener('close', () => setConnected(false))
-      channel.addEventListener('message', (event) => {
+      channel.addEventListener('message', event => {
         try {
           setRemote(JSON.parse(event.data))
         } catch {
@@ -63,7 +63,7 @@ export const useRemotePlayer = ({ isOfferer, active, offer, answer, onOffer, onA
       })
     }
 
-    pc.addEventListener('icecandidate', (event) => {
+    pc.addEventListener('icecandidate', event => {
       if (event.candidate) candidates.push(event.candidate.toJSON())
     })
 
@@ -76,10 +76,10 @@ export const useRemotePlayer = ({ isOfferer, active, offer, answer, onOffer, onA
     if (isOfferer) {
       attachChannel(pc.createDataChannel('race-progress'))
       pc.createOffer()
-        .then((offerDescription) => pc.setLocalDescription(offerDescription))
-        .catch(() => { })
+        .then(offerDescription => pc.setLocalDescription(offerDescription))
+        .catch(() => {})
     } else {
-      pc.addEventListener('datachannel', (event) => attachChannel(event.channel))
+      pc.addEventListener('datachannel', event => attachChannel(event.channel))
     }
 
     return () => {
@@ -97,10 +97,10 @@ export const useRemotePlayer = ({ isOfferer, active, offer, answer, onOffer, onA
     if (isOfferer || !pc || !offer || remoteDescriptionSetRef.current) return
     remoteDescriptionSetRef.current = true
     pc.setRemoteDescription(new RTCSessionDescription(offer.sdp))
-      .then(() => Promise.all(offer.candidates.map((c) => pc.addIceCandidate(new RTCIceCandidate(c)))))
+      .then(() => Promise.all(offer.candidates.map(c => pc.addIceCandidate(new RTCIceCandidate(c)))))
       .then(() => pc.createAnswer())
-      .then((answerDescription) => pc.setLocalDescription(answerDescription))
-      .catch(() => { })
+      .then(answerDescription => pc.setLocalDescription(answerDescription))
+      .catch(() => {})
   }, [isOfferer, offer])
 
   // offerer: apply the answer once it lands in session attributes
@@ -109,8 +109,8 @@ export const useRemotePlayer = ({ isOfferer, active, offer, answer, onOffer, onA
     if (!isOfferer || !pc || !answer || remoteDescriptionSetRef.current) return
     remoteDescriptionSetRef.current = true
     pc.setRemoteDescription(new RTCSessionDescription(answer.sdp))
-      .then(() => Promise.all(answer.candidates.map((c) => pc.addIceCandidate(new RTCIceCandidate(c)))))
-      .catch(() => { })
+      .then(() => Promise.all(answer.candidates.map(c => pc.addIceCandidate(new RTCIceCandidate(c)))))
+      .catch(() => {})
   }, [isOfferer, answer])
 
   const sendSnapshot = (snapshot: RemotePlayerSnapshot) => {

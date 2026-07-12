@@ -1,20 +1,20 @@
-import axios from 'axios'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import axios from 'axios'
 import { GameHistoryEntry, StreakData, ProgressionData, PvcData, PvpData, RoomData } from '@/lib/progress'
 import { authHeaders, readLocal, writeLocal, AgsSession } from './shared'
 
 // a cloud-save resource is read from `url` and cached under `queryKey` when signed in, or
 // falls back to `localStorageKey` in localStorage otherwise; `bodyKey` is the field name the
 // PUT endpoint expects the value under
-const makeCloudSaveResource = <T,>(queryKey: string, url: string, localStorageKey: string, defaultValue: T, bodyKey: string) => {
+const makeCloudSaveResource = <T>(queryKey: string, url: string, localStorageKey: string, defaultValue: T, bodyKey: string) => {
   const useResourceQuery = (session: AgsSession | null) =>
     useQuery({
       queryKey: [queryKey, session?.userId ?? 'local'],
       queryFn: () =>
         session
-          ? axios.get<T>(url, { headers: authHeaders(session) }).then((res) => res.data)
+          ? axios.get<T>(url, { headers: authHeaders(session) }).then(res => res.data)
           : Promise.resolve(readLocal<T>(localStorageKey, defaultValue)),
-      initialData: session ? undefined : () => readLocal<T>(localStorageKey, defaultValue),
+      initialData: session ? undefined : () => readLocal<T>(localStorageKey, defaultValue)
     })
 
   const useSaveMutation = (session: AgsSession | null) => {
@@ -25,7 +25,7 @@ const makeCloudSaveResource = <T,>(queryKey: string, url: string, localStorageKe
         if (session) await axios.put(url, { [bodyKey]: value }, { headers: authHeaders(session) })
         else writeLocal(localStorageKey, value)
       },
-      onSuccess: (_, value) => queryClient.setQueryData(key, value),
+      onSuccess: (_, value) => queryClient.setQueryData(key, value)
     })
   }
 

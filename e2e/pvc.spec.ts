@@ -27,7 +27,7 @@ test('typing fast and accurately beats the easy bot', async ({ page }) => {
   await page.getByRole('button', { name: 'Easy' }).click()
 
   const words = await readCurrentWords(page)
-  const typedStream = words.map((word) => `${word} `).join('')
+  const typedStream = words.map(word => `${word} `).join('')
 
   // the input itself is visually hidden; the word display area is the click target that
   // focuses it (see WordContainer's onClick={onFocusRequest})

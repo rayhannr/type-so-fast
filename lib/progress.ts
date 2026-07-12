@@ -59,10 +59,10 @@ export const advanceProgression = (
       modesPlayed: (base.modesPlayed ?? []).includes(game.mode) ? base.modesPlayed : [...(base.modesPlayed ?? []), game.mode],
       durationsPlayed: (base.durationsPlayed ?? []).includes(game.duration)
         ? base.durationsPlayed
-        : [...(base.durationsPlayed ?? []), game.duration],
+        : [...(base.durationsPlayed ?? []), game.duration]
     },
     earnedXp,
-    leveledUp: levelFromXp(xp) > levelFromXp(base.xp),
+    leveledUp: levelFromXp(xp) > levelFromXp(base.xp)
   }
 }
 
@@ -90,7 +90,7 @@ export const advancePvc = (previous: PvcData | null, result: PvcRoundResult): Pv
     mediumWins: base.mediumWins + (result.won && result.difficulty === 'medium' ? 1 : 0),
     hardWins: base.hardWins + (result.won && result.difficulty === 'hard' ? 1 : 0),
     legendWins: base.legendWins + (result.won && result.difficulty === 'legend' ? 1 : 0),
-    legendWinStreak,
+    legendWinStreak
   }
 }
 
@@ -112,7 +112,7 @@ export const advancePvp = (previous: PvpData | null, result: PvpRoundResult): Pv
     wins: base.wins + (result.outcome === 'win' ? 1 : 0),
     losses: base.losses + (result.outcome === 'lose' ? 1 : 0),
     ties: base.ties + (result.outcome === 'tie' ? 1 : 0),
-    winStreak: result.outcome === 'win' ? base.winStreak + 1 : 0,
+    winStreak: result.outcome === 'win' ? base.winStreak + 1 : 0
   }
 }
 
@@ -134,7 +134,7 @@ export const advanceRoom = (previous: RoomData | null, result: RoomRoundResult):
   return {
     wins: base.wins + (result.won ? 1 : 0),
     winStreak: result.won ? base.winStreak + 1 : 0,
-    fullHouseWins: base.fullHouseWins + (result.won && result.fullHouse ? 1 : 0),
+    fullHouseWins: base.fullHouseWins + (result.won && result.fullHouse ? 1 : 0)
   }
 }
 
@@ -154,6 +154,6 @@ export const advanceStreak = (previous: StreakData | null, now: Date): StreakDat
   const yesterday = toDateString(new Date(now.getTime() - 24 * 60 * 60 * 1000))
   return {
     lastPlayedDate: today,
-    currentStreak: previous.lastPlayedDate === yesterday ? previous.currentStreak + 1 : 1,
+    currentStreak: previous.lastPlayedDate === yesterday ? previous.currentStreak + 1 : 1
   }
 }

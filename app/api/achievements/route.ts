@@ -7,7 +7,7 @@ import {
   unlockPvpAchievementsIfEligible,
   unlockRoomAchievementsIfEligible,
   unlockStreakAchievementsIfEligible,
-  unlockVarietyIfEligible,
+  unlockVarietyIfEligible
 } from '@/lib/ags/achievements'
 import { getAuth } from '@/lib/api-auth'
 import { errorResponse } from '@/lib/api-error'
@@ -39,21 +39,21 @@ export async function POST(request: Request) {
         difficulty: pvc.difficulty,
         won: pvc.won,
         accuracy,
-        pvcProgress: pvc.pvcProgress,
+        pvcProgress: pvc.pvcProgress
       })
     }
     if (pvp) {
       await unlockPvpAchievementsIfEligible(auth.userId, auth.accessToken, {
         outcome: pvp.outcome,
         accuracy,
-        pvpProgress: pvp.pvpProgress,
+        pvpProgress: pvp.pvpProgress
       })
     }
     if (room) {
       await unlockRoomAchievementsIfEligible(auth.userId, auth.accessToken, {
         won: room.won,
         fullHouse: room.fullHouse,
-        roomProgress: room.roomProgress,
+        roomProgress: room.roomProgress
       })
     }
     const newlyUnlocked = await diffNewlyUnlocked(auth.userId, auth.accessToken, previousCodes ?? [])

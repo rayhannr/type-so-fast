@@ -1,17 +1,17 @@
+import { DURATIONS } from '@/components/DurationSelector'
+import { Duration } from '@/components/DurationSelector'
 import {
   getTopLeaderboard,
   getDurationLeaderboardCode,
   getModeLeaderboardCode,
   LEADERBOARD_CODE,
   XP_LEADERBOARD_CODE,
-  WEEKLY_CYCLE_ID,
+  WEEKLY_CYCLE_ID
 } from '@/lib/ags/leaderboard'
 import { LeaderboardRange } from '@/lib/ags/leaderboard'
-import { DURATIONS } from '@/components/DurationSelector'
-import { Duration } from '@/components/DurationSelector'
+import { errorResponse } from '@/lib/api-error'
 import { WORD_MODES } from '@/lib/word-generators'
 import { WordMode } from '@/lib/word-generators'
-import { errorResponse } from '@/lib/api-error'
 
 export async function GET(request: Request) {
   try {

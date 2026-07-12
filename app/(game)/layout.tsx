@@ -1,14 +1,14 @@
 'use client'
 
-import { AgsSessionProvider, useAgsSessionContext } from '@/lib/ags/AgsSessionContext'
-import { useProgressionQuery } from '@/lib/queries/cloudsave'
+import { AccentPicker } from '@/components/AccentPicker'
 import { Heading } from '@/components/Heading'
 import { LevelBadge } from '@/components/LevelBadge'
-import { AccentPicker } from '@/components/AccentPicker'
-import { SoundToggle } from '@/components/SoundToggle'
-import { ThemeToggle } from '@/components/ThemeToggle'
-import { TabNav } from '@/components/TabNav'
 import { PendingInviteBanner } from '@/components/PendingInviteBanner'
+import { SoundToggle } from '@/components/SoundToggle'
+import { TabNav } from '@/components/TabNav'
+import { ThemeToggle } from '@/components/ThemeToggle'
+import { AgsSessionProvider, useAgsSessionContext } from '@/lib/ags/AgsSessionContext'
+import { useProgressionQuery } from '@/lib/queries/cloudsave'
 
 const GameChrome = ({ children }: { children: React.ReactNode }) => {
   const { session } = useAgsSessionContext()

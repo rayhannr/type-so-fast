@@ -16,6 +16,6 @@ export const DurationSelector = ({ active, disabled, onChange }: Props) => (
     disabled={disabled}
     onChange={onChange}
     ariaLabel="Test duration"
-    getLabel={(duration) => `${duration}s`}
+    getLabel={duration => `${duration}s`}
   />
 )

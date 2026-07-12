@@ -25,7 +25,7 @@ export async function POST(request: Request) {
 
   if (channelName === PRESENCE_CHANNEL) {
     const response = authenticate(socketId, channelName, {
-      user_id: auth.userId,
+      user_id: auth.userId
     })
     return Response.json(response)
   }

@@ -1,26 +1,26 @@
 'use client'
 
 import { useEffect, useReducer, useState, useRef, useCallback } from 'react'
-import { generateWords } from '@/lib/word-generators'
 import { Language } from '@/constants/words'
+import { generateWords } from '@/lib/word-generators'
 
-import { WordContainer } from './WordContainer'
+import { Difficulty } from '@/lib/botDifficulty'
+import { AchievementToast } from './AchievementToast'
+import { DifficultySelector } from './DifficultySelector'
+import { DurationSelector, Duration } from './DurationSelector'
 import { Input } from './Input'
+import { LanguageSelector } from './LanguageSelector'
+import { RestartButton } from './RestartButton'
 import { Result } from './Result'
 import { Timer } from './Timer'
-import { RestartButton } from './RestartButton'
-import { AchievementToast } from './AchievementToast'
 import { TypingHands } from './TypingHands'
-import { DurationSelector, Duration } from './DurationSelector'
-import { DifficultySelector } from './DifficultySelector'
-import { LanguageSelector } from './LanguageSelector'
-import { Difficulty } from '@/lib/botDifficulty'
+import { WordContainer } from './WordContainer'
 
-import { useAgsSessionContext } from '@/lib/ags/AgsSessionContext'
-import { useGameEndSync } from '@/hooks/useGameEndSync'
 import { useBotTypist } from '@/hooks/useBotTypist'
-import { useTypingInput } from '@/hooks/useTypingInput'
+import { useGameEndSync } from '@/hooks/useGameEndSync'
 import { useTabRestart } from '@/hooks/useTabRestart'
+import { useTypingInput } from '@/hooks/useTypingInput'
+import { useAgsSessionContext } from '@/lib/ags/AgsSessionContext'
 import { gameReducer, createInitialState } from '@/lib/gameReducer'
 
 const numberOfWords = 400
@@ -63,7 +63,7 @@ export const PvcGame = () => {
     mode: 'words',
     session,
     displayName,
-    pvc: isGameOver ? { difficulty, won: outcome === 'win' } : undefined,
+    pvc: isGameOver ? { difficulty, won: outcome === 'win' } : undefined
   })
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -101,11 +101,7 @@ export const PvcGame = () => {
     }, 1000)
   }
 
-  const { keystrokeRef, capsLockOn, changeHandler, inputHandler, keyDownHandler } = useTypingInput(
-    state,
-    dispatch,
-    onFirstKeystroke
-  )
+  const { keystrokeRef, capsLockOn, changeHandler, inputHandler, keyDownHandler } = useTypingInput(state, dispatch, onFirstKeystroke)
 
   const restartHandler = useCallback(() => {
     clearInterval(intervalRef.current!)

@@ -15,11 +15,7 @@ const waitForRacing = async (page: Page) => {
   await expect(page.getByLabel('Type the highlighted word')).toBeVisible({ timeout: 45_000 })
 }
 
-test('host creates a room, two players join by code, race runs, and late joins are rejected', async ({
-  browser,
-}: {
-  browser: Browser
-}) => {
+test('host creates a room, two players join by code, race runs, and late joins are rejected', async ({ browser }: { browser: Browser }) => {
   // heavier than a typical 2-context spec: 3 simultaneous contexts against live AGS/Pusher plus a
   // cold first-hit dev compile of the /room route — parallelize independent waits below (not
   // sequential like the 2-context PvP/Friends specs) to keep total wall-clock reasonable
@@ -32,11 +28,11 @@ test('host creates a room, two players join by code, race runs, and late joins a
   const pageB = await ctxB.newPage()
 
   const crashes: string[] = []
-  for (const page of [pageHost, pageA, pageB]) page.on('pageerror', (e) => crashes.push(e.message))
+  for (const page of [pageHost, pageA, pageB]) page.on('pageerror', e => crashes.push(e.message))
 
-  await Promise.all([pageHost, pageA, pageB].map((page) => page.goto('/room', { waitUntil: 'networkidle' })))
+  await Promise.all([pageHost, pageA, pageB].map(page => page.goto('/room', { waitUntil: 'networkidle' })))
   // Device ID login on mount needs a moment to settle
-  await Promise.all([pageHost, pageA, pageB].map((page) => page.waitForTimeout(1500)))
+  await Promise.all([pageHost, pageA, pageB].map(page => page.waitForTimeout(1500)))
 
   await pageHost.getByRole('button', { name: 'Create Room' }).click()
   await expect(pageHost.getByText('Room code')).toBeVisible({ timeout: 15_000 })
@@ -44,16 +40,14 @@ test('host creates a room, two players join by code, race runs, and late joins a
   // the code paragraph shows a 6-dot placeholder ("······") until the real code loads — both are
   // 6 characters, so wait for actual alphanumerics, not just a length match
   const codeParagraph = pageHost.locator('p.text-accent')
-  await expect
-    .poll(async () => /^[0-9A-Z]{6}$/.test((await codeParagraph.innerText()).trim()), { timeout: 15_000 })
-    .toBe(true)
+  await expect.poll(async () => /^[0-9A-Z]{6}$/.test((await codeParagraph.innerText()).trim()), { timeout: 15_000 }).toBe(true)
   const code = (await codeParagraph.innerText()).trim()
 
   // the host sees the Start button immediately, before anyone else has joined
   await expect(pageHost.getByRole('button', { name: /Start Match/ })).toBeVisible()
 
   await Promise.all(
-    [pageA, pageB].map(async (page) => {
+    [pageA, pageB].map(async page => {
       await page.getByLabel('Room code').fill(code)
       await page.getByRole('button', { name: /^Join$/ }).click()
       await expect(page.getByText('Waiting for the host to start')).toBeVisible({ timeout: 15_000 })
@@ -61,9 +55,11 @@ test('host creates a room, two players join by code, race runs, and late joins a
   )
 
   // roster should reflect all 3 players on the host's screen before starting
-  await expect.poll(async () => (await pageHost.locator('body').innerText()).includes('3 / 5 players joined'), {
-    timeout: 15_000,
-  }).toBe(true)
+  await expect
+    .poll(async () => (await pageHost.locator('body').innerText()).includes('3 / 5 players joined'), {
+      timeout: 15_000
+    })
+    .toBe(true)
 
   await pageHost.getByRole('button', { name: /Start Match/ }).click()
 
@@ -90,7 +86,7 @@ test('host creates a room, two players join by code, race runs, and late joins a
   // prove the same thing, that opponent progress made it across the Pusher channel.
   await expect
     .poll(async () => (await pageHost.locator('body').innerText()).match(/\d+ wpm|Best opponent: \d+ WPM/i) !== null, {
-      timeout: 15_000,
+      timeout: 15_000
     })
     .toBe(true)
 

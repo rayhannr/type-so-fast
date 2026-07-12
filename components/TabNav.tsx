@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useEffect, useRef, useState } from 'react'
 
 const ROUTES = [
   { href: '/', label: 'Type' },
@@ -12,7 +12,7 @@ const ROUTES = [
   { href: '/friends', label: 'Friends' },
   { href: '/stats', label: 'Stats' },
   { href: '/leaderboard', label: 'Leaderboard' },
-  { href: '/achievements', label: 'Achievements' },
+  { href: '/achievements', label: 'Achievements' }
 ]
 
 export const TabNav = () => {
@@ -42,7 +42,7 @@ export const TabNav = () => {
         className="flex flex-row flex-nowrap justify-start md:justify-center gap-6 md:gap-8 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         aria-label="Sections"
       >
-        {ROUTES.map((route) => (
+        {ROUTES.map(route => (
           <Link
             key={route.href}
             href={route.href}

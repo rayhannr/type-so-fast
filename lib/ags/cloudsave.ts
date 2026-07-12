@@ -1,6 +1,6 @@
 import { PublicPlayerRecordApi } from '@accelbyte/sdk-cloudsave'
-import { createSdk } from './sdk'
 import { GameHistoryEntry, ProgressionData, PvcData, PvpData, RoomData, StreakData } from '@/lib/progress'
+import { createSdk } from './sdk'
 
 const RECORDS_KEY = 'bestRecords'
 const HISTORY_KEY = 'gameHistory'

@@ -1,25 +1,25 @@
 'use client'
 
-import { useEffect, useMemo, useReducer, useRef, useState, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { generateWords, WordMode } from '@/lib/word-generators'
+import { useEffect, useMemo, useReducer, useRef, useState, useCallback } from 'react'
 import { Language } from '@/constants/words'
+import { generateWords, WordMode } from '@/lib/word-generators'
 
-import { WordContainer } from './WordContainer'
+import { AchievementToast } from './AchievementToast'
+import { DurationSelector, Duration } from './DurationSelector'
 import { Input } from './Input'
+import { LanguageSelector } from './LanguageSelector'
+import { ModeSelector } from './ModeSelector'
+import { RestartButton } from './RestartButton'
 import { Result } from './Result'
 import { Timer } from './Timer'
-import { RestartButton } from './RestartButton'
-import { AchievementToast } from './AchievementToast'
 import { TypingHands } from './TypingHands'
-import { DurationSelector, Duration } from './DurationSelector'
-import { ModeSelector } from './ModeSelector'
-import { LanguageSelector } from './LanguageSelector'
+import { WordContainer } from './WordContainer'
 
-import { useAgsSessionContext } from '@/lib/ags/AgsSessionContext'
 import { useGameEndSync } from '@/hooks/useGameEndSync'
 import { useRemotePlayer } from '@/hooks/useRemotePlayer'
 import { useTypingInput } from '@/hooks/useTypingInput'
+import { useAgsSessionContext } from '@/lib/ags/AgsSessionContext'
 import { gameReducer, createInitialState } from '@/lib/gameReducer'
 import { useCreateMatchTicketMutation, useMatchTicketStatusQuery, useCancelMatchTicketMutation } from '@/lib/queries/matchmaking'
 import { useSessionQuery, useSetSessionAttributesMutation, useLeaveSessionMutation } from '@/lib/queries/session'
@@ -60,12 +60,12 @@ export const PvpGame = () => {
   const attributes = pvpSession.data?.attributes
 
   const peerUserId = useMemo(
-    () => pvpSession.data?.members.find((m) => m.userID !== session?.userId)?.userID ?? null,
+    () => pvpSession.data?.members.find(m => m.userID !== session?.userId)?.userID ?? null,
     [pvpSession.data, session?.userId]
   )
   const isAuthority = useMemo(() => {
     if (!pvpSession.data || !session) return false
-    const ids = pvpSession.data.members.map((m) => m.userID).sort()
+    const ids = pvpSession.data.members.map(m => m.userID).sort()
     return ids[0] === session.userId
   }, [pvpSession.data, session])
 
@@ -75,8 +75,8 @@ export const PvpGame = () => {
     active: phase === 'connecting' || phase === 'countdown' || phase === 'racing',
     offer: attributes?.offer,
     answer: attributes?.answer,
-    onOffer: (offer) => setSessionAttributes.mutate({ sessionId, attributes: { offer } }),
-    onAnswer: (answer) => setSessionAttributes.mutate({ sessionId, attributes: { answer } }),
+    onOffer: offer => setSessionAttributes.mutate({ sessionId, attributes: { offer } }),
+    onAnswer: answer => setSessionAttributes.mutate({ sessionId, attributes: { answer } })
   })
 
   const playerWpm = Math.round((state.correctKeystroke * 12) / state.duration)
@@ -98,7 +98,7 @@ export const PvpGame = () => {
     mode,
     session,
     displayName,
-    pvp: isGameOver ? { outcome: outcome! } : undefined,
+    pvp: isGameOver ? { outcome: outcome! } : undefined
   })
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -117,7 +117,7 @@ export const PvpGame = () => {
     dispatch({ type: 'RESTART', words, duration })
     setSessionAttributes.mutate({
       sessionId,
-      attributes: { mode, duration, language, words, authorityUserId: session!.userId },
+      attributes: { mode, duration, language, words, authorityUserId: session!.userId }
     })
   }, [phase, pvpSession.data, isAuthority, attributes?.words])
 
@@ -138,7 +138,7 @@ export const PvpGame = () => {
       inputRef.current?.focus()
       return
     }
-    const timeout = setTimeout(() => setCountdown((c) => c - 1), 1000)
+    const timeout = setTimeout(() => setCountdown(c => c - 1), 1000)
     return () => clearTimeout(timeout)
   }, [phase, countdown])
 
@@ -160,7 +160,7 @@ export const PvpGame = () => {
       words: state.words,
       wordInput: state.wordInput,
       correctKeystroke: state.correctKeystroke,
-      wrongKeystroke: state.wrongKeystroke,
+      wrongKeystroke: state.wrongKeystroke
     })
   }, [phase, state.words, state.wordInput, state.correctKeystroke, state.wrongKeystroke])
 
@@ -168,8 +168,8 @@ export const PvpGame = () => {
     setTimedOut(false)
     setPhase('queueing')
     createTicket.mutate(undefined, {
-      onSuccess: (ticket) => setTicketId(ticket.matchTicketID),
-      onError: () => setPhase('idle'),
+      onSuccess: ticket => setTicketId(ticket.matchTicketID),
+      onError: () => setPhase('idle')
     })
   }
 
@@ -296,7 +296,7 @@ export const PvpGame = () => {
                 typedInput={remote.remote.wordInput}
                 wpm={remoteLiveWpm}
                 wrongKeystroke={remote.remote.wrongKeystroke}
-                onFocusRequest={() => { }}
+                onFocusRequest={() => {}}
                 compact
               />
             ) : (

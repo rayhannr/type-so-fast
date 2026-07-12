@@ -8,12 +8,12 @@ export default defineConfig({
   reporter: 'list',
   use: {
     baseURL: 'http://localhost:3123',
-    trace: 'retain-on-failure',
+    trace: 'retain-on-failure'
   },
   webServer: {
     command: 'npm run dev -- --port 3123',
     url: 'http://localhost:3123',
     reuseExistingServer: true,
-    timeout: 30_000,
-  },
+    timeout: 30_000
+  }
 })

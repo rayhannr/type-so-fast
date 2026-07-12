@@ -1,24 +1,24 @@
 'use client'
 
 import { useEffect, useMemo, useReducer, useRef, useState, useCallback, FormEvent } from 'react'
-import { generateWords, WordMode } from '@/lib/word-generators'
 import { Language } from '@/constants/words'
+import { generateWords, WordMode } from '@/lib/word-generators'
 
-import { WordContainer } from './WordContainer'
+import { AchievementToast } from './AchievementToast'
+import { DurationSelector, Duration } from './DurationSelector'
 import { Input } from './Input'
+import { LanguageSelector } from './LanguageSelector'
+import { ModeSelector } from './ModeSelector'
+import { RestartButton } from './RestartButton'
 import { Result } from './Result'
 import { Timer } from './Timer'
-import { RestartButton } from './RestartButton'
-import { AchievementToast } from './AchievementToast'
 import { TypingHands } from './TypingHands'
-import { DurationSelector, Duration } from './DurationSelector'
-import { ModeSelector } from './ModeSelector'
-import { LanguageSelector } from './LanguageSelector'
+import { WordContainer } from './WordContainer'
 
-import { useAgsSessionContext } from '@/lib/ags/AgsSessionContext'
 import { useGameEndSync } from '@/hooks/useGameEndSync'
 import { useRoomChannel } from '@/hooks/useRoomChannel'
 import { useTypingInput } from '@/hooks/useTypingInput'
+import { useAgsSessionContext } from '@/lib/ags/AgsSessionContext'
 import { gameReducer, createInitialState } from '@/lib/gameReducer'
 import {
   useCreateRoomMutation,
@@ -26,7 +26,7 @@ import {
   useStartRoomMutation,
   useRoomQuery,
   useSetRoomAttributesMutation,
-  joinRoomErrorMessage,
+  joinRoomErrorMessage
 } from '@/lib/queries/rooms'
 
 const numberOfWords = 400
@@ -64,35 +64,17 @@ export const RoomGame = () => {
     return ids
   }, [roomChannel.roster, room.data])
 
-  const opponentIds = useMemo(() => [...rosterIds].filter((id) => id !== session?.userId), [rosterIds, session?.userId])
+  const opponentIds = useMemo(() => [...rosterIds].filter(id => id !== session?.userId), [rosterIds, session?.userId])
 
   // memberNames only covers whoever was in the room as of the last poll — a player who joined via
   // Pusher's room:joined between polls has no resolved name yet, so fall back to a truncated id
   // (same fallback shape getUserSummaries itself uses when IAM has no displayName).
   const nameFor = useCallback(
-    (userId: string) => room.data?.memberNames.find((m) => m.userId === userId)?.displayName ?? userId.slice(0, 8),
+    (userId: string) => room.data?.memberNames.find(m => m.userId === userId)?.displayName ?? userId.slice(0, 8),
     [room.data?.memberNames]
   )
 
   const playerWpm = Math.round((state.correctKeystroke * 12) / state.duration)
-  const maxOpponentWpm = Math.max(0, ...opponentIds.map((id) => roomChannel.opponents[id]?.wpm ?? 0))
-  // heuristic, not authoritative: everyone shares the same duration/word list and finishes at the
-  // same tick, but opponent WPM here comes from throttled Pusher updates (~500ms lag), not a
-  // server-verified tally — good enough for an achievement gate, not for a leaderboard.
-  const won = opponentIds.length > 0 && playerWpm >= maxOpponentWpm
-
-  const { xpGain, newAchievement, dismissAchievement } = useGameEndSync({
-    timer: state.timer,
-    correctKeystroke: state.correctKeystroke,
-    wrongKeystroke: state.wrongKeystroke,
-    correction: state.correction,
-    correctWords: state.correctWords,
-    duration,
-    mode,
-    session,
-    displayName,
-    room: isGameOver ? { won, fullHouse: rosterIds.size >= 5 } : undefined,
-  })
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const inputRef = useRef<HTMLInputElement | null>(null)
@@ -108,14 +90,18 @@ export const RoomGame = () => {
     hasSeededWordsRef.current = true
     const words = generateWords(mode, numberOfWords, language)
     dispatch({ type: 'RESTART', words, duration })
+    let startedAt: number
     try {
-      await startRoom.mutateAsync({ sessionId, words, duration, mode, language })
+      const response = await startRoom.mutateAsync({ sessionId, words, duration, mode, language })
+      startedAt = response.data.startedAt
     } catch {
       // surfaced via startRoom.isError — nothing started, so the host can retry
       return
     }
-    // fallback record for clients that missed the broadcast and start via the attributes poll
-    setRoomAttributes.mutate({ sessionId, attributes: { mode, duration, language, words, status: 'racing' } })
+    // fallback record for clients that missed the broadcast and start via the attributes poll —
+    // carries the same startedAt the broadcast used, so late-joining clients' wpm math still
+    // shares the one true race origin instead of falling back to their own Date.now()
+    setRoomAttributes.mutate({ sessionId, attributes: { mode, duration, language, words, status: 'racing', startedAt } })
   }
 
   // joiners seed from the room:start broadcast — same event that starts the race, so the words
@@ -151,7 +137,10 @@ export const RoomGame = () => {
 
   useEffect(() => {
     if (phase !== 'racing') return
-    raceStartRef.current = Date.now()
+    // server-shared origin (room:start broadcast, falling back to the attributes poll) so every
+    // client's wpm math is anchored to the same instant regardless of when it individually
+    // observed the start — a client that joins the phase late no longer gets a shifted clock
+    raceStartRef.current = roomChannel.raceSetup?.startedAt ?? attributes?.startedAt ?? Date.now()
     let timesLeft = state.timer
     intervalRef.current = setInterval(() => {
       timesLeft -= 1
@@ -159,12 +148,13 @@ export const RoomGame = () => {
       if (timesLeft <= 0) clearInterval(intervalRef.current!)
     }, 1000)
     return () => clearInterval(intervalRef.current!)
-  }, [phase])
+  }, [phase, roomChannel.raceSetup, attributes?.startedAt])
 
   // wall-clock, not the once-a-second timer tick — a tick-based denominator spikes the wpm
-  // broadcast when keystrokes land right after a tick
+  // broadcast when keystrokes land right after a tick. Floored at 1s so a keystroke landing in
+  // the first instant after start can't blow up the denominator into a wpm spike.
   const wallElapsed = raceStartRef.current ? (Date.now() - raceStartRef.current) / 1000 : 0
-  const liveWpm = wallElapsed > 0 ? (state.correctKeystroke * 12) / wallElapsed : 0
+  const liveWpm = wallElapsed > 0 ? (state.correctKeystroke * 12) / Math.max(wallElapsed, 1) : 0
   const progressPct = state.words.length > 0 ? Math.min(100, (state.correctWords / (wallElapsed * 0.8 + 1)) * 10) : 0
 
   // broadcast our own progress at a throttled rate so opponents' panels stay live
@@ -173,13 +163,68 @@ export const RoomGame = () => {
     roomChannel.publishProgress(Math.round(liveWpm), progressPct)
   }, [phase, state.correctKeystroke, state.wrongKeystroke])
 
+  // the throttle above only guarantees a leading-edge send, so a keystroke burst right at race
+  // end can leave the true final wpm stuck unsent — force one final publish once our own race
+  // ends so opponents don't display a stale mid-race value as our result
+  useEffect(() => {
+    if (phase !== 'racing' || !isGameOver) return
+    roomChannel.publishProgress(Math.round(liveWpm), 100, { force: true, final: true })
+  }, [phase, isGameOver])
+
+  // snapshot of who's actually racing, taken the instant the race starts — the room is locked
+  // against further joins at that point (see /start), so this roster can't grow, only shrink in
+  // effect if someone reported final=false forever (disconnected mid-race)
+  const raceOpponentsRef = useRef<Set<string>>(new Set())
+  useEffect(() => {
+    if (phase !== 'racing') return
+    raceOpponentsRef.current = new Set(opponentIds)
+  }, [phase])
+
+  // don't compare against opponents until they've all reported their true final wpm — otherwise
+  // "Best opponent" is just whatever happened to have arrived by the time our own race ended,
+  // understating a still-racing (or merely late-starting) opponent's eventual result. A player who
+  // never reports (disconnected/left mid-race) shouldn't block the reveal forever, hence the timeout.
+  const [revealTimedOut, setRevealTimedOut] = useState(false)
+  useEffect(() => {
+    if (!isGameOver) {
+      setRevealTimedOut(false)
+      return
+    }
+    const timeout = setTimeout(() => setRevealTimedOut(true), 15000)
+    return () => clearTimeout(timeout)
+  }, [isGameOver])
+
+  const finalOpponentWpms = [...raceOpponentsRef.current]
+    .map(id => roomChannel.opponents[id])
+    .filter((opponent): opponent is NonNullable<typeof opponent> => !!opponent?.final)
+    .map(opponent => opponent.wpm)
+  const allFinalsIn = finalOpponentWpms.length === raceOpponentsRef.current.size
+  const resultsReady = isGameOver && (allFinalsIn || revealTimedOut)
+  const maxOpponentWpm = Math.max(0, ...finalOpponentWpms)
+  const won = resultsReady && finalOpponentWpms.length > 0 && playerWpm >= maxOpponentWpm
+
+  // useGameEndSync fires its save/XP effect exactly once, the instant timer hits 0 — holding it at
+  // a nonzero value until resultsReady keeps it from firing with an incomplete win/loss verdict
+  const { xpGain, newAchievement, dismissAchievement } = useGameEndSync({
+    timer: isGameOver && !resultsReady ? 1 : state.timer,
+    correctKeystroke: state.correctKeystroke,
+    wrongKeystroke: state.wrongKeystroke,
+    correction: state.correction,
+    correctWords: state.correctWords,
+    duration,
+    mode,
+    session,
+    displayName,
+    room: resultsReady ? { won, fullHouse: rosterIds.size >= 5 } : undefined
+  })
+
   const handleCreateRoom = () => {
     setJoinError(null)
     createRoom.mutate(undefined, {
-      onSuccess: (created) => {
+      onSuccess: created => {
         setSessionId(created.id)
         setPhase('lobby')
-      },
+      }
     })
   }
 
@@ -189,11 +234,11 @@ export const RoomGame = () => {
     if (!code) return
     setJoinError(null)
     joinRoom.mutate(code, {
-      onSuccess: (joined) => {
+      onSuccess: joined => {
         setSessionId(joined.id)
         setPhase('lobby')
       },
-      onError: (error) => setJoinError(joinRoomErrorMessage(error)),
+      onError: error => setJoinError(joinRoomErrorMessage(error))
     })
   }
 
@@ -228,7 +273,7 @@ export const RoomGame = () => {
           <form onSubmit={handleJoinRoom} className="flex flex-row gap-2">
             <input
               value={codeInput}
-              onChange={(event) => setCodeInput(event.target.value.toUpperCase())}
+              onChange={event => setCodeInput(event.target.value.toUpperCase())}
               placeholder="Enter room code"
               aria-label="Room code"
               autoCapitalize="characters"
@@ -256,11 +301,9 @@ export const RoomGame = () => {
       <div className="max-w-3xl mx-auto mt-10 md:mt-14 text-center">
         <p className="text-[10px] text-muted uppercase tracking-widest mb-1">Room code</p>
         <p className="text-4xl font-bold text-accent tracking-[0.3em] mb-6">{room.data?.code ?? '······'}</p>
-        <p className="text-active text-sm mb-2">
-          {rosterIds.size} / 5 players joined
-        </p>
+        <p className="text-active text-sm mb-2">{rosterIds.size} / 5 players joined</p>
         <ul className="text-muted text-xs mb-8">
-          {[...rosterIds].map((id) => (
+          {[...rosterIds].map(id => (
             <li key={id}>{id === session?.userId ? `${displayName ?? 'You'} (you)` : nameFor(id)}</li>
           ))}
         </ul>
@@ -315,16 +358,13 @@ export const RoomGame = () => {
           {opponentIds.length > 0 && (
             <div className="mt-6 pt-4 border-t border-solid border-edge flex flex-col gap-2">
               <p className="text-xs text-muted mb-1">Opponents</p>
-              {opponentIds.map((id) => {
+              {opponentIds.map(id => {
                 const opponent = roomChannel.opponents[id]
                 return (
                   <div key={id} className="flex flex-row items-center gap-3 text-xs">
                     <span className="text-muted w-24 truncate">{nameFor(id)}</span>
                     <div className="flex-1 h-1.5 rounded-full bg-surface overflow-hidden">
-                      <div
-                        className="h-full bg-accent transition-all"
-                        style={{ width: `${Math.min(100, opponent?.progress ?? 0)}%` }}
-                      />
+                      <div className="h-full bg-accent transition-all" style={{ width: `${Math.min(100, opponent?.progress ?? 0)}%` }} />
                     </div>
                     <span className="text-active w-16 text-right tabular-nums">{opponent?.wpm ?? 0} wpm</span>
                   </div>
@@ -337,12 +377,16 @@ export const RoomGame = () => {
         <div className="mt-10">
           {opponentIds.length > 0 && (
             <div className="text-center mb-8">
-              <p className={`text-3xl font-bold ${won ? 'text-correct' : 'text-active'}`}>
-                {won ? 'You Win!' : 'Better luck next time'}
-              </p>
-              <p className="text-muted text-sm mt-1">
-                You: {playerWpm} WPM &middot; Best opponent: {maxOpponentWpm} WPM
-              </p>
+              {resultsReady ? (
+                <>
+                  <p className={`text-3xl font-bold ${won ? 'text-correct' : 'text-active'}`}>{won ? 'You Win!' : 'Better luck next time'}</p>
+                  <p className="text-muted text-sm mt-1">
+                    You: {playerWpm} WPM &middot; Best opponent: {maxOpponentWpm} WPM
+                  </p>
+                </>
+              ) : (
+                <p className="text-muted text-sm">Waiting for other players to finish&hellip;</p>
+              )}
             </div>
           )}
           <Result state={state} session={session} displayName={displayName} xpGain={xpGain} />

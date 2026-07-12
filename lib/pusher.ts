@@ -5,11 +5,10 @@ const pusher = new Pusher({
   key: process.env.PUSHER_KEY!,
   secret: process.env.PUSHER_SECRET!,
   cluster: process.env.PUSHER_CLUSTER!,
-  useTLS: true,
+  useTLS: true
 })
 
-export const trigger = (channel: string, event: string, data: unknown) =>
-  pusher.trigger(channel, event, data)
+export const trigger = (channel: string, event: string, data: unknown) => pusher.trigger(channel, event, data)
 
 export const authenticate = (socketId: string, channel: string, presenceData?: Pusher.PresenceChannelData) =>
   pusher.authorizeChannel(socketId, channel, presenceData)

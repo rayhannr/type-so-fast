@@ -11,7 +11,7 @@ import {
   Points,
   PointsMaterial,
   Scene,
-  WebGLRenderer,
+  WebGLRenderer
 } from 'three'
 
 interface Props {
@@ -79,7 +79,7 @@ export const WpmBurst = ({ wpm }: Props) => {
       opacity: 1,
       depthWrite: false,
       sizeAttenuation: false,
-      blending: isLightTheme ? NormalBlending : AdditiveBlending,
+      blending: isLightTheme ? NormalBlending : AdditiveBlending
     })
     scene.add(new Points(geometry, material))
 

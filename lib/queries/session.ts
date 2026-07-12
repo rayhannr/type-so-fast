@@ -1,14 +1,14 @@
-import axios from 'axios'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import axios from 'axios'
 import { PvpSession, PvpSessionAttributes } from '@/lib/ags/session'
 import { authHeaders, AgsSession } from './shared'
 
 export const useSessionQuery = (session: AgsSession | null, sessionId: string | null) =>
   useQuery({
     queryKey: ['pvpSession', sessionId],
-    queryFn: () => axios.get<PvpSession>(`/api/session/${sessionId}`, { headers: authHeaders(session!) }).then((res) => res.data),
+    queryFn: () => axios.get<PvpSession>(`/api/session/${sessionId}`, { headers: authHeaders(session!) }).then(res => res.data),
     enabled: !!session && !!sessionId,
-    refetchInterval: 1500,
+    refetchInterval: 1500
   })
 
 // the writer already knows the exact resulting attributes (it just built them), so update the
@@ -23,11 +23,11 @@ export const useSetSessionAttributesMutation = (session: AgsSession | null) => {
       queryClient.setQueryData(['pvpSession', sessionId], (current: PvpSession | undefined) =>
         current ? { ...current, attributes: { ...current.attributes, ...attributes } } : current
       )
-    },
+    }
   })
 }
 
 export const useLeaveSessionMutation = (session: AgsSession | null) =>
   useMutation({
-    mutationFn: (sessionId: string) => axios.delete(`/api/session/${sessionId}`, { headers: authHeaders(session!) }),
+    mutationFn: (sessionId: string) => axios.delete(`/api/session/${sessionId}`, { headers: authHeaders(session!) })
   })

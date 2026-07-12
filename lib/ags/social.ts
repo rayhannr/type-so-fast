@@ -50,5 +50,5 @@ export const unblockUser = async (accessToken: string, userId: string): Promise<
 export const listBlockedUsers = async (accessToken: string): Promise<string[]> => {
   const api = PlayerApi(createSdk(accessToken))
   const { data } = await api.getPlayerUsersMeBlocked()
-  return data.data.map((entry) => entry.blockedUserId)
+  return data.data.map(entry => entry.blockedUserId)
 }

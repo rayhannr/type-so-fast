@@ -9,12 +9,10 @@ import { Browser, Page } from '@playwright/test'
 // matchmaking/session/signaling surface automatically instead of needing another manual pass.
 
 const waitForRacing = async (page: Page) => {
-  await expect
-    .poll(async () => (await page.locator('body').innerText()).includes('WPM'), { timeout: 45_000, intervals: [1000] })
-    .toBe(true)
+  await expect.poll(async () => (await page.locator('body').innerText()).includes('WPM'), { timeout: 45_000, intervals: [1000] }).toBe(true)
 }
 
-test('two players quick-match and see each other\'s live progress', async ({ browser }: { browser: Browser }) => {
+test("two players quick-match and see each other's live progress", async ({ browser }: { browser: Browser }) => {
   const ctxA = await browser.newContext()
   const ctxB = await browser.newContext()
   const pageA = await ctxA.newPage()
@@ -22,8 +20,8 @@ test('two players quick-match and see each other\'s live progress', async ({ bro
 
   const crashesA: string[] = []
   const crashesB: string[] = []
-  pageA.on('pageerror', (e) => crashesA.push(e.message))
-  pageB.on('pageerror', (e) => crashesB.push(e.message))
+  pageA.on('pageerror', e => crashesA.push(e.message))
+  pageB.on('pageerror', e => crashesB.push(e.message))
 
   await pageA.goto('/pvp', { waitUntil: 'networkidle' })
   await pageB.goto('/pvp', { waitUntil: 'networkidle' })

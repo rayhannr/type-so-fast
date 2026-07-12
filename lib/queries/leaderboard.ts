@@ -1,7 +1,7 @@
-import axios from 'axios'
 import { useQuery } from '@tanstack/react-query'
-import { LeaderboardEntry, LeaderboardMetric, LeaderboardRange } from '@/lib/ags/leaderboard'
+import axios from 'axios'
 import { Duration } from '@/components/DurationSelector'
+import { LeaderboardEntry, LeaderboardMetric, LeaderboardRange } from '@/lib/ags/leaderboard'
 import { WordMode } from '@/lib/word-generators'
 
 export const useLeaderboardQuery = (filters: {
@@ -15,7 +15,7 @@ export const useLeaderboardQuery = (filters: {
     queryFn: () =>
       axios
         .get<LeaderboardEntry[]>('/api/leaderboard', {
-          params: { limit: 10, duration: filters.duration ?? undefined, mode: filters.mode, range: filters.range, metric: filters.metric },
+          params: { limit: 10, duration: filters.duration ?? undefined, mode: filters.mode, range: filters.range, metric: filters.metric }
         })
-        .then((res) => res.data),
+        .then(res => res.data)
   })

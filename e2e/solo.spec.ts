@@ -16,7 +16,7 @@ const readCurrentWords = async (page: Page): Promise<string[]> => {
 const mistype = (word: string): string =>
   word
     .split('')
-    .map((char) => (char.toLowerCase() === 'z' ? 'a' : 'z'))
+    .map(char => (char.toLowerCase() === 'z' ? 'a' : 'z'))
     .join('')
 
 test('typing correct words plus one mistyped word produces a results screen matching what was typed', async ({ page }) => {
@@ -42,10 +42,12 @@ test('typing correct words plus one mistyped word produces a results screen matc
   await page.keyboard.type(`${mistype(toMistype)} `, { delay: 30 })
 
   // 15s duration selected above; wait for the timer to run out and the results screen to render
-  await expect.poll(async () => (await page.locator('body').innerText()).includes('Accuracy'), {
-    timeout: 25_000,
-    intervals: [1000],
-  }).toBe(true)
+  await expect
+    .poll(async () => (await page.locator('body').innerText()).includes('Accuracy'), {
+      timeout: 25_000,
+      intervals: [1000]
+    })
+    .toBe(true)
 
   const resultText = await page.locator('body').innerText()
 

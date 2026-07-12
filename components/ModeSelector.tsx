@@ -4,7 +4,7 @@ import { SelectorButtons } from './SelectorButtons'
 const MODE_LABELS: Record<WordMode, string> = {
   words: 'Words',
   numbers: 'Numbers',
-  punctuation: 'Punctuation',
+  punctuation: 'Punctuation'
 }
 
 type Props = {
@@ -20,6 +20,6 @@ export const ModeSelector = ({ active, disabled, onChange }: Props) => (
     disabled={disabled}
     onChange={onChange}
     ariaLabel="Word mode"
-    getLabel={(mode) => MODE_LABELS[mode]}
+    getLabel={mode => MODE_LABELS[mode]}
   />
 )

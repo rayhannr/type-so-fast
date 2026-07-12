@@ -25,7 +25,7 @@ export const SpeedCurve = ({ samples }: Props) => {
   const points = useMemo(() => [{ elapsed: 0, wpm: 0 }, ...samples], [samples])
 
   const yMax = useMemo(() => {
-    const max = Math.max(...points.map((p) => p.wpm))
+    const max = Math.max(...points.map(p => p.wpm))
     return Math.max(40, Math.ceil(max / 20) * 20)
   }, [points])
 
@@ -37,7 +37,7 @@ export const SpeedCurve = ({ samples }: Props) => {
   const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${x(p.elapsed)},${y(p.wpm)}`).join(' ')
   const areaPath = `${linePath} L${x(points[points.length - 1].elapsed)},${y(0)} L${x(0)},${y(0)} Z`
 
-  const yTicks = [0, 1, 2, 3, 4].map((i) => (yMax / 4) * i)
+  const yTicks = [0, 1, 2, 3, 4].map(i => (yMax / 4) * i)
   const xTicks = [0, 15, 30, 45, 60]
   const lastPoint = points[points.length - 1]
 
@@ -63,7 +63,7 @@ export const SpeedCurve = ({ samples }: Props) => {
     if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return
     event.preventDefault()
     const delta = event.key === 'ArrowLeft' ? -1 : 1
-    setHoverIndex((prev) => Math.min(points.length - 1, Math.max(0, (prev ?? points.length - 1) + delta)))
+    setHoverIndex(prev => Math.min(points.length - 1, Math.max(0, (prev ?? points.length - 1) + delta)))
   }
 
   const hovered = hoverIndex !== null ? points[hoverIndex] : null
@@ -83,16 +83,31 @@ export const SpeedCurve = ({ samples }: Props) => {
           onKeyDown={keyHandler}
           onBlur={() => setHoverIndex(null)}
         >
-          {yTicks.map((tick) => (
+          {yTicks.map(tick => (
             <g key={tick}>
               <line x1={M.left} x2={W - M.right} y1={y(tick)} y2={y(tick)} stroke="var(--border)" strokeWidth="1" />
-              <text x={M.left - 6} y={y(tick) + 3} textAnchor="end" fontSize="9" fill="var(--text-muted)" style={{ fontVariantNumeric: 'tabular-nums' }}>
+              <text
+                x={M.left - 6}
+                y={y(tick) + 3}
+                textAnchor="end"
+                fontSize="9"
+                fill="var(--text-muted)"
+                style={{ fontVariantNumeric: 'tabular-nums' }}
+              >
                 {tick}
               </text>
             </g>
           ))}
-          {xTicks.map((tick) => (
-            <text key={tick} x={x(tick)} y={H - M.bottom + 14} textAnchor="middle" fontSize="9" fill="var(--text-muted)" style={{ fontVariantNumeric: 'tabular-nums' }}>
+          {xTicks.map(tick => (
+            <text
+              key={tick}
+              x={x(tick)}
+              y={H - M.bottom + 14}
+              textAnchor="middle"
+              fontSize="9"
+              fill="var(--text-muted)"
+              style={{ fontVariantNumeric: 'tabular-nums' }}
+            >
               {tick}s
             </text>
           ))}
@@ -101,9 +116,7 @@ export const SpeedCurve = ({ samples }: Props) => {
           <path d={areaPath} fill="var(--accent)" fillOpacity="0.12" />
           <path d={linePath} fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
 
-          {hovered && (
-            <line x1={x(hovered.elapsed)} x2={x(hovered.elapsed)} y1={M.top} y2={y(0)} stroke="var(--border)" strokeWidth="1" />
-          )}
+          {hovered && <line x1={x(hovered.elapsed)} x2={x(hovered.elapsed)} y1={M.top} y2={y(0)} stroke="var(--border)" strokeWidth="1" />}
           {hovered && <circle cx={x(hovered.elapsed)} cy={y(hovered.wpm)} r="4" fill="var(--accent)" stroke="var(--bg)" strokeWidth="2" />}
 
           <circle cx={x(lastPoint.elapsed)} cy={y(lastPoint.wpm)} r="4" fill="var(--accent)" stroke="var(--bg)" strokeWidth="2" />
@@ -125,7 +138,7 @@ export const SpeedCurve = ({ samples }: Props) => {
             style={{
               left: `${(x(hovered.elapsed) / W) * 100}%`,
               top: 0,
-              transform: `translateX(${hovered.elapsed > GAME_DURATION * 0.75 ? '-100%' : hovered.elapsed < GAME_DURATION * 0.25 ? '0' : '-50%'})`,
+              transform: `translateX(${hovered.elapsed > GAME_DURATION * 0.75 ? '-100%' : hovered.elapsed < GAME_DURATION * 0.25 ? '0' : '-50%'})`
             }}
           >
             <span className="font-bold">{hovered.wpm} WPM</span> <span className="text-muted">at {hovered.elapsed}s</span>
@@ -141,7 +154,7 @@ export const SpeedCurve = ({ samples }: Props) => {
             </tr>
           </thead>
           <tbody>
-            {points.map((p) => (
+            {points.map(p => (
               <tr key={p.elapsed}>
                 <td>{p.elapsed}</td>
                 <td>{p.wpm}</td>

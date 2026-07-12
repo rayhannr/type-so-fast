@@ -1,6 +1,6 @@
-import axios from 'axios'
 import { GameSessionApi } from '@accelbyte/sdk-session'
 import { CreateGameSessionRequest, GameSessionResponse, UpdateGameSessionRequest } from '@accelbyte/sdk-session'
+import axios from 'axios'
 import { createSdk } from './sdk'
 
 const PVP_SESSION_TEMPLATE = 'pvp-quick-match-session'
@@ -34,21 +34,17 @@ export interface PvpSession {
 // both players directly in `teams`, bypassing Matchmaking entirely — the create-session call takes
 // joinability/type/etc. from the template only when not provided in the request (confirmed via
 // `ags session game-sessions create --help`), so no separate invite-only template is needed.
-export const createInviteSession = async (
-  accessToken: string,
-  inviterUserId: string,
-  inviteeUserId: string
-): Promise<PvpSession> => {
+export const createInviteSession = async (accessToken: string, inviterUserId: string, inviteeUserId: string): Promise<PvpSession> => {
   const api = GameSessionApi(createSdk(accessToken))
   const { data } = await api.createGamesession({
     configurationName: PVP_SESSION_TEMPLATE,
     joinability: 'INVITE_ONLY',
-    teams: [{ userIDs: [inviterUserId, inviteeUserId] }],
+    teams: [{ userIDs: [inviterUserId, inviteeUserId] }]
   } as CreateGameSessionRequest)
   return {
     id: data.id ?? '',
-    members: (data.members ?? []).map((m) => ({ userID: m.id ?? '', status: m.status ?? '' })),
-    attributes: (data.attributes as Partial<PvpSessionAttributes>) ?? {},
+    members: (data.members ?? []).map(m => ({ userID: m.id ?? '', status: m.status ?? '' })),
+    attributes: (data.attributes as Partial<PvpSessionAttributes>) ?? {}
   }
 }
 
@@ -57,8 +53,8 @@ export const getSession = async (accessToken: string, sessionId: string): Promis
   const { data } = await api.getGamesession_BySessionId(sessionId)
   return {
     id: sessionId,
-    members: (data.members ?? []).map((m) => ({ userID: m.id ?? '', status: m.status ?? '' })),
-    attributes: (data.attributes as Partial<PvpSessionAttributes>) ?? {},
+    members: (data.members ?? []).map(m => ({ userID: m.id ?? '', status: m.status ?? '' })),
+    attributes: (data.attributes as Partial<PvpSessionAttributes>) ?? {}
   }
 }
 
@@ -89,7 +85,7 @@ const patchSessionWithRetry = async (
     const patch = buildPatch(current)
     await api.patchGamesession_BySessionId(sessionId, {
       ...patch,
-      version: Math.max(patch.version ?? 0, reportedVersion),
+      version: Math.max(patch.version ?? 0, reportedVersion)
     })
   }
 
@@ -115,10 +111,10 @@ export const setSessionAttributes = async (
   attributes: Partial<PvpSessionAttributes> | Partial<RoomSessionAttributes>
 ): Promise<void> => {
   const api = GameSessionApi(createSdk(accessToken))
-  await patchSessionWithRetry(api, sessionId, (current) => {
+  await patchSessionWithRetry(api, sessionId, current => {
     return {
       attributes: { ...current.attributes, ...attributes },
-      version: current.version,
+      version: current.version
     } as UpdateGameSessionRequest
   })
 }
@@ -138,6 +134,10 @@ export interface RoomSessionAttributes {
   words: string[]
   // Lobby vs race phase for joiners; AGS-level joinability is locked separately (see lockRoom).
   status: 'waiting' | 'racing'
+  // Server timestamp (ms) the race actually started, shared by every client so wpm math uses the
+  // same wall-clock origin instead of each client's own Date.now() at the moment it observed the
+  // start — a client that observes the start late would otherwise compute wpm off a shifted clock.
+  startedAt: number
 }
 
 export interface RoomSession {
@@ -153,9 +153,9 @@ export interface RoomSession {
 const toRoomSession = (data: GameSessionResponse): RoomSession => ({
   id: data.id ?? '',
   leaderId: data.leaderID,
-  members: (data.members ?? []).map((m) => ({ userID: m.id ?? '', status: m.status ?? '' })),
+  members: (data.members ?? []).map(m => ({ userID: m.id ?? '', status: m.status ?? '' })),
   code: data.code ?? null,
-  attributes: (data.attributes as Partial<RoomSessionAttributes>) ?? {},
+  attributes: (data.attributes as Partial<RoomSessionAttributes>) ?? {}
 })
 
 export const getRoomSession = async (accessToken: string, sessionId: string): Promise<RoomSession> => {
@@ -174,7 +174,7 @@ export const createRoomSession = async (accessToken: string): Promise<RoomSessio
     configurationName: PVP_SESSION_TEMPLATE,
     joinability: 'OPEN',
     minPlayers: 1,
-    maxPlayers: ROOM_MAX_PLAYERS,
+    maxPlayers: ROOM_MAX_PLAYERS
   } as CreateGameSessionRequest)
   return toRoomSession(data)
 }
@@ -200,10 +200,10 @@ export const joinRoomByCode = async (accessToken: string, code: string): Promise
 export const lockRoom = async (accessToken: string, sessionId: string): Promise<void> => {
   const api = GameSessionApi(createSdk(accessToken))
   await api.deleteCode_BySessionId(sessionId)
-  await patchSessionWithRetry(api, sessionId, (current) => {
+  await patchSessionWithRetry(api, sessionId, current => {
     return {
       joinability: 'CLOSED',
-      version: current.version,
+      version: current.version
     } as UpdateGameSessionRequest
   })
 }

@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { useState } from 'react'
 
 export const Providers = ({ children }: { children: React.ReactNode }) => {
   const [queryClient] = useState(
@@ -11,9 +11,9 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
           queries: {
             staleTime: 5 * 60 * 1000,
             refetchOnWindowFocus: false,
-            retry: 1,
-          },
-        },
+            retry: 1
+          }
+        }
       })
   )
 

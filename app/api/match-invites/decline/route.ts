@@ -1,6 +1,6 @@
 import { getAuth } from '@/lib/api-auth'
-import { trigger } from '@/lib/pusher'
 import { errorResponse } from '@/lib/api-error'
+import { trigger } from '@/lib/pusher'
 
 export async function POST(request: Request) {
   const auth = getAuth(request)

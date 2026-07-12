@@ -1,7 +1,7 @@
 import { UserStatisticApi } from '@accelbyte/sdk-social'
-import { createSdk } from './sdk'
 import { Duration } from '@/components/DurationSelector'
 import { WordMode } from '@/lib/word-generators'
+import { createSdk } from './sdk'
 
 const STAT_BEST_WPM = 'best-wpm'
 const STAT_GAMES_PLAYED = 'games-played'
@@ -13,14 +13,14 @@ const STAT_BEST_WPM_BY_DURATION: Record<Duration, string> = {
   15: 'best-wpm-15s',
   30: 'best-wpm-30s',
   60: 'best-wpm-60s',
-  120: 'best-wpm-120s',
+  120: 'best-wpm-120s'
 }
 
 // 'words' reuses the base best-wpm stat since it's the default mode
 const STAT_BEST_WPM_BY_MODE: Record<WordMode, string> = {
   words: 'best-wpm',
   numbers: 'best-wpm-numbers',
-  punctuation: 'best-wpm-punctuation',
+  punctuation: 'best-wpm-punctuation'
 }
 
 export interface GameResultStats {
@@ -47,7 +47,7 @@ export const submitGameStats = async (userId: string, accessToken: string, resul
 
   const updates = new Map<string, number>([
     [STAT_BEST_WPM, result.wpm],
-    [durationStatCode, result.wpm],
+    [durationStatCode, result.wpm]
   ])
   if (modeStatCode !== STAT_BEST_WPM) updates.set(modeStatCode, result.wpm)
 
@@ -56,40 +56,40 @@ export const submitGameStats = async (userId: string, accessToken: string, resul
       statisticApi.updateStatitemValue_ByUserId_ByStatCode_v2(userId, statCode, {
         updateStrategy: 'MAX',
         value,
-        additionalData: { displayName: result.displayName },
+        additionalData: { displayName: result.displayName }
       })
     ),
     statisticApi.updateStatitemValue_ByUserId_ByStatCode_v2(userId, STAT_GAMES_PLAYED, {
       updateStrategy: 'INCREMENT',
-      value: 1,
+      value: 1
     }),
     statisticApi.updateStatitemValue_ByUserId_ByStatCode_v2(userId, STAT_TOTAL_WORDS_TYPED, {
       updateStrategy: 'INCREMENT',
-      value: result.wordsTyped,
+      value: result.wordsTyped
     }),
     statisticApi.updateStatitemValue_ByUserId_ByStatCode_v2(userId, STAT_TOTAL_XP, {
       updateStrategy: 'INCREMENT',
       value: result.xpEarned,
-      additionalData: { displayName: result.displayName },
+      additionalData: { displayName: result.displayName }
     }),
     statisticApi.updateStatitemValue_ByUserId_ByStatCode_v2(userId, STAT_LEVEL, {
       updateStrategy: 'MAX',
-      value: result.level,
-    }),
+      value: result.level
+    })
   ])
 }
 
 export const getPersonalStats = async (userId: string, accessToken: string): Promise<PersonalStats> => {
   const statisticApi = UserStatisticApi(createSdk(accessToken))
   const { data } = await statisticApi.getStatitemsValueBulk_ByUserId(userId, {
-    statCodes: [STAT_BEST_WPM, STAT_GAMES_PLAYED, STAT_TOTAL_WORDS_TYPED],
+    statCodes: [STAT_BEST_WPM, STAT_GAMES_PLAYED, STAT_TOTAL_WORDS_TYPED]
   })
 
-  const valueOf = (statCode: string) => data.find((item) => item.statCode === statCode)?.value ?? 0
+  const valueOf = (statCode: string) => data.find(item => item.statCode === statCode)?.value ?? 0
 
   return {
     bestWpm: valueOf(STAT_BEST_WPM),
     gamesPlayed: valueOf(STAT_GAMES_PLAYED),
-    totalWordsTyped: valueOf(STAT_TOTAL_WORDS_TYPED),
+    totalWordsTyped: valueOf(STAT_TOTAL_WORDS_TYPED)
   }
 }

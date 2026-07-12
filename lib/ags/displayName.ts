@@ -1,11 +1,10 @@
 import { UsersAdminApi, UsersApi } from '@accelbyte/sdk-iam'
 import { fakerEN } from '@faker-js/faker'
-import { createSdk } from './sdk'
 import { getAdminAccessToken } from './adminToken'
+import { createSdk } from './sdk'
 
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
-const generateDisplayName = () =>
-  `${capitalize(fakerEN.word.adjective())} ${capitalize(fakerEN.word.noun())}`
+const generateDisplayName = () => `${capitalize(fakerEN.word.adjective())} ${capitalize(fakerEN.word.noun())}`
 
 // Headless Device ID accounts are created with an empty IAM displayName (verified live),
 // so the first load assigns one and every later load returns the stored value.
@@ -35,6 +34,6 @@ export const getUserSummaries = async (userIds: string[]): Promise<UserSummary[]
   const adminAccessToken = await getAdminAccessToken()
   const usersApi = UsersAdminApi(createSdk(adminAccessToken))
   const { data } = await usersApi.createUserBulk_v3({ userIds })
-  const names = new Map(data.data.map((user) => [user.userId, user.displayName]))
-  return userIds.map((userId) => ({ userId, displayName: names.get(userId) || userId.slice(0, 8) }))
+  const names = new Map(data.data.map(user => [user.userId, user.displayName]))
+  return userIds.map(userId => ({ userId, displayName: names.get(userId) || userId.slice(0, 8) }))
 }

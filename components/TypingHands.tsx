@@ -11,7 +11,7 @@ import {
   MeshStandardMaterial,
   PerspectiveCamera,
   Scene,
-  WebGLRenderer,
+  WebGLRenderer
 } from 'three'
 import { Keystroke } from '@/lib/gameReducer'
 
@@ -97,7 +97,7 @@ export const TypingHands = ({ keystrokeRef, gameOver }: Props) => {
     const addKey = (geometry: BoxGeometry, x: number, z: number) => {
       const material = new MeshStandardMaterial({
         color: isLightTheme() ? KEY_COLOR_LIGHT : KEY_COLOR_DARK,
-        roughness: 0.85,
+        roughness: 0.85
       })
       const mesh = new Mesh(geometry, material)
       mesh.position.set(x, 0, z)
@@ -118,7 +118,7 @@ export const TypingHands = ({ keystrokeRef, gameOver }: Props) => {
 
     const handMaterial = new MeshStandardMaterial({
       color: isLightTheme() ? HAND_COLOR_LIGHT : HAND_COLOR_DARK,
-      roughness: 0.7,
+      roughness: 0.7
     })
     const palmGeometry = new BoxGeometry(1.7, 0.35, 1.3)
     // finger pivots at its knuckle (back edge) so rotation.x dips the tip
@@ -171,9 +171,7 @@ export const TypingHands = ({ keystrokeRef, gameOver }: Props) => {
         keyIndex = charToKey.get(char.toLowerCase())
         if (keyIndex === undefined) return
         const keyX = keys[keyIndex].mesh.position.x
-        finger = fingers.reduce((nearest, candidate) =>
-          Math.abs(candidate.x - keyX) < Math.abs(nearest.x - keyX) ? candidate : nearest
-        )
+        finger = fingers.reduce((nearest, candidate) => (Math.abs(candidate.x - keyX) < Math.abs(nearest.x - keyX) ? candidate : nearest))
       }
 
       finger.t = 0
@@ -235,7 +233,7 @@ export const TypingHands = ({ keystrokeRef, gameOver }: Props) => {
     const themeObserver = new MutationObserver(() => {
       const light = isLightTheme()
       handMaterial.color.copy(light ? HAND_COLOR_LIGHT : HAND_COLOR_DARK)
-      keys.forEach((key) => key.material.color.copy(light ? KEY_COLOR_LIGHT : KEY_COLOR_DARK))
+      keys.forEach(key => key.material.color.copy(light ? KEY_COLOR_LIGHT : KEY_COLOR_DARK))
       ambient.intensity = light ? 1.6 : 0.7
       sun.intensity = light ? 0.6 : 1
     })
@@ -251,7 +249,7 @@ export const TypingHands = ({ keystrokeRef, gameOver }: Props) => {
       fingerGeometry.dispose()
       thumbGeometry.dispose()
       handMaterial.dispose()
-      keys.forEach((key) => key.material.dispose())
+      keys.forEach(key => key.material.dispose())
       renderer.dispose()
       container.removeChild(renderer.domElement)
     }

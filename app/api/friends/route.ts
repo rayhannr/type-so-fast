@@ -1,6 +1,6 @@
-import { listFriends, sendFriendRequest } from '@/lib/ags/social'
 import { getUserSummaries } from '@/lib/ags/displayName'
 import { getUserIdByPublicId } from '@/lib/ags/profile'
+import { listFriends, sendFriendRequest } from '@/lib/ags/social'
 import { getAuth } from '@/lib/api-auth'
 import { errorResponse } from '@/lib/api-error'
 import { trigger } from '@/lib/pusher'

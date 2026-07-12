@@ -13,10 +13,10 @@ export const SelectorButtons = <T extends string | number>({
   onChange,
   getLabel,
   ariaLabel,
-  disabled = false,
+  disabled = false
 }: Props<T>) => (
   <div className="flex flex-row justify-center gap-2" aria-label={ariaLabel}>
-    {options.map((option) => (
+    {options.map(option => (
       <button
         key={option}
         type="button"

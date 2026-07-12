@@ -1,5 +1,5 @@
-import axios from 'axios'
 import { UserProfileApi } from '@accelbyte/sdk-basic'
+import axios from 'axios'
 import { createSdk } from './sdk'
 
 export interface AgsProfile {

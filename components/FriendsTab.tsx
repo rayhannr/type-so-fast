@@ -2,10 +2,10 @@
 
 import { useRef, useState } from 'react'
 import { FormEvent, ReactNode } from 'react'
-import { useAgsSessionContext } from '@/lib/ags/AgsSessionContext'
 import { useFriendsPresence } from '@/hooks/useFriendsPresence'
-import { useSendInviteMutation } from '@/lib/queries/matchInvites'
+import { useAgsSessionContext } from '@/lib/ags/AgsSessionContext'
 import { updateDisplayNameErrorMessage, useUpdateDisplayNameMutation } from '@/lib/queries/displayName'
+import { useSendInviteMutation } from '@/lib/queries/matchInvites'
 import {
   addFriendErrorMessage,
   useAcceptFriendRequestMutation,
@@ -16,7 +16,7 @@ import {
   useFriendsQuery,
   useIncomingFriendRequestsQuery,
   useRemoveFriendMutation,
-  useUnblockUserMutation,
+  useUnblockUserMutation
 } from '@/lib/queries/social'
 
 const buttonBaseClass = 'px-2.5 py-1 text-xs rounded-md transition-colors cursor-pointer disabled:cursor-default disabled:opacity-50'
@@ -144,7 +144,7 @@ export const FriendsTab = () => {
             <form onSubmit={submitDisplayName} className="flex flex-row flex-wrap items-center gap-2">
               <input
                 value={nameInput}
-                onChange={(event) => setNameInput(event.target.value)}
+                onChange={event => setNameInput(event.target.value)}
                 aria-label="Display name"
                 autoFocus
                 maxLength={40}
@@ -198,7 +198,14 @@ export const FriendsTab = () => {
               {publicId ?? '········'}
             </span>
             {copied ? (
-              <svg className="w-4 h-4 text-correct" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" aria-hidden="true">
+              <svg
+                className="w-4 h-4 text-correct"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
             ) : (
@@ -221,7 +228,7 @@ export const FriendsTab = () => {
       <form onSubmit={submitAddFriend} className="flex flex-row gap-2">
         <input
           value={codeInput}
-          onChange={(event) => setCodeInput(event.target.value.toUpperCase())}
+          onChange={event => setCodeInput(event.target.value.toUpperCase())}
           placeholder="Enter a friend's code"
           aria-label="Friend's code"
           autoCapitalize="characters"
@@ -248,36 +255,38 @@ export const FriendsTab = () => {
           <SectionHeading label="Requests" />
           <StatusLine tone="muted">Loading…</StatusLine>
         </section>
-      ) : (incomingRequests.data ?? []).length > 0 && (
-        <section className="mb-8">
-          <SectionHeading label="Requests" count={incomingRequests.data!.length} />
-          <ul className="flex flex-col gap-2">
-            {incomingRequests.data!.map((requester) => (
-              <li key={requester.userId} className={`${rowClass} border-l-2 border-l-accent`}>
-                <p className="text-sm text-active">{requester.displayName}</p>
-                <span className="text-[10px] text-muted">wants to be friends</span>
-                <div className="ml-auto flex flex-row gap-1">
-                  <button
-                    type="button"
-                    onClick={() => acceptRequest.mutate(requester.userId)}
-                    disabled={acceptRequest.isPending || declineRequest.isPending}
-                    className={accentButtonClass}
-                  >
-                    Accept
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => declineRequest.mutate(requester.userId)}
-                    disabled={acceptRequest.isPending || declineRequest.isPending}
-                    className={ghostButtonClass}
-                  >
-                    Decline
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
+      ) : (
+        (incomingRequests.data ?? []).length > 0 && (
+          <section className="mb-8">
+            <SectionHeading label="Requests" count={incomingRequests.data!.length} />
+            <ul className="flex flex-col gap-2">
+              {incomingRequests.data!.map(requester => (
+                <li key={requester.userId} className={`${rowClass} border-l-2 border-l-accent`}>
+                  <p className="text-sm text-active">{requester.displayName}</p>
+                  <span className="text-[10px] text-muted">wants to be friends</span>
+                  <div className="ml-auto flex flex-row gap-1">
+                    <button
+                      type="button"
+                      onClick={() => acceptRequest.mutate(requester.userId)}
+                      disabled={acceptRequest.isPending || declineRequest.isPending}
+                      className={accentButtonClass}
+                    >
+                      Accept
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => declineRequest.mutate(requester.userId)}
+                      disabled={acceptRequest.isPending || declineRequest.isPending}
+                      className={ghostButtonClass}
+                    >
+                      Decline
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )
       )}
 
       <section className="mb-8">
@@ -288,19 +297,17 @@ export const FriendsTab = () => {
         {friends.isSuccess && friendCount === 0 && (
           <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-edge px-4 py-10 text-center">
             <svg className="w-6 h-6 text-muted" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24" aria-hidden="true">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15 19a4 4 0 00-8 0M11 11a3 3 0 100-6 3 3 0 000 6zM19 8v6M22 11h-6"
-              />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19a4 4 0 00-8 0M11 11a3 3 0 100-6 3 3 0 000 6zM19 8v6M22 11h-6" />
             </svg>
             <p className="text-sm text-active">No friends yet</p>
-            <p className="text-xs text-muted max-w-60">Share your code above — once they add you and you accept, they&apos;ll show up here.</p>
+            <p className="text-xs text-muted max-w-60">
+              Share your code above — once they add you and you accept, they&apos;ll show up here.
+            </p>
           </div>
         )}
 
         <ul className="flex flex-col gap-2">
-          {(friends.data ?? []).map((friend) => {
+          {(friends.data ?? []).map(friend => {
             const online = onlineUserIds.has(friend.userId)
             const invited = sendInvite.isSuccess && sendInvite.variables === friend.userId
             return (
@@ -333,25 +340,27 @@ export const FriendsTab = () => {
           <SectionHeading label="Blocked" />
           <StatusLine tone="muted">Loading…</StatusLine>
         </section>
-      ) : (blockedUsers.data ?? []).length > 0 && (
-        <section>
-          <SectionHeading label="Blocked" count={blockedUsers.data!.length} />
-          <ul className="flex flex-col gap-2">
-            {blockedUsers.data!.map((blocked) => (
-              <li key={blocked.userId} className={`${rowClass} opacity-70 hover:opacity-100`}>
-                <p className="text-sm text-muted">{blocked.displayName}</p>
-                <button
-                  type="button"
-                  onClick={() => unblockUser.mutate(blocked.userId)}
-                  disabled={unblockUser.isPending}
-                  className={`ml-auto ${ghostButtonClass}`}
-                >
-                  Unblock
-                </button>
-              </li>
-            ))}
-          </ul>
-        </section>
+      ) : (
+        (blockedUsers.data ?? []).length > 0 && (
+          <section>
+            <SectionHeading label="Blocked" count={blockedUsers.data!.length} />
+            <ul className="flex flex-col gap-2">
+              {blockedUsers.data!.map(blocked => (
+                <li key={blocked.userId} className={`${rowClass} opacity-70 hover:opacity-100`}>
+                  <p className="text-sm text-muted">{blocked.displayName}</p>
+                  <button
+                    type="button"
+                    onClick={() => unblockUser.mutate(blocked.userId)}
+                    disabled={unblockUser.isPending}
+                    className={`ml-auto ${ghostButtonClass}`}
+                  >
+                    Unblock
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )
       )}
     </div>
   )

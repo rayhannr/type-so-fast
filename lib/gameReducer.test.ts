@@ -3,7 +3,7 @@ import { createInitialState, gameReducer, type GameState } from './gameReducer'
 
 const baseState = (overrides: Partial<GameState> = {}): GameState => ({
   ...createInitialState(['hello', 'world'], 60),
-  ...overrides,
+  ...overrides
 })
 
 describe('INPUT_CHANGE', () => {
@@ -153,7 +153,7 @@ describe('RESTART', () => {
       wrongWords: 2,
       wpmSamples: [{ elapsed: 5, wpm: 40 }],
       missMap: { a: 3 },
-      wordInput: 'abc',
+      wordInput: 'abc'
     })
     const next = gameReducer(dirty, { type: 'RESTART', words: ['new', 'words'], duration: 30 })
     expect(next).toEqual(createInitialState(['new', 'words'], 30))

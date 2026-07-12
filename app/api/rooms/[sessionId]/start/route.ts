@@ -21,8 +21,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ ses
     } catch (err) {
       console.error(`[rooms/${sessionId}/start] lockRoom failed — starting unlocked:`, err)
     }
-    await trigger(`private-room-${sessionId}`, 'room:start', { words, duration, mode, language })
-    return Response.json({ ok: true })
+    // single shared origin for every client's wpm wall-clock math (see RoomSessionAttributes.startedAt)
+    const startedAt = Date.now()
+    await trigger(`private-room-${sessionId}`, 'room:start', { words, duration, mode, language, startedAt })
+    return Response.json({ ok: true, startedAt })
   } catch (err) {
     return errorResponse(err, '[rooms/:sessionId/start] POST failed')
   }
