@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { useLoginMutation } from '@/lib/queries/auth'
+import { useGoogleLoginMutation, useLinkGoogleMutation, useLoginMutation } from '@/lib/queries/auth'
 import { useDisplayNameQuery } from '@/lib/queries/displayName'
 import { useMyProfileQuery } from '@/lib/queries/profile'
 import { AgsSession } from '@/lib/queries/shared'
@@ -20,12 +20,16 @@ interface AgsSessionState {
   session: AgsSession | null
   displayName?: string
   publicId?: string
+  loginWithGoogle: (idToken: string) => Promise<void>
+  linkGoogle: (idToken: string) => Promise<void>
 }
 
 export const useAgsSession = (): AgsSessionState => {
   const [session, setSession] = useState<AgsSession | null>(null)
   const hasInitialized = useRef(false)
   const loginMutation = useLoginMutation()
+  const googleLoginMutation = useGoogleLoginMutation()
+  const linkGoogleMutation = useLinkGoogleMutation()
 
   useEffect(() => {
     if (hasInitialized.current) return
@@ -38,5 +42,12 @@ export const useAgsSession = (): AgsSessionState => {
   const displayName = useDisplayNameQuery(session)
   const profile = useMyProfileQuery(session)
 
-  return { session, displayName: displayName.data, publicId: profile.data?.publicId }
+  const loginWithGoogle = async (idToken: string) => setSession(await googleLoginMutation.mutateAsync(idToken))
+
+  const linkGoogle = async (idToken: string) => {
+    if (!session) throw new Error('linkGoogle requires an active session')
+    await linkGoogleMutation.mutateAsync({ session, idToken })
+  }
+
+  return { session, displayName: displayName.data, publicId: profile.data?.publicId, loginWithGoogle, linkGoogle }
 }

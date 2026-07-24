@@ -1,6 +1,7 @@
 'use client'
 
 import { AccentPicker } from '@/components/AccentPicker'
+import { AccountLink } from '@/components/AccountLink'
 import { Heading } from '@/components/Heading'
 import { LevelBadge } from '@/components/LevelBadge'
 import { PendingInviteBanner } from '@/components/PendingInviteBanner'
@@ -21,6 +22,7 @@ const GameChrome = ({ children }: { children: React.ReactNode }) => {
         <div className="flex flex-row items-center gap-2 sm:gap-3">
           <LevelBadge xp={progression.data?.xp ?? 0} />
           <AccentPicker session={session} />
+          <AccountLink />
           <SoundToggle />
           <ThemeToggle />
           <a
