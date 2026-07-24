@@ -32,6 +32,19 @@ type Phase = 'idle' | 'queueing' | 'connecting' | 'countdown' | 'racing'
 const OUTCOME_LABEL: Record<Outcome, string> = { win: 'You Win!', lose: 'Opponent Wins', tie: "It's a Tie" }
 const OUTCOME_CLASS: Record<Outcome, string> = { win: 'text-correct', lose: 'text-error', tie: 'text-active' }
 
+// the WebRTC handshake happens during 'connecting' — poll tighter there so offer/answer/ICE
+// candidates propagate faster. Nothing in `attributes` changes once the race has actually started
+// (words/offer/answer are already resolved by then, and progress rides the data channel, not this
+// poll), so 'countdown'/'racing' disable polling entirely instead of continuing to hit AGS every
+// 1.5s through to the results screen.
+const POLL_INTERVAL_MS_BY_PHASE: Record<Phase, number | false> = {
+  idle: 1500,
+  queueing: 1500,
+  connecting: 400,
+  countdown: false,
+  racing: false
+}
+
 export const PvpGame = () => {
   const { session, displayName } = useAgsSessionContext()
 
@@ -54,8 +67,11 @@ export const PvpGame = () => {
   const cancelTicket = useCancelMatchTicketMutation(session)
   const ticketStatus = useMatchTicketStatusQuery(session, phase === 'queueing' ? ticketId : null)
   // the WebRTC handshake happens during 'connecting' — poll tighter there so offer/answer/ICE
-  // candidates propagate faster, then fall back to the steady-state interval once connected
-  const pvpSession = useSessionQuery(session, sessionId, phase === 'connecting' ? 400 : 1500)
+  // candidates propagate faster. Nothing in `attributes` changes once the race has actually
+  // started (words/offer/answer are already resolved by then, and progress rides the data
+  // channel, not this poll), so stop polling entirely for 'countdown'/'racing' instead of
+  // continuing to hit AGS every 1.5s through to the results screen.
+  const pvpSession = useSessionQuery(session, sessionId, POLL_INTERVAL_MS_BY_PHASE[phase])
   const setSessionAttributes = useSetSessionAttributesMutation(session)
   const leaveSession = useLeaveSessionMutation(session)
 

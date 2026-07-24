@@ -6,8 +6,9 @@ import { authHeaders, AgsSession } from './shared'
 // pollIntervalMs defaults to 1500 for steady-state polling (room lobby waits, race setup), but
 // the WebRTC handshake is latency-sensitive enough to warrant a tighter interval while it's live —
 // callers pass a shorter value only for the 'connecting' phase so we're not hammering AGS the rest
-// of the time
-export const useSessionQuery = (session: AgsSession | null, sessionId: string | null, pollIntervalMs = 1500) =>
+// of the time. Pass `false` once nothing in `attributes` can change anymore (race underway/over) so
+// the query stops refetching instead of polling forever off the back of a still-set sessionId.
+export const useSessionQuery = (session: AgsSession | null, sessionId: string | null, pollIntervalMs: number | false = 1500) =>
   useQuery({
     queryKey: ['pvpSession', sessionId],
     queryFn: () => axios.get<PvpSession>(`/api/session/${sessionId}`, { headers: authHeaders(session!) }).then(res => res.data),
