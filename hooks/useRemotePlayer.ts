@@ -8,6 +8,10 @@ import { SignalPayload } from '@/lib/ags/session'
 // connections but has no fallback when both peers are behind restrictive NATs.
 const ICE_SERVERS: RTCIceServer[] = [{ urls: 'stun:stun.l.google.com:19302' }]
 
+// how long to batch newly-gathered candidates before writing them out, so a burst of candidates
+// (STUN typically returns several close together) becomes one signal write instead of many
+const CANDIDATE_FLUSH_DELAY_MS = 150
+
 export interface RemotePlayerSnapshot {
   words: string[]
   wordInput: string
@@ -33,15 +37,17 @@ interface RemotePlayer {
 // Signaling rides on the session's `attributes` field (polled REST, see useSessionQuery)
 // instead of AGS Lobby: Lobby's websocket requires an Authorization header at handshake
 // time, which a browser WebSocket client can't send — confirmed by three failed spikes
-// (docs/ags-plans/2026-07-07-pvp-quick-match.md). Non-trickle ICE: each side waits for its
-// own candidate gathering to finish, then writes one signal payload instead of streaming
-// candidates one at a time.
+// (docs/ags-plans/2026-07-07-pvp-quick-match.md). Trickle ICE: each side writes its SDP as
+// soon as it's created, then writes the growing candidate list as candidates arrive, instead
+// of waiting for gathering to fully finish — the other side can start connecting on partial
+// candidates rather than sitting idle for the whole gathering round trip.
 export const useRemotePlayer = ({ isOfferer, active, offer, answer, onOffer, onAnswer }: Params): RemotePlayer => {
   const [connected, setConnected] = useState(false)
   const [remote, setRemote] = useState<RemotePlayerSnapshot | null>(null)
   const channelRef = useRef<RTCDataChannel | null>(null)
   const pcRef = useRef<RTCPeerConnection | null>(null)
   const remoteDescriptionSetRef = useRef(false)
+  const appliedCandidateCountRef = useRef(0)
 
   useEffect(() => {
     if (!active) return
@@ -49,6 +55,22 @@ export const useRemotePlayer = ({ isOfferer, active, offer, answer, onOffer, onA
     const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS })
     pcRef.current = pc
     const candidates: RTCIceCandidateInit[] = []
+    let localDescription: RTCSessionDescription | null = null
+    let flushTimeout: ReturnType<typeof setTimeout> | null = null
+
+    const publish = () => {
+      if (!localDescription) return
+      if (isOfferer) onOffer({ sdp: localDescription, candidates: [...candidates] })
+      else onAnswer({ sdp: localDescription, candidates: [...candidates] })
+    }
+
+    const scheduleFlush = () => {
+      if (flushTimeout) return
+      flushTimeout = setTimeout(() => {
+        flushTimeout = null
+        publish()
+      }, CANDIDATE_FLUSH_DELAY_MS)
+    }
 
     const attachChannel = (channel: RTCDataChannel) => {
       channelRef.current = channel
@@ -64,54 +86,71 @@ export const useRemotePlayer = ({ isOfferer, active, offer, answer, onOffer, onA
     }
 
     pc.addEventListener('icecandidate', event => {
-      if (event.candidate) candidates.push(event.candidate.toJSON())
-    })
-
-    pc.addEventListener('icegatheringstatechange', () => {
-      if (pc.iceGatheringState !== 'complete' || !pc.localDescription) return
-      if (isOfferer) onOffer({ sdp: pc.localDescription, candidates })
-      else onAnswer({ sdp: pc.localDescription, candidates })
+      if (!event.candidate) return
+      candidates.push(event.candidate.toJSON())
+      scheduleFlush()
     })
 
     if (isOfferer) {
       attachChannel(pc.createDataChannel('race-progress'))
       pc.createOffer()
         .then(offerDescription => pc.setLocalDescription(offerDescription))
+        .then(() => {
+          localDescription = pc.localDescription
+          publish()
+        })
         .catch(() => {})
     } else {
       pc.addEventListener('datachannel', event => attachChannel(event.channel))
     }
 
     return () => {
+      if (flushTimeout) clearTimeout(flushTimeout)
       pc.close()
       pcRef.current = null
       channelRef.current = null
       remoteDescriptionSetRef.current = false
+      appliedCandidateCountRef.current = 0
       setConnected(false)
     }
   }, [active, isOfferer])
 
-  // non-offerer: apply the offer once it lands in session attributes
+  // non-offerer: apply the offer's sdp as soon as it lands, then apply the answer's own local
+  // description once created — same trickle-publish shape as the offerer side
   useEffect(() => {
     const pc = pcRef.current
     if (isOfferer || !pc || !offer || remoteDescriptionSetRef.current) return
     remoteDescriptionSetRef.current = true
     pc.setRemoteDescription(new RTCSessionDescription(offer.sdp))
-      .then(() => Promise.all(offer.candidates.map(c => pc.addIceCandidate(new RTCIceCandidate(c)))))
       .then(() => pc.createAnswer())
       .then(answerDescription => pc.setLocalDescription(answerDescription))
+      .then(() => {
+        if (pc.localDescription) onAnswer({ sdp: pc.localDescription, candidates: [] })
+      })
       .catch(() => {})
   }, [isOfferer, offer])
 
-  // offerer: apply the answer once it lands in session attributes
+  // offerer: apply the answer's sdp as soon as it lands
   useEffect(() => {
     const pc = pcRef.current
     if (!isOfferer || !pc || !answer || remoteDescriptionSetRef.current) return
     remoteDescriptionSetRef.current = true
-    pc.setRemoteDescription(new RTCSessionDescription(answer.sdp))
-      .then(() => Promise.all(answer.candidates.map(c => pc.addIceCandidate(new RTCIceCandidate(c)))))
-      .catch(() => {})
+    pc.setRemoteDescription(new RTCSessionDescription(answer.sdp)).catch(() => {})
   }, [isOfferer, answer])
+
+  // apply newly-arrived candidates from whichever side we're not — the signal's candidate list
+  // only grows, so track how many we've already added and add just the new tail each update
+  useEffect(() => {
+    const pc = pcRef.current
+    const signal = isOfferer ? answer : offer
+    if (!pc || !signal || !remoteDescriptionSetRef.current) return
+    const newCandidates = signal.candidates.slice(appliedCandidateCountRef.current)
+    if (newCandidates.length === 0) return
+    appliedCandidateCountRef.current = signal.candidates.length
+    newCandidates.forEach(candidate => {
+      pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(() => {})
+    })
+  }, [isOfferer, offer, answer])
 
   const sendSnapshot = (snapshot: RemotePlayerSnapshot) => {
     if (channelRef.current?.readyState === 'open') channelRef.current.send(JSON.stringify(snapshot))

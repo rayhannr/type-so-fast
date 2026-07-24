@@ -3,12 +3,16 @@ import axios from 'axios'
 import { PvpSession, PvpSessionAttributes } from '@/lib/ags/session'
 import { authHeaders, AgsSession } from './shared'
 
-export const useSessionQuery = (session: AgsSession | null, sessionId: string | null) =>
+// pollIntervalMs defaults to 1500 for steady-state polling (room lobby waits, race setup), but
+// the WebRTC handshake is latency-sensitive enough to warrant a tighter interval while it's live —
+// callers pass a shorter value only for the 'connecting' phase so we're not hammering AGS the rest
+// of the time
+export const useSessionQuery = (session: AgsSession | null, sessionId: string | null, pollIntervalMs = 1500) =>
   useQuery({
     queryKey: ['pvpSession', sessionId],
     queryFn: () => axios.get<PvpSession>(`/api/session/${sessionId}`, { headers: authHeaders(session!) }).then(res => res.data),
     enabled: !!session && !!sessionId,
-    refetchInterval: 1500
+    refetchInterval: pollIntervalMs
   })
 
 // the writer already knows the exact resulting attributes (it just built them), so update the

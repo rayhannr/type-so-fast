@@ -53,7 +53,9 @@ export const PvpGame = () => {
   const createTicket = useCreateMatchTicketMutation(session)
   const cancelTicket = useCancelMatchTicketMutation(session)
   const ticketStatus = useMatchTicketStatusQuery(session, phase === 'queueing' ? ticketId : null)
-  const pvpSession = useSessionQuery(session, sessionId)
+  // the WebRTC handshake happens during 'connecting' — poll tighter there so offer/answer/ICE
+  // candidates propagate faster, then fall back to the steady-state interval once connected
+  const pvpSession = useSessionQuery(session, sessionId, phase === 'connecting' ? 400 : 1500)
   const setSessionAttributes = useSetSessionAttributesMutation(session)
   const leaveSession = useLeaveSessionMutation(session)
 
