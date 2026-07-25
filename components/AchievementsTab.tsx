@@ -15,7 +15,9 @@ export const AchievementsTab = ({ session }: Props) => {
       {achievements.isFetching && <p className="text-center text-xs text-muted mb-6">Loading achievements…</p>}
       {achievements.isError && <p className="text-center text-xs text-muted mb-6">Couldn&apos;t load achievements — try again later.</p>}
       <ul className="flex flex-col gap-3">
-        {(achievements.data ?? []).map(achievement => (
+        {[...(achievements.data ?? [])]
+          .sort((a, b) => Number(b.unlocked) - Number(a.unlocked))
+          .map(achievement => (
           <li
             key={achievement.code}
             className={`flex flex-row items-center gap-4 rounded-lg border border-solid border-edge bg-surface px-4 py-3 ${
