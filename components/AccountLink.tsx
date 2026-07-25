@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import Script from 'next/script'
 import { useEffect, useRef, useState } from 'react'
 import { useAgsSessionContext } from '@/lib/ags/AgsSessionContext'
-import { useGoogleStatusQuery, useUnlinkGoogleMutation } from '@/lib/queries/auth'
+import { linkGoogleErrorMessage, useGoogleStatusQuery, useUnlinkGoogleMutation } from '@/lib/queries/auth'
 import { readLocal, writeLocal } from '@/lib/queries/shared'
 
 const decodeGoogleAvatarUrl = (idToken: string): string | undefined => {
@@ -40,6 +40,7 @@ export const AccountLink = () => {
   const [mode, setMode] = useState<'link' | 'signin'>('link')
   const [status, setStatus] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [isLinking, setIsLinking] = useState(false)
   const [googleReady, setGoogleReady] = useState(false)
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const googleButtonRef = useRef<HTMLDivElement | null>(null)
@@ -84,6 +85,7 @@ export const AccountLink = () => {
     const handleCredential = async (idToken: string) => {
       setError(null)
       setStatus(null)
+      setIsLinking(true)
       try {
         const newAvatarUrl = decodeGoogleAvatarUrl(idToken)
         if (modeRef.current === 'link') {
@@ -100,8 +102,10 @@ export const AccountLink = () => {
           await loginWithGoogle(idToken)
           setStatus('Signed in.')
         }
-      } catch {
-        setError(modeRef.current === 'link' ? 'Could not link this Google account.' : 'Could not sign in with this Google account.')
+      } catch (err) {
+        setError(modeRef.current === 'link' ? linkGoogleErrorMessage(err) : 'Could not sign in with this Google account.')
+      } finally {
+        setIsLinking(false)
       }
     }
 
@@ -188,8 +192,9 @@ export const AccountLink = () => {
                   : 'Sign in with the Google account you linked elsewhere to bring that progress here.'}
               </p>
 
-              <div ref={googleButtonRef} />
+              <div ref={googleButtonRef} className={isLinking ? 'pointer-events-none opacity-50' : undefined} />
 
+              {isLinking && <p className="text-xs text-muted">{mode === 'link' ? 'Linking…' : 'Signing in…'}</p>}
               {status && <p className="text-xs text-green-500">{status}</p>}
               {error && <p className="text-xs text-red-500">{error}</p>}
               {mode === 'link' && !session && <p className="text-xs text-red-500">You need an active session to link Google.</p>}
