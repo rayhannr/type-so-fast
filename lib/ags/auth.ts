@@ -1,30 +1,28 @@
-import axios from 'axios'
+import { UsersApi, OAuth20Api } from '@accelbyte/sdk-iam'
 import { createSdk } from './sdk'
-
-interface AgsTokenResponse {
-  access_token: string
-  refresh_token?: string
-  user_id: string
-}
 
 export interface AgsSession {
   userId: string
   accessToken: string
 }
 
-const toSession = (data: AgsTokenResponse): AgsSession => ({ userId: data.user_id, accessToken: data.access_token })
+// Public IAM client has no secret; the platform-token endpoint still requires HTTP Basic auth
+// with an empty password (verified live, same pattern as adminToken.ts's confidential-client call).
+const withPublicClientAuth = () => {
+  const basicAuth = Buffer.from(`${process.env.ACCELBYTE_CLIENT_ID}:`).toString('base64')
+  return OAuth20Api(createSdk(), { axiosConfig: { request: { headers: { Authorization: `Basic ${basicAuth}` } } } })
+}
 
-const loginWithPlatformToken = async (platformId: string, params: Record<string, string>): Promise<AgsSession> => {
-  const { data } = await axios.post<AgsTokenResponse>(
-    `${process.env.ACCELBYTE_BASE_URL}/iam/v3/oauth/platforms/${platformId}/token`,
-    new URLSearchParams({ create_headless: 'true', ...params }),
-    {
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      auth: { username: process.env.ACCELBYTE_CLIENT_ID!, password: '' }
-    }
-  )
+const loginWithPlatformToken = async (
+  platformId: string,
+  params: { device_id?: string; platform_token?: string }
+): Promise<AgsSession> => {
+  const { data } = await withPublicClientAuth().postTokenOauth_ByPlatformId_v3(platformId, {
+    createHeadless: true,
+    ...params
+  })
 
-  return toSession(data)
+  return { userId: data.user_id, accessToken: data.access_token }
 }
 
 export const loginWithDeviceId = (deviceId: string): Promise<AgsSession> =>
@@ -34,16 +32,21 @@ export const loginWithGoogle = (googleIdToken: string): Promise<AgsSession> =>
   loginWithPlatformToken('google', { platform_token: googleIdToken })
 
 export const linkGoogleAccount = async (session: AgsSession, googleIdToken: string): Promise<void> => {
-  await axios.post(
-    `${process.env.ACCELBYTE_BASE_URL}/iam/v3/public/namespaces/${process.env.ACCELBYTE_NAMESPACE}/users/me/platforms/google`,
-    new URLSearchParams({ ticket: googleIdToken }),
-    {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        Authorization: `Bearer ${session.accessToken}`
-      }
-    }
-  )
+  const usersApi = UsersApi(createSdk(session.accessToken))
+  await usersApi.postUserMePlatform_ByPlatformId_v3('google', { ticket: googleIdToken })
+}
+
+export const unlinkGoogleAccount = async (session: AgsSession): Promise<void> => {
+  const usersApi = UsersApi(createSdk(session.accessToken))
+  await usersApi.deleteAllMeUser_ByPlatformId_v3('google')
+}
+
+export const getLinkedGoogleAccount = async (session: AgsSession): Promise<{ displayName: string | null } | null> => {
+  const usersApi = UsersApi(createSdk(session.accessToken))
+  const { data } = await usersApi.getPlatforms_ByUserId_v3(session.userId, { platformId: 'google' })
+
+  const google = data.data.find(platform => platform.platformId === 'google')
+  return google ? { displayName: google.displayName ?? null } : null
 }
 
 export { createSdk }
