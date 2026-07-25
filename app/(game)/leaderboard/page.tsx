@@ -1,9 +1,11 @@
-'use client'
+import { Metadata } from 'next'
+import { LeaderboardContainer } from '@/components/LeaderboardContainer'
 
-import { Leaderboard } from '@/components/Leaderboard'
-import { useAgsSessionContext } from '@/lib/ags/AgsSessionContext'
+export const metadata: Metadata = {
+  title: 'TypeSoFast! — Leaderboard',
+  description: 'See how your typing speed ranks against other players.'
+}
 
 export default function LeaderboardPage() {
-  const { session } = useAgsSessionContext()
-  return <Leaderboard currentUserId={session?.userId ?? null} />
+  return <LeaderboardContainer />
 }

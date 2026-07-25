@@ -1,9 +1,11 @@
-'use client'
+import { Metadata } from 'next'
+import { AchievementsTabContainer } from '@/components/AchievementsTabContainer'
 
-import { AchievementsTab } from '@/components/AchievementsTab'
-import { useAgsSessionContext } from '@/lib/ags/AgsSessionContext'
+export const metadata: Metadata = {
+  title: 'TypeSoFast! — Achievements',
+  description: 'View unlocked achievements and track progress toward the ones you have left.'
+}
 
 export default function AchievementsPage() {
-  const { session } = useAgsSessionContext()
-  return <AchievementsTab session={session} />
+  return <AchievementsTabContainer />
 }

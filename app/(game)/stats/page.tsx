@@ -1,9 +1,11 @@
-'use client'
+import { Metadata } from 'next'
+import { StatsTabContainer } from '@/components/StatsTabContainer'
 
-import { StatsTab } from '@/components/StatsTab'
-import { useAgsSessionContext } from '@/lib/ags/AgsSessionContext'
+export const metadata: Metadata = {
+  title: 'TypeSoFast! — Stats',
+  description: 'Track your typing speed history, streaks, and personal bests over time.'
+}
 
 export default function StatsPage() {
-  const { session } = useAgsSessionContext()
-  return <StatsTab session={session} />
+  return <StatsTabContainer />
 }

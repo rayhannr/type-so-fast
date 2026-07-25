@@ -12,7 +12,8 @@ const ROUTES = [
   { href: '/friends', label: 'Friends' },
   { href: '/stats', label: 'Stats' },
   { href: '/leaderboard', label: 'Leaderboard' },
-  { href: '/achievements', label: 'Achievements' }
+  { href: '/achievements', label: 'Achievements' },
+  { href: '/about', label: 'About' }
 ]
 
 export const TabNav = () => {
