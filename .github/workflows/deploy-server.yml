@@ -34,3 +34,9 @@ jobs:
           region: ${{ env.REGION }}
           source: ./server
           flags: --allow-unauthenticated
+          env_vars: |
+            ACCELBYTE_BASE_URL=${{ secrets.ACCELBYTE_BASE_URL }}
+            ACCELBYTE_NAMESPACE=${{ secrets.ACCELBYTE_NAMESPACE }}
+            ACCELBYTE_CLIENT_ID=${{ secrets.ACCELBYTE_CLIENT_ID }}
+            ACCELBYTE_ADMIN_CLIENT_ID=${{ secrets.ACCELBYTE_ADMIN_CLIENT_ID }}
+            ACCELBYTE_ADMIN_CLIENT_SECRET=${{ secrets.ACCELBYTE_ADMIN_CLIENT_SECRET }}

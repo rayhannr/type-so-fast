@@ -17,6 +17,10 @@ func main() {
 
 	router := gin.Default()
 	router.GET("/api/health", handlers.Health)
+	router.GET("/api/profile", handlers.Profile)
+	router.GET("/api/leaderboard", handlers.Leaderboard)
+	router.GET("/api/display-name", handlers.GetDisplayName)
+	router.PATCH("/api/display-name", handlers.PatchDisplayName)
 
 	log.Printf("listening on :%s", port)
 	if err := router.Run(":" + port); err != nil {
