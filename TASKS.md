@@ -218,3 +218,39 @@ Key finding that shaped the whole slice: AGS Session already has a native join-b
 Implemented: `lib/ags/session.ts` room helpers (`createRoomSession`/`generateRoomCode`/`joinRoomByCode`/`lockRoom`/`getRoomSession`, `RoomSessionAttributes`, shared `patchSessionWithRetry` extracted from the existing PvP attribute-write retry); API routes under `app/api/rooms` (including a GET route resolving opponent display names via `getUserSummaries`, matching Friends' pattern); `lib/queries/rooms.ts`; Pusher `private-room-{sessionId}` channel (`room:joined`/`room:start`/`room:progress`) via `hooks/useRoomChannel.ts`, with progress publishing throttled to ~2/sec; `components/RoomGame.tsx` + `/room` nav entry — entry (create/join-by-code) → lobby (code, live roster, host-only Start) → racing (own `WordContainer` + compact opponent progress rows, opponent names resolved not raw userIds) → result with a win/lose banner. Room wins/streaks get their own CloudSave-backed progression (`RoomData`/`advanceRoom`) and 6 new achievements (`room-win`, `room-full-house`, `room-streak-3`/`5`, `room-wins-10`) wired through the same achievements pipeline as PvP — `won` is a client-side heuristic (own WPM vs. max opponent WPM from the throttled Pusher stream), not server-authoritative, acceptable for an achievement gate.
 
 Verified end-to-end via `e2e/room.spec.ts` (host + 2 joiners, representative of N-join rather than full 5-seat capacity): create → join by code → roster fills live → start → all three race → **a 4th context is confirmed rejected when submitting the same code after start** (proves the lock is real, not just a hidden UI button) → synced opponent progress over Pusher. Writing and running this test (not just typechecking) caught a real concurrency bug: `RoomGame.tsx`'s start handler fired two concurrent AGS session writes (attributes + joinability) that raced the same optimistic-concurrency `version` and exhausted the single retry each write allows — fixed by sequencing the writes instead of firing them together. Also required parallelizing the test's own independent waits (`Promise.all` over multi-context page loads/joins/racing-transitions) after early runs timed out purely from cumulative wall-clock latency against live AGS/Pusher across 3-4 real browser contexts.
+
+---
+
+## Phase 19 — Backend Migration to Go (planned, not started)
+
+**T53 — Migrate `app/api/**` to a standalone Go service on Cloud Run, same domain via Next.js rewrite**
+
+Move the backend (currently ~35 Next.js API routes wrapping `@accelbyte/sdk-*` + Pusher) to a standalone Go service, for architecture/learning reasons, hosted on Google Cloud Run (existing GCP account, staying within the free tier — min instances 0, no GPU, budget alert as a tripwire). The Next.js frontend stays on its current host; the browser only ever talks to one domain via a `next.config.ts` `rewrites()` proxy (`/api/:path*` → the Cloud Run service URL), which sidesteps CORS entirely. This repo becomes a monorepo: a new `/server` directory (independent Go module) alongside the existing Next.js app.
+
+Two things found during research that simplify this:
+- Auth has no cookies/server session — login returns a raw AGS access token + userId as JSON, the client stores it in `localStorage` (`lib/queries/shared.ts`) and resends it as `Authorization: Bearer <token>` + `X-User-Id` headers on every call, validated server-side only by presence (`lib/api-auth.ts`). The Go service just needs to forward those two headers — no session/JWT to reimplement.
+- Every frontend call already uses relative `/api/...` paths (`lib/queries/*.ts`, no hardcoded base URL), so the rewrite proxy works with zero frontend code changes.
+
+Realtime stays on Pusher (via the official `pusher-http-go` Go server library, which replicates the trigger + HMAC channel-auth signature format exactly) rather than moving to native Go WebSockets — Cloud Run's multi-instance scaling would otherwise require a cross-instance fanout layer (e.g. Redis pub/sub) to replace what Pusher already provides for free.
+
+Repo layout:
+```
+/server
+  go.mod
+  main.go              (entrypoint, listens on $PORT for Cloud Run)
+  internal/
+    ags/                (mirrors lib/ags/*.ts, via accelbyte-go-modular-sdk)
+    handlers/           (mirrors app/api/**)
+    pusherx/            (wraps pusher-http-go: trigger + channel auth)
+    apiauth/            (mirrors lib/api-auth.ts)
+  Dockerfile
+```
+
+Migration in verifiable slices (not big-bang), deleting each `app/api/**` route once its Go counterpart is live and tested:
+1. Scaffold `/server` + Dockerfile + a trivial `/api/health` route, deploy to Cloud Run once, wire up the `next.config.ts` rewrite (`GO_BACKEND_URL` env var), verify the round trip.
+2. Port read-only routes first (`profile`, `leaderboard`, `display-name`) to validate the AGS Go SDK pattern and header-auth passthrough, plus the admin `client_credentials` token cache (`lib/ags/adminToken.ts` → Go, mutex-guarded since concurrent).
+3. Port the Pusher-touching/stateful routes (`rooms/*`, `match-invites/*`, `friends`, and `pusher/auth` — the highest-risk piece, must use `pusher-http-go`'s own auth helpers so the signature matches what `pusher-js` validates client-side). Verify manually end-to-end with two browser sessions, not just tests — realtime correctness isn't caught by type checks.
+4. Port the remaining CRUD-style routes (achievements, blocks, friends sub-routes, history, matchmaking, progression, pvc/pvp/room-progress, records, session, settings, stats, streak, auth + Google linking).
+5. Delete `app/api/**` once every route has a verified Go counterpart.
+
+Verification per slice: `npm run test:e2e` (Playwright, hits `/api/*` from the browser so it's an automatic regression check for the rewrite), `npm run test:unit` for anything touching `lib/queries/*.ts`, and manual two-browser verification for the Pusher slice specifically. Run each Go route locally via `go run ./server` and hit it directly before deploying, to isolate Go-side bugs from proxy config.

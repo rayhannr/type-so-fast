@@ -43,3 +43,7 @@ next-env.d.ts
 docs/ags-plans/
 test-results/
 playwright-report/
+
+# go
+/server/server
+/server/*.exe
