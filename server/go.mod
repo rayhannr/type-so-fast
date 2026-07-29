@@ -6,11 +6,14 @@ require (
 	github.com/AccelByte/accelbyte-go-modular-sdk/basic-sdk v0.4.0
 	github.com/AccelByte/accelbyte-go-modular-sdk/iam-sdk v0.10.0
 	github.com/AccelByte/accelbyte-go-modular-sdk/leaderboard-sdk v0.5.0
+	github.com/AccelByte/accelbyte-go-modular-sdk/lobby-sdk v0.4.0
 	github.com/AccelByte/accelbyte-go-modular-sdk/services-api v0.1.0
+	github.com/AccelByte/accelbyte-go-modular-sdk/session-sdk v0.10.0
 	github.com/brianvoe/gofakeit/v7 v7.15.0
 	github.com/gin-gonic/gin v1.12.0
 	github.com/go-openapi/runtime v0.19.29
 	github.com/go-openapi/strfmt v0.21.1
+	github.com/pusher/pusher-http-go/v5 v5.1.1
 )
 
 require (
@@ -42,6 +45,7 @@ require (
 	github.com/goccy/go-yaml v1.19.2 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/google/uuid v1.3.0 // indirect
+	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect

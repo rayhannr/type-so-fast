@@ -75,8 +75,10 @@ type UserSummary struct {
 	DisplayName string `json:"displayName"`
 }
 
-// GetUserSummaries is a bulk lookup that needs an admin-scoped token, not the
-// requesting player's.
+// GetUserSummaries is a bulk lookup that needs an admin-scoped token, not the requesting
+// player's — the public bulk/basic endpoint 404s in this AGS deployment (endpoint not found),
+// so this uses the admin bulk-by-userIds endpoint instead, matching the TS SDK's
+// UsersAdminApi.createUserBulk_v3.
 func GetUserSummaries(userIDs []string) ([]UserSummary, error) {
 	if len(userIDs) == 0 {
 		return []UserSummary{}, nil
@@ -88,11 +90,11 @@ func GetUserSummaries(userIDs []string) ([]UserSummary, error) {
 	}
 
 	service := newUsersService(adminAccessToken)
-	params := users.NewPublicBulkGetUsersParams()
+	params := users.NewAdminListUserIDByUserIDsV3Params()
 	params.Namespace = agsconfig.Namespace()
-	params.Body = &iamclientmodels.ModelUserIDsRequest{UserIds: userIDs}
+	params.Body = &iamclientmodels.ModelAdminBulkUserRequest{UserIds: userIDs}
 
-	resp, err := service.PublicBulkGetUsersShort(params)
+	resp, err := service.AdminListUserIDByUserIDsV3Short(params)
 	if err != nil {
 		return nil, err
 	}

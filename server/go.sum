@@ -4,8 +4,12 @@ github.com/AccelByte/accelbyte-go-modular-sdk/iam-sdk v0.10.0 h1:dGvmTlVgnld8Vt7
 github.com/AccelByte/accelbyte-go-modular-sdk/iam-sdk v0.10.0/go.mod h1:SlWQGmCoGGresWqVCrAv+pLNBJlnVXWBQMsKd1u/ah4=
 github.com/AccelByte/accelbyte-go-modular-sdk/leaderboard-sdk v0.5.0 h1:4m+Aqc22SMkyxJwwzd7HCcNkdxPv9ZzZN0wKRx+L08I=
 github.com/AccelByte/accelbyte-go-modular-sdk/leaderboard-sdk v0.5.0/go.mod h1:6rixzU0wiGsXTbN5eaXicC5UOhZqRgpmQx2ZgaI0ai4=
+github.com/AccelByte/accelbyte-go-modular-sdk/lobby-sdk v0.4.0 h1:QsSTudVaXx4oV+HWcQGIexa+4nkrguMLcVYe+hDgILU=
+github.com/AccelByte/accelbyte-go-modular-sdk/lobby-sdk v0.4.0/go.mod h1:HjalE/x3NMYUavhHtK0a7041qsEFXfKwpVhXCohuFis=
 github.com/AccelByte/accelbyte-go-modular-sdk/services-api v0.1.0 h1:Nk2jYoAxVMFpNbgh1/CaeUCzpjLO3XNyqzuyeFEEzG0=
 github.com/AccelByte/accelbyte-go-modular-sdk/services-api v0.1.0/go.mod h1:/eLGacVUuC63ecIx2mnCqRonZbiP/PYzzkUERCYBdUo=
+github.com/AccelByte/accelbyte-go-modular-sdk/session-sdk v0.10.0 h1:2tGL3BIVc6cdknBKNnTii+8U5cCvUHaihmgnStqfcdk=
+github.com/AccelByte/accelbyte-go-modular-sdk/session-sdk v0.10.0/go.mod h1:/iN1s1Js/693P1rWlqluIjMks6q6ETM8IxVHlNrZPfQ=
 github.com/AccelByte/bloom v0.0.0-20180915202807-98c052463922 h1:3v15CkYPdxShj9tisD+pU4YihvQCPUISwFrandjwq5A=
 github.com/AccelByte/bloom v0.0.0-20180915202807-98c052463922/go.mod h1:njjI8ZR5oAhtMq8ODchl6GBz8enKQJt+D9WqLn96hLI=
 github.com/AccelByte/go-jose v2.1.4+incompatible h1:jn3BJ0HZAUskWJ042CJGgFXDAwhTsEkOKCX0DIZ5OcQ=
@@ -179,6 +183,8 @@ github.com/google/uuid v1.0.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+
 github.com/google/uuid v1.1.1/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/google/uuid v1.3.0 h1:t6JiXgmwXMjEs8VusXIJk2BXHsn+wx8BZdTaoZ5fu7I=
 github.com/google/uuid v1.3.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
+github.com/gorilla/websocket v1.5.3 h1:saDtZ6Pbx/0u+bgYQ3q96pZgCzfhKXGPqt7kZ72aNNg=
+github.com/gorilla/websocket v1.5.3/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/inconshreveable/mousetrap v1.0.0/go.mod h1:PxqpIevigyE2G7u3NXJIT2ANytuPF1OarO4DADm73n8=
 github.com/joho/godotenv v1.3.0/go.mod h1:7hK45KPybAkOC6peb+G5yklZfMxEjkZhHbwpqxOKXbg=
 github.com/josharian/intern v1.0.0 h1:vlS4z54oSdjm0bgjRigI+G1HpF+tI+9rE5LLzOg8HmY=
@@ -245,6 +251,8 @@ github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINE
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
+github.com/pusher/pusher-http-go/v5 v5.1.1 h1:ZLUGdLA8yXMvByafIkS47nvuXOHrYmlh4bsQvuZnYVQ=
+github.com/pusher/pusher-http-go/v5 v5.1.1/go.mod h1:Ibji4SGoUDtOy7CVRhCiEpgy+n5Xv6hSL/QqYOhmWW8=
 github.com/quic-go/qpack v0.6.0 h1:g7W+BMYynC1LbYLSqRt8PBg5Tgwxn214ZZR34VIOjz8=
 github.com/quic-go/qpack v0.6.0/go.mod h1:lUpLKChi8njB4ty2bFLX2x4gzDqXwUpaO1DP9qMDZII=
 github.com/quic-go/quic-go v0.59.0 h1:OLJkp1Mlm/aS7dpKgTc6cnpynnD2Xg7C1pwL6vy/SAw=
@@ -325,6 +333,7 @@ golang.org/x/crypto v0.0.0-20190530122614-20be4c3c3ed5/go.mod h1:yigFU9vqHzYiE8U
 golang.org/x/crypto v0.0.0-20190611184440-5c40567a22f8/go.mod h1:yigFU9vqHzYiE8UmvKecakEJjdnWj3jj499lnFckfCI=
 golang.org/x/crypto v0.0.0-20190617133340-57b3e21c3d56/go.mod h1:yigFU9vqHzYiE8UmvKecakEJjdnWj3jj499lnFckfCI=
 golang.org/x/crypto v0.0.0-20200302210943-78000ba7a073/go.mod h1:LzIPMQfyMNhhGPhUkYOs5KpL4U8rLKemX1yGLhDgUto=
+golang.org/x/crypto v0.0.0-20200709230013-948cd5f35899/go.mod h1:LzIPMQfyMNhhGPhUkYOs5KpL4U8rLKemX1yGLhDgUto=
 golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d/go.mod h1:IxCIyHEi3zRg3s0A5j5BB6A9Jmi73HwBIUl50j+osU4=
 golang.org/x/crypto v0.48.0 h1:/VRzVqiRSggnhY7gNRxPauEQ5Drw9haKdM0jqfcCFts=
 golang.org/x/crypto v0.48.0/go.mod h1:r0kV5h3qnFPlQnBSrULhlsRfryS2pmewsg+XfMgkVos=
@@ -387,6 +396,8 @@ gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f/go.mod h1:Co6ibVJAznAaIkqp8
 gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c h1:Hei/4ADfdWqJk1ZMxUNpqntNwaWcugrBjAiHlqqRiVk=
 gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c/go.mod h1:JHkPIbrfpd72SG/EVd6muEfDQjcINNoR0C8j2r3qZ4Q=
 gopkg.in/errgo.v2 v2.1.0/go.mod h1:hNsd1EY+bozCKY1Ytp96fpM3vjJbqLJn88ws8XvfDNI=
+gopkg.in/stretchr/testify.v1 v1.2.2 h1:yhQC6Uy5CqibAIlk1wlusa/MJ3iAN49/BsR/dCCKz3M=
+gopkg.in/stretchr/testify.v1 v1.2.2/go.mod h1:QI5V/q6UbPmuhtm10CaFZxED9NreB8PnFYN9JcR6TxU=
 gopkg.in/yaml.v2 v2.2.1/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
 gopkg.in/yaml.v2 v2.2.2/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
 gopkg.in/yaml.v2 v2.2.4/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
@@ -400,3 +411,5 @@ gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776/go.mod h1:K4uyk7z7BCEPqu6E+C
 gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
 gopkg.in/yaml.v3 v3.0.1 h1:fxVm/GzAzEWqLHuvctI91KS9hhNmmWOoWu0XTYJS7CA=
 gopkg.in/yaml.v3 v3.0.1/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
+tideland.dev/go/wait v0.2.0 h1:YlzCwWUr/A+AVhXHWy2CqGBwH5LZ5R9+VjtjuAmNLRA=
+tideland.dev/go/wait v0.2.0/go.mod h1:pJYuoW70eNxLP7qy7o5FstPkLII0TjY+2bBx1UzxJa4=

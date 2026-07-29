@@ -63,3 +63,18 @@ func GetOrCreateProfile(accessToken string) (*Profile, error) {
 	}
 	return nil, err
 }
+
+// GetUserIDByPublicID resolves the userId behind a friend's shared publicId, so a friend request
+// can notify them over Pusher on their private-user-{userId} channel.
+func GetUserIDByPublicID(accessToken, publicID string) (string, error) {
+	service := newUserProfileService(accessToken)
+	params := user_profile.NewPublicGetUserProfileInfoByPublicIDParams()
+	params.Namespace = agsconfig.Namespace()
+	params.PublicID = publicID
+
+	resp, err := service.PublicGetUserProfileInfoByPublicIDShort(params)
+	if err != nil {
+		return "", err
+	}
+	return resp.Data.UserID, nil
+}
