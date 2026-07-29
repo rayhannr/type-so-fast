@@ -284,6 +284,54 @@ func patchSessionWithRetry(service *session.GameSessionService, sessionID string
 	return nil
 }
 
+// GetSession fetches a session's live state as a PvpSession — used by the generic /api/session/:id
+// route (direct match-invite / PvP session polling), unlike GetRoomSession's room-specific shape.
+func GetSession(accessToken, sessionID string) (*PvpSession, error) {
+	service := newGameSessionService(accessToken)
+	params := game_session.NewGetGameSessionParams()
+	params.Namespace = agsconfig.Namespace()
+	params.SessionID = sessionID
+
+	resp, err := service.GetGameSessionShort(params)
+	if err != nil {
+		return nil, err
+	}
+	return &PvpSession{ID: sessionID, Members: toMembers(resp.Data.Members), Attributes: resp.Data.Attributes}, nil
+}
+
+// SetSessionAttributes merges the given attributes into whatever's already on the session.
+// AGS's PATCH replaces the whole `attributes` object rather than deep-merging it, so the merge
+// has to happen here against the freshest possible read — not on the client, where two concurrent
+// writers (e.g. one seeding the word list, the other writing its WebRTC offer) can each hold a
+// stale cached copy of the other's write and clobber it.
+func SetSessionAttributes(accessToken, sessionID string, attributes map[string]interface{}) error {
+	service := newGameSessionService(accessToken)
+	return patchSessionWithRetry(service, sessionID, func(current *sessionclientmodels.ApimodelsGameSessionResponse) *sessionclientmodels.ApimodelsUpdateGameSessionRequest {
+		merged := map[string]interface{}{}
+		if existing, ok := current.Attributes.(map[string]interface{}); ok {
+			for k, v := range existing {
+				merged[k] = v
+			}
+		}
+		for k, v := range attributes {
+			merged[k] = v
+		}
+		return &sessionclientmodels.ApimodelsUpdateGameSessionRequest{
+			Attributes: merged,
+			Version:    current.Version,
+		}
+	})
+}
+
+// LeaveSession removes the caller from the session (used when a player exits a PvP match or room).
+func LeaveSession(accessToken, sessionID string) error {
+	service := newGameSessionService(accessToken)
+	params := game_session.NewLeaveGameSessionParams()
+	params.Namespace = agsconfig.Namespace()
+	params.SessionID = sessionID
+	return service.LeaveGameSessionShort(params)
+}
+
 // LockRoom revokes the join code (leader-only, like GenerateRoomCode) and flips joinability to
 // CLOSED so AGS itself refuses any further joins — the code becoming invalid alone wouldn't stop
 // a direct join against a still-OPEN session.

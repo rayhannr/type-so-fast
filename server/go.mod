@@ -17,6 +17,7 @@ require (
 )
 
 require (
+	github.com/AccelByte/accelbyte-go-modular-sdk/achievement-sdk v0.3.0 // indirect
 	github.com/AccelByte/accelbyte-go-modular-sdk/cloudsave-sdk v0.3.0 // indirect
 	github.com/AccelByte/accelbyte-go-modular-sdk/match2-sdk v0.9.0 // indirect
 	github.com/AccelByte/accelbyte-go-modular-sdk/social-sdk v0.6.0 // indirect

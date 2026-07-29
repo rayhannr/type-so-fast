@@ -1,3 +1,5 @@
+github.com/AccelByte/accelbyte-go-modular-sdk/achievement-sdk v0.3.0 h1:eXCItDFuDPHjt+h4qLtCty79Jj6qMWuS29HjhkXdYP4=
+github.com/AccelByte/accelbyte-go-modular-sdk/achievement-sdk v0.3.0/go.mod h1:C9MVmNyN+4RCJxibDQNe7A0aMoDTyelOGWtNtYBXuLA=
 github.com/AccelByte/accelbyte-go-modular-sdk/basic-sdk v0.4.0 h1:8aL4yAqSSGwkRkf/bBezDx7iC+zoUK/aEpDi4Dlu8H0=
 github.com/AccelByte/accelbyte-go-modular-sdk/basic-sdk v0.4.0/go.mod h1:Yqu5MJbaNkrr/qPp7fagJQw/hD7+UtlgawKxib1xb5w=
 github.com/AccelByte/accelbyte-go-modular-sdk/cloudsave-sdk v0.3.0 h1:PH9Ze0K0L4693mQvMSQHMBOEqCPQ5VAglj4d6WuNEIg=

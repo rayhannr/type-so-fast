@@ -66,8 +66,18 @@ func main() {
 	router.GET("/api/matchmaking/:ticketId", handlers.GetMatchTicketStatus)
 	router.DELETE("/api/matchmaking/:ticketId", handlers.CancelMatchTicket)
 
+	router.GET("/api/session/:id", handlers.GetSession)
+	router.PATCH("/api/session/:id", handlers.SetSessionAttributes)
+	router.DELETE("/api/session/:id", handlers.LeaveSession)
+
 	router.GET("/api/stats", handlers.GetPersonalStats)
 	router.POST("/api/stats", handlers.SubmitGameStats)
+
+	router.POST("/api/auth", handlers.LoginWithDeviceID)
+	router.POST("/api/auth/google", handlers.LoginWithGoogle)
+	router.POST("/api/auth/link-google", handlers.LinkGoogleAccount)
+	router.POST("/api/auth/unlink-google", handlers.UnlinkGoogleAccount)
+	router.GET("/api/auth/google-status", handlers.GoogleLinkStatus)
 
 	log.Printf("listening on :%s", port)
 	if err := router.Run(":" + port); err != nil {
