@@ -45,6 +45,30 @@ func main() {
 
 	router.POST("/api/pusher/auth", handlers.PusherAuth)
 
+	router.GET("/api/records", handlers.GetBestRecords)
+	router.PUT("/api/records", handlers.PutBestRecords)
+	router.GET("/api/history", handlers.GetGameHistory)
+	router.PUT("/api/history", handlers.PutGameHistory)
+	router.GET("/api/streak", handlers.GetStreak)
+	router.PUT("/api/streak", handlers.PutStreak)
+	router.GET("/api/progression", handlers.GetProgression)
+	router.PUT("/api/progression", handlers.PutProgression)
+	router.GET("/api/pvc-progress", handlers.GetPvcProgress)
+	router.PUT("/api/pvc-progress", handlers.PutPvcProgress)
+	router.GET("/api/pvp-progress", handlers.GetPvpProgress)
+	router.PUT("/api/pvp-progress", handlers.PutPvpProgress)
+	router.GET("/api/room-progress", handlers.GetRoomProgress)
+	router.PUT("/api/room-progress", handlers.PutRoomProgress)
+	router.GET("/api/settings", handlers.GetSettings)
+	router.PUT("/api/settings", handlers.PutSettings)
+
+	router.POST("/api/matchmaking", handlers.CreateMatchTicket)
+	router.GET("/api/matchmaking/:ticketId", handlers.GetMatchTicketStatus)
+	router.DELETE("/api/matchmaking/:ticketId", handlers.CancelMatchTicket)
+
+	router.GET("/api/stats", handlers.GetPersonalStats)
+	router.POST("/api/stats", handlers.SubmitGameStats)
+
 	log.Printf("listening on :%s", port)
 	if err := router.Run(":" + port); err != nil {
 		log.Fatal(err)
