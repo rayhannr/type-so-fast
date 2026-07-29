@@ -20,6 +20,8 @@ export const metadata: Metadata = {
 
 const themeScript = `(function(){try{var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark"){t=window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"}document.documentElement.setAttribute("data-theme",t)}catch(e){}})()`
 
+const faviconScript = `(function(){var link=document.querySelector('link[rel="icon"]');if(!link){link=document.createElement('link');link.rel='icon';document.head.appendChild(link)}var frames=['/favicon-on.png','/favicon-off.png'];var i=0;setInterval(function(){i=(i+1)%frames.length;link.href=frames[i]},500)})()`
+
 export default function RootLayout({
   children
 }: Readonly<{
@@ -29,6 +31,7 @@ export default function RootLayout({
     <html lang="en" data-theme="dark" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <script dangerouslySetInnerHTML={{ __html: faviconScript }} />
       </head>
       <body>
         <Providers>{children}</Providers>
