@@ -1,9 +1,8 @@
-import { Metadata } from 'next'
-
-export const metadata: Metadata = {
-  title: 'TypeSoFast! — About',
-  description: 'A free typing speed test with solo practice, computer races, live 1v1 and room matches, leaderboards, and achievements.'
-}
+import { pageMetadata } from '@/lib/metadata'
+export const metadata = pageMetadata(
+  'About | TypeSoFast!',
+  'A free typing speed test with solo practice, computer races, live 1v1 and room matches, leaderboards, and achievements.'
+)
 
 export default function AboutPage() {
   return (

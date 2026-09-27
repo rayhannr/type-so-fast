@@ -1,21 +1,14 @@
 import { Metadata } from 'next'
 import './globals.css'
 import { Providers } from './providers'
+import { pageMetadata } from '@/lib/metadata'
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://typesofast.rayhannr.dev'),
-  title: 'TypeSoFast!',
-  description: 'How fast can you type?',
-  openGraph: {
-    title: 'TypeSoFast!',
-    description: 'How fast can you type?',
-    type: 'website'
-  },
-  twitter: {
-    card: 'summary',
-    title: 'TypeSoFast!',
-    description: 'How fast can you type?'
-  }
+  ...pageMetadata(
+    'TypeSoFast!',
+    'Free typing speed test in English and Indonesian. Practice solo, race the computer, or go 1v1 with another player. See your WPM and personal bests.'
+  )
 }
 
 const themeScript = `(function(){try{var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark"){t=window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"}document.documentElement.setAttribute("data-theme",t)}catch(e){}})()`

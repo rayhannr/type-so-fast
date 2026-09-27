@@ -1,10 +1,10 @@
-import { Metadata } from 'next'
+import { pageMetadata } from '@/lib/metadata'
 import { StatsTabContainer } from '@/components/StatsTabContainer'
 
-export const metadata: Metadata = {
-  title: 'TypeSoFast! — Stats',
-  description: 'Track your typing speed history, streaks, and personal bests over time.'
-}
+export const metadata = pageMetadata(
+  'Stats | TypeSoFast!',
+  'Track your typing speed history, streaks, and personal bests over time.'
+)
 
 export default function StatsPage() {
   return <StatsTabContainer />
