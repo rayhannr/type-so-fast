@@ -3,7 +3,7 @@ import axios from 'axios'
 import { UserSummary } from '@/lib/ags/displayName'
 import { agsErrorMessage, authHeaders, AgsSession } from './shared'
 
-const friendsKey = (userId: string) => ['friends', userId] as const
+export const friendsKey = (userId: string) => ['friends', userId] as const
 export const incomingFriendRequestsKey = (userId: string) => ['incomingFriendRequests', userId] as const
 const blockedUsersKey = (userId: string) => ['blockedUsers', userId] as const
 export const friendsPresenceKey = (userId: string, friendIds: string) =>

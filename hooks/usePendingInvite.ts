@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useState } from 'react'
 import { PvpSettings } from '@/lib/pvpSettings'
 import { AgsSession } from '@/lib/queries/shared'
-import { incomingFriendRequestsKey } from '@/lib/queries/social'
+import { friendsKey, incomingFriendRequestsKey } from '@/lib/queries/social'
 import { useRealtimeConnected, useRealtimeEvent } from '@/lib/realtime'
 
 export interface PendingInvite {
@@ -52,6 +52,13 @@ export const usePendingInvite = (session: AgsSession | null): PendingInviteState
     session,
     'invite:declined',
     useCallback(() => setDeclined(true), [])
+  )
+  useRealtimeEvent(
+    session,
+    'friend:accepted',
+    useCallback(() => {
+      if (session) queryClient.invalidateQueries({ queryKey: friendsKey(session.userId) })
+    }, [session, queryClient])
   )
   useRealtimeEvent(
     session,

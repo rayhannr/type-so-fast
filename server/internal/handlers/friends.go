@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -105,9 +106,13 @@ func AcceptFriendRequest(c *gin.Context) {
 		return
 	}
 
-	if err := ags.AcceptFriendRequest(auth.AccessToken, c.Param("userId")); err != nil {
+	requesterUserID := c.Param("userId")
+	if err := ags.AcceptFriendRequest(auth.AccessToken, requesterUserID); err != nil {
 		respondError(c, err, "friends/:userId/accept POST")
 		return
+	}
+	if err := ags.NotifyUser(requesterUserID, "friend:accepted", nil); err != nil {
+		log.Printf("[friends/:userId/accept POST] notify %s failed: %v", requesterUserID, err)
 	}
 	c.JSON(http.StatusOK, gin.H{"ok": true})
 }
