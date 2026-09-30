@@ -47,3 +47,5 @@ playwright-report/
 # go
 /server/server
 /server/*.exe
+
+ags-config-export.json

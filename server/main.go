@@ -44,6 +44,7 @@ func main() {
 	router.DELETE("/api/blocks/:userId", handlers.UnblockUser)
 
 	router.POST("/api/pusher/auth", handlers.PusherAuth)
+	router.GET("/api/realtime", handlers.Realtime)
 
 	router.GET("/api/records", handlers.GetBestRecords)
 	router.PUT("/api/records", handlers.PutBestRecords)
