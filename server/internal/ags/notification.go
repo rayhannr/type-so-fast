@@ -2,8 +2,10 @@ package ags
 
 import (
 	"encoding/json"
+	"sync"
 
 	lobby "github.com/AccelByte/accelbyte-go-modular-sdk/lobby-sdk/pkg"
+	"github.com/AccelByte/accelbyte-go-modular-sdk/lobby-sdk/pkg/lobbyclient"
 	"github.com/AccelByte/accelbyte-go-modular-sdk/lobby-sdk/pkg/lobbyclient/notification"
 	"github.com/AccelByte/accelbyte-go-modular-sdk/lobby-sdk/pkg/lobbyclientmodels"
 
@@ -14,10 +16,20 @@ import (
 // is what receivers actually branch on.
 const notificationTopic = "typesofast"
 
+// Room progress notifies twice a second per racer, and each new client carries its own HTTP
+// transport and connection pool, so the client is built once and only the per-call token
+// repository is swapped.
+var (
+	lobbyClientOnce sync.Once
+	sharedLobby     *lobbyclient.JusticeLobbyService
+)
+
 func newNotificationService(accessToken string) *lobby.NotificationService {
 	configRepo := agsconfig.Player()
+	lobbyClientOnce.Do(func() { sharedLobby = lobby.NewLobbyClient(configRepo) })
+
 	return &lobby.NotificationService{
-		Client:           lobby.NewLobbyClient(configRepo),
+		Client:           sharedLobby,
 		ConfigRepository: configRepo,
 		TokenRepository:  agsconfig.NewStaticTokenRepository(accessToken),
 	}

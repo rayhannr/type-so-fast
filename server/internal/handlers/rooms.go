@@ -9,10 +9,7 @@ import (
 
 	"type-so-fast-server/internal/ags"
 	"type-so-fast-server/internal/apiauth"
-	"type-so-fast-server/internal/pusherx"
 )
-
-func roomChannel(sessionID string) string { return "private-room-" + sessionID }
 
 func CreateRoom(c *gin.Context) {
 	auth := apiauth.FromHeaders(c.GetHeader("Authorization"), c.GetHeader("X-User-Id"))
@@ -54,7 +51,9 @@ func JoinRoom(c *gin.Context) {
 		respondError(c, err, "rooms/join POST")
 		return
 	}
-	if err := pusherx.Trigger(roomChannel(room.ID), "room:joined", gin.H{"userId": auth.UserID}); err != nil {
+	members := memberIDs(room.Members)
+	cacheRoster(room.ID, members)
+	if err := ags.NotifyUsers(members, "room:joined", map[string]any{"userId": auth.UserID}); err != nil {
 		respondError(c, err, "rooms/join POST")
 		return
 	}
@@ -122,8 +121,13 @@ func StartRoom(c *gin.Context) {
 
 	// single shared origin for every client's wpm wall-clock math (see RoomSessionAttributes.startedAt)
 	startedAt := time.Now().UnixMilli()
-	payload := gin.H{"words": body.Words, "duration": body.Duration, "mode": body.Mode, "language": body.Language, "startedAt": startedAt}
-	if err := pusherx.Trigger(roomChannel(sessionID), "room:start", payload); err != nil {
+	members, err := roomMembers(auth.AccessToken, sessionID)
+	if err != nil {
+		respondError(c, err, "rooms/:sessionId/start POST")
+		return
+	}
+	payload := map[string]any{"words": body.Words, "duration": body.Duration, "mode": body.Mode, "language": body.Language, "startedAt": startedAt}
+	if err := ags.NotifyUsers(members, "room:start", payload); err != nil {
 		respondError(c, err, "rooms/:sessionId/start POST")
 		return
 	}
@@ -132,8 +136,8 @@ func StartRoom(c *gin.Context) {
 
 // ProgressRoom takes userId from auth, not the request body, so a player can't spoof another
 // player's progress. sentAt (the sender's clock at publish time) rides along so receivers can drop
-// an update that arrives out of order — separate POSTs racing to Pusher have no delivery-order
-// guarantee.
+// an update that arrives out of order — separate POSTs racing through the notification
+// pipeline have no delivery-order guarantee.
 func ProgressRoom(c *gin.Context) {
 	auth := apiauth.FromHeaders(c.GetHeader("Authorization"), c.GetHeader("X-User-Id"))
 	if auth == nil {
@@ -153,8 +157,13 @@ func ProgressRoom(c *gin.Context) {
 		return
 	}
 
-	payload := gin.H{"userId": auth.UserID, "wpm": body.WPM, "progress": body.Progress, "sentAt": body.SentAt, "final": body.Final}
-	if err := pusherx.Trigger(roomChannel(sessionID), "room:progress", payload); err != nil {
+	members, err := roomMembers(auth.AccessToken, sessionID)
+	if err != nil {
+		respondError(c, err, "rooms/:sessionId/progress POST")
+		return
+	}
+	payload := map[string]any{"userId": auth.UserID, "wpm": body.WPM, "progress": body.Progress, "sentAt": body.SentAt, "final": body.Final}
+	if err := ags.NotifyUsers(members, "room:progress", payload); err != nil {
 		respondError(c, err, "rooms/:sessionId/progress POST")
 		return
 	}
