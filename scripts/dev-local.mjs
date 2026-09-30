@@ -21,7 +21,7 @@ const readEnvFile = () => {
   try {
     contents = readFileSync(resolve(root, '.env.local'), 'utf8')
   } catch {
-    console.error('dev-local: .env.local not found; the Go server needs it for AGS and Pusher credentials')
+    console.error('dev-local: .env.local not found; the Go server needs it for AGS credentials')
     process.exit(1)
   }
 

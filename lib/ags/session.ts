@@ -24,7 +24,8 @@ export interface PvpSession {
 
 // The host (session leader) is the sole author of mode/duration/words — joiners only read them.
 // Unlike PvpSessionAttributes there are no WebRTC signaling fields: room progress sync runs over
-// Pusher, not peer connections, so session attributes only carry the shared race setup.
+// each player's realtime connection, not peer connections, so session attributes only carry the
+// shared race setup.
 export interface RoomSessionAttributes {
   mode: string
   duration: number

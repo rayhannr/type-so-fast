@@ -65,7 +65,7 @@ func GetOrCreateProfile(accessToken string) (*Profile, error) {
 }
 
 // GetUserIDByPublicID resolves the userId behind a friend's shared publicId, so a friend request
-// can notify them over Pusher on their private-user-{userId} channel.
+// can notify them over their own Lobby socket.
 func GetUserIDByPublicID(accessToken, publicID string) (string, error) {
 	service := newUserProfileService(accessToken)
 	params := user_profile.NewPublicGetUserProfileInfoByPublicIDParams()

@@ -4,8 +4,8 @@ import { Browser, Page } from '@playwright/test'
 // Covers the room-code match flow end to end against the real AGS dev namespace: a host
 // creates a room (AGS-native generate-code, see lib/ags/session.ts's createRoomSession),
 // up to 4 more players join by submitting the code, the host starts the race (which revokes
-// the code and closes joinability — see lockRoom), and live progress syncs over Pusher instead
-// of WebRTC (see hooks/useRoomChannel.ts, docs/ags-plans/2026-07-08-room-code-match.md). Uses
+// the code and closes joinability — see lockRoom), and live progress syncs over each player's
+// AGS Lobby socket instead of WebRTC (see hooks/useRoomChannel.ts, docs/ags-plans/2026-07-08-room-code-match.md). Uses
 // 3 players (host + 2 joiners) as a representative multi-join case rather than the full 5-seat
 // capacity, to keep the run fast — the join/roster/lock mechanics don't change with player count.
 
@@ -16,7 +16,7 @@ const waitForRacing = async (page: Page) => {
 }
 
 test('host creates a room, two players join by code, race runs, and late joins are rejected', async ({ browser }: { browser: Browser }) => {
-  // heavier than a typical 2-context spec: 3 simultaneous contexts against live AGS/Pusher plus a
+  // heavier than a typical 2-context spec: 3 simultaneous contexts against live AGS plus a
   // cold first-hit dev compile of the /room route — parallelize independent waits below (not
   // sequential like the 2-context PvP/Friends specs) to keep total wall-clock reasonable
   test.setTimeout(120_000)
@@ -83,7 +83,7 @@ test('host creates a room, two players join by code, race runs, and late joins a
   // cold compiles, the late-join subtest above) could let the round's own timer finish first.
   // Accept either: still racing with an opponent's synced progress ("N wpm"), or the round just
   // ended and the win/lose outcome banner rendered ("... WPM · Best opponent: ... WPM") — both
-  // prove the same thing, that opponent progress made it across the Pusher channel.
+  // prove the same thing, that opponent progress made it across the realtime connection.
   await expect
     .poll(async () => (await pageHost.locator('body').innerText()).match(/\d+ wpm|Best opponent: \d+ WPM/i) !== null, {
       timeout: 15_000

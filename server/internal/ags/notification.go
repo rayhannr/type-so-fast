@@ -36,7 +36,7 @@ func newNotificationService(accessToken string) *lobby.NotificationService {
 }
 
 // Lobby carries a freeform notification as a single opaque string, so the event name travels
-// inside the payload rather than as a separate field the way a Pusher event name would.
+// inside the payload rather than travelling as a separate field.
 func notificationPayload(event string, data map[string]any) (string, error) {
 	if data == nil {
 		data = map[string]any{}

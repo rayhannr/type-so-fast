@@ -18,7 +18,6 @@ require (
 	github.com/go-openapi/runtime v0.19.29
 	github.com/go-openapi/strfmt v0.21.1
 	github.com/gorilla/websocket v1.5.3
-	github.com/pusher/pusher-http-go/v5 v5.1.1
 )
 
 require (

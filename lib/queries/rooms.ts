@@ -15,7 +15,7 @@ export const useCreateRoomMutation = (session: AgsSession | null) =>
     mutationFn: () => axios.post<RoomSession>('/api/rooms', {}, { headers: authHeaders(session!) }).then(res => res.data)
   })
 
-// Poll fallback for the lobby roster/attributes alongside the live Pusher channel
+// Poll fallback for the lobby roster/attributes alongside the live realtime events
 // (useRoomChannel) — a joiner who was already in the room before this client subscribed
 // wouldn't otherwise show up, since room:joined only fires for joins that happen after
 // subscription.

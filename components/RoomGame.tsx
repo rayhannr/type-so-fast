@@ -57,7 +57,7 @@ export const RoomGame = () => {
   const isGameOver = state.timer === 0
 
   // roster combines the room's own member list (covers players already joined before this
-  // client subscribed) with live room:joined events from Pusher (covers joins after)
+  // client subscribed) with live room:joined events (covers joins after)
   const rosterIds = useMemo(() => {
     const ids = new Set(roomChannel.roster)
     for (const m of room.data?.members ?? []) ids.add(m.userID)
@@ -66,8 +66,8 @@ export const RoomGame = () => {
 
   const opponentIds = useMemo(() => [...rosterIds].filter(id => id !== session?.userId), [rosterIds, session?.userId])
 
-  // memberNames only covers whoever was in the room as of the last poll — a player who joined via
-  // Pusher's room:joined between polls has no resolved name yet, so fall back to a truncated id
+  // memberNames only covers whoever was in the room as of the last poll — a player whose
+  // room:joined arrived between polls has no resolved name yet, so fall back to a truncated id
   // (same fallback shape getUserSummaries itself uses when IAM has no displayName).
   const nameFor = useCallback(
     (userId: string) => room.data?.memberNames.find(m => m.userId === userId)?.displayName ?? userId.slice(0, 8),
