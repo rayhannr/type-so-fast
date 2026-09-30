@@ -7,13 +7,10 @@ import (
 
 	"type-so-fast-server/internal/ags"
 	"type-so-fast-server/internal/apiauth"
-	"type-so-fast-server/internal/pusherx"
 )
 
-func userChannel(userID string) string { return "private-user-" + userID }
-
-// CreateMatchInvite has no server-side invite record: delivery is purely the live Pusher event on
-// the invitee's private channel. If the invitee isn't connected when this fires, the invite is
+// CreateMatchInvite has no server-side invite record: delivery is purely the live notification on
+// the invitee's Lobby socket. If the invitee isn't connected when this fires, the invite is
 // simply missed — there is no fallback poll.
 func CreateMatchInvite(c *gin.Context) {
 	auth := apiauth.FromHeaders(c.GetHeader("Authorization"), c.GetHeader("X-User-Id"))
@@ -30,7 +27,7 @@ func CreateMatchInvite(c *gin.Context) {
 		return
 	}
 
-	if err := pusherx.Trigger(userChannel(body.InviteeUserID), "invite:new", gin.H{"inviterUserId": auth.UserID}); err != nil {
+	if err := ags.NotifyUser(body.InviteeUserID, "invite:new", map[string]any{"inviterUserId": auth.UserID}); err != nil {
 		respondError(c, err, "match-invites POST")
 		return
 	}
@@ -57,7 +54,7 @@ func AcceptMatchInvite(c *gin.Context) {
 		respondError(c, err, "match-invites/accept POST")
 		return
 	}
-	if err := pusherx.Trigger(userChannel(body.InviterUserID), "invite:accepted", gin.H{"sessionId": session.ID}); err != nil {
+	if err := ags.NotifyUser(body.InviterUserID, "invite:accepted", map[string]any{"sessionId": session.ID}); err != nil {
 		respondError(c, err, "match-invites/accept POST")
 		return
 	}
@@ -79,7 +76,7 @@ func DeclineMatchInvite(c *gin.Context) {
 		return
 	}
 
-	if err := pusherx.Trigger(userChannel(body.InviterUserID), "invite:declined", gin.H{"inviteeUserId": auth.UserID}); err != nil {
+	if err := ags.NotifyUser(body.InviterUserID, "invite:declined", map[string]any{"inviteeUserId": auth.UserID}); err != nil {
 		respondError(c, err, "match-invites/decline POST")
 		return
 	}

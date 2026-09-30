@@ -7,7 +7,6 @@ import (
 
 	"type-so-fast-server/internal/ags"
 	"type-so-fast-server/internal/apiauth"
-	"type-so-fast-server/internal/pusherx"
 )
 
 func ListFriends(c *gin.Context) {
@@ -56,7 +55,7 @@ func SendFriendRequest(c *gin.Context) {
 		return
 	}
 	if friendUserID != "" {
-		if err := pusherx.Trigger(userChannel(friendUserID), "friend:request", gin.H{}); err != nil {
+		if err := ags.NotifyUser(friendUserID, "friend:request", nil); err != nil {
 			respondError(c, err, "friends POST")
 			return
 		}

@@ -3,7 +3,7 @@ import { Browser, Page } from '@playwright/test'
 
 // Covers the friends + match-invite flow end to end against the real AGS dev namespace: two
 // independent Device ID sessions become friends via friend code, one invites the other to a
-// match over the live Pusher channel (see hooks/usePendingInvite.ts), the invitee accepts and
+// match over the live Lobby socket (see hooks/usePendingInvite.ts), the invitee accepts and
 // both players land in the same PvP session via the `/pvp?session=<id>` join path added in
 // components/PvpGame.tsx. A second pass covers the decline path.
 
