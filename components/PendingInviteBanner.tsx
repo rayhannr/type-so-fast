@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import { usePendingInvite } from '@/hooks/usePendingInvite'
+import { describePvpSettings } from '@/lib/pvpSettings'
 import { useAcceptInviteMutation, useDeclineInviteMutation } from '@/lib/queries/matchInvites'
 import { AgsSession } from '@/lib/queries/shared'
 
@@ -31,7 +32,7 @@ export const PendingInviteBanner = ({ session }: Props) => {
 
   const handleAccept = () => {
     if (!invite) return
-    acceptInvite.mutate(invite.inviterUserId, {
+    acceptInvite.mutate(invite, {
       onSuccess: pvpSession => {
         dismissInvite()
         router.push(`/pvp?session=${pvpSession.id}`)
@@ -50,7 +51,10 @@ export const PendingInviteBanner = ({ session }: Props) => {
     <div className="fixed bottom-4 inset-x-0 z-50 flex justify-center px-4" role="status">
       {invite && (
         <div className="flex flex-row items-center gap-4 rounded-lg border border-solid border-accent/40 bg-surface shadow-lg px-4 py-3">
-          <p className="text-sm text-active">You&apos;ve been invited to a match!</p>
+          <div>
+            <p className="text-sm text-active">You&apos;ve been invited to a match!</p>
+            {invite.settings && <p className="text-xs text-muted">{describePvpSettings(invite.settings)}</p>}
+          </div>
           <div className="flex flex-row gap-2">
             <button
               type="button"

@@ -2,12 +2,15 @@
 
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useState } from 'react'
+import { PvpSettings } from '@/lib/pvpSettings'
 import { AgsSession } from '@/lib/queries/shared'
 import { incomingFriendRequestsKey } from '@/lib/queries/social'
 import { useRealtimeConnected, useRealtimeEvent } from '@/lib/realtime'
 
 export interface PendingInvite {
   inviterUserId: string
+  // absent when the invite was sent without settings; the session then races the authority's own
+  settings?: PvpSettings
 }
 
 interface AcceptedInvite {
@@ -35,13 +38,21 @@ export const usePendingInvite = (session: AgsSession | null): PendingInviteState
   const queryClient = useQueryClient()
   const connected = useRealtimeConnected(session)
 
-  useRealtimeEvent(session, 'invite:new', useCallback(payload => setInvite(payload as unknown as PendingInvite), []))
+  useRealtimeEvent(
+    session,
+    'invite:new',
+    useCallback(payload => setInvite(payload as unknown as PendingInvite), [])
+  )
   useRealtimeEvent(
     session,
     'invite:accepted',
     useCallback(payload => setAcceptedInvite(payload as unknown as AcceptedInvite), [])
   )
-  useRealtimeEvent(session, 'invite:declined', useCallback(() => setDeclined(true), []))
+  useRealtimeEvent(
+    session,
+    'invite:declined',
+    useCallback(() => setDeclined(true), [])
+  )
   useRealtimeEvent(
     session,
     'friend:request',

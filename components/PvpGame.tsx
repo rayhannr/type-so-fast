@@ -20,7 +20,9 @@ import { useGameEndSync } from '@/hooks/useGameEndSync'
 import { useRemotePlayer } from '@/hooks/useRemotePlayer'
 import { useTypingInput } from '@/hooks/useTypingInput'
 import { useAgsSessionContext } from '@/lib/ags/AgsSessionContext'
+import { PvpSessionAttributes } from '@/lib/ags/session'
 import { gameReducer, createInitialState } from '@/lib/gameReducer'
+import { DEFAULT_PVP_SETTINGS, describePvpSettings, PvpSettings, readPvpSettings, writePvpSettings } from '@/lib/pvpSettings'
 import { useCreateMatchTicketMutation, useMatchTicketStatusQuery, useCancelMatchTicketMutation } from '@/lib/queries/matchmaking'
 import { useSessionQuery, useSetSessionAttributesMutation, useLeaveSessionMutation } from '@/lib/queries/session'
 
@@ -45,6 +47,13 @@ const POLL_INTERVAL_MS_BY_PHASE: Record<Phase, number | false> = {
   racing: false
 }
 
+// An invite session carries the inviter's settings from creation, while a matchmade one starts
+// empty; either way the authority's write fills all three in alongside the words.
+const sessionSettings = (attributes: Partial<PvpSessionAttributes> | undefined): PvpSettings | null => {
+  if (!attributes?.mode || !attributes.duration || !attributes.language) return null
+  return { mode: attributes.mode as WordMode, duration: attributes.duration, language: attributes.language as Language }
+}
+
 export const PvpGame = () => {
   const { session, displayName } = useAgsSessionContext()
 
@@ -53,9 +62,22 @@ export const PvpGame = () => {
   // it directly instead of going through Quick Match's idle/queueing ticket flow.
   const joinSessionId = useSearchParams().get('session')
 
-  const [duration, setDuration] = useState<Duration>(60)
-  const [mode, setMode] = useState<WordMode>('words')
-  const [language, setLanguage] = useState<Language>('indonesian')
+  // `settings` is this player's own preference; `race` is what the current match is played with,
+  // which for an invite is the inviter's choice rather than this player's
+  const [settings, setSettings] = useState<PvpSettings>(DEFAULT_PVP_SETTINGS)
+  const [race, setRace] = useState<PvpSettings | null>(null)
+  const raceSettings = race ?? settings
+
+  // read after mount so the server render and the first client render agree
+  useEffect(() => setSettings(readPvpSettings()), [])
+
+  // only an explicit pick is saved, so racing with an inviter's settings never overwrites this
+  // player's own preference
+  const changeSettings = (patch: Partial<PvpSettings>) => {
+    const next = { ...settings, ...patch }
+    setSettings(next)
+    writePvpSettings(next)
+  }
   const [phase, setPhase] = useState<Phase>(joinSessionId ? 'connecting' : 'idle')
   const [ticketId, setTicketId] = useState<string | null>(null)
   const [sessionId, setSessionId] = useState(joinSessionId ?? '')
@@ -112,8 +134,8 @@ export const PvpGame = () => {
     wrongKeystroke: state.wrongKeystroke,
     correction: state.correction,
     correctWords: state.correctWords,
-    duration,
-    mode,
+    duration: raceSettings.duration as Duration,
+    mode: raceSettings.mode,
     session,
     displayName,
     pvp: isGameOver ? { outcome: outcome! } : undefined
@@ -131,17 +153,20 @@ export const PvpGame = () => {
   useEffect(() => {
     if (phase !== 'connecting' || !pvpSession.data || !isAuthority || attributes?.words || hasSeededWordsRef.current) return
     hasSeededWordsRef.current = true
-    const words = generateWords(mode, numberOfWords, language)
-    dispatch({ type: 'RESTART', words, duration })
+    const next = sessionSettings(attributes) ?? settings
+    setRace(next)
+    const words = generateWords(next.mode, numberOfWords, next.language)
+    dispatch({ type: 'RESTART', words, duration: next.duration })
     setSessionAttributes.mutate({
       sessionId,
-      attributes: { mode, duration, language, words, authorityUserId: session!.userId }
+      attributes: { ...next, words, authorityUserId: session!.userId }
     })
   }, [phase, pvpSession.data, isAuthority, attributes?.words])
 
   // non-authority: seed the local reducer once the authority's word list lands via poll
   useEffect(() => {
     if (phase !== 'connecting' || isAuthority || !attributes?.words || !peerUserId) return
+    setRace(sessionSettings(attributes))
     dispatch({ type: 'RESTART', words: attributes.words, duration: attributes.duration! })
   }, [phase, isAuthority, attributes?.words, peerUserId])
 
@@ -185,7 +210,7 @@ export const PvpGame = () => {
   const startQuickMatch = () => {
     setTimedOut(false)
     setPhase('queueing')
-    createTicket.mutate(undefined, {
+    createTicket.mutate(settings, {
       onSuccess: ticket => setTicketId(ticket.matchTicketID),
       onError: () => setPhase('idle')
     })
@@ -218,8 +243,10 @@ export const PvpGame = () => {
     setSessionId('')
     setTicketId(null)
     setCountdown(3)
-    dispatch({ type: 'RESTART', words: [], duration })
-  }, [duration, sessionId])
+    setRace(null)
+    hasSeededWordsRef.current = false
+    dispatch({ type: 'RESTART', words: [], duration: settings.duration })
+  }, [settings.duration, sessionId])
 
   const { keystrokeRef, capsLockOn, changeHandler, inputHandler, keyDownHandler } = useTypingInput(state, dispatch)
 
@@ -231,9 +258,9 @@ export const PvpGame = () => {
     return (
       <div className="max-w-3xl mx-auto mt-10 md:mt-14 text-center">
         <div className="flex flex-col items-center gap-2 mb-8">
-          <DurationSelector active={duration} disabled={false} onChange={setDuration} />
-          <ModeSelector active={mode} disabled={false} onChange={setMode} />
-          <LanguageSelector active={language} disabled={false} onChange={setLanguage} />
+          <DurationSelector active={settings.duration as Duration} disabled={false} onChange={duration => changeSettings({ duration })} />
+          <ModeSelector active={settings.mode} disabled={false} onChange={mode => changeSettings({ mode })} />
+          <LanguageSelector active={settings.language} disabled={false} onChange={language => changeSettings({ language })} />
         </div>
         {timedOut && <p className="text-error text-sm mb-4">No opponent found within 60s. Try again?</p>}
         <button
@@ -251,6 +278,7 @@ export const PvpGame = () => {
     return (
       <div className="max-w-3xl mx-auto mt-14 text-center">
         <p className="text-active text-lg mb-2">Searching for an opponent&hellip;</p>
+        <p className="text-muted text-sm mb-1">{describePvpSettings(settings)}</p>
         <p className="text-muted text-xs mb-6">Cancels automatically after 60s if no one joins</p>
         <button
           type="button"

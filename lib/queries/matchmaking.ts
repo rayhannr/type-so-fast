@@ -1,11 +1,13 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import axios from 'axios'
 import { MatchTicket, MatchTicketStatus } from '@/lib/ags/matchmaking'
+import { PvpSettings } from '@/lib/pvpSettings'
 import { authHeaders, AgsSession } from './shared'
 
 export const useCreateMatchTicketMutation = (session: AgsSession | null) =>
   useMutation({
-    mutationFn: () => axios.post<MatchTicket>('/api/matchmaking', {}, { headers: authHeaders(session!) }).then(res => res.data)
+    mutationFn: (settings: PvpSettings) =>
+      axios.post<MatchTicket>('/api/matchmaking', { settings }, { headers: authHeaders(session!) }).then(res => res.data)
   })
 
 export const useMatchTicketStatusQuery = (session: AgsSession | null, ticketId: string | null) =>

@@ -83,8 +83,10 @@ func toRoomSession(data *sessionclientmodels.ApimodelsGameSessionResponse) RoomS
 }
 
 // CreateInviteSession reuses the PvP quick-match session template but overrides joinability to
-// INVITE_ONLY and names both players directly in `teams`, bypassing Matchmaking entirely.
-func CreateInviteSession(accessToken, inviterUserID, inviteeUserID string) (*PvpSession, error) {
+// INVITE_ONLY and names both players directly in `teams`, bypassing Matchmaking entirely. The
+// inviter's settings are written onto the session up front, so whichever player generates the
+// words races with them instead of its own.
+func CreateInviteSession(accessToken, inviterUserID, inviteeUserID string, settings *PvpSettings) (*PvpSession, error) {
 	service := newGameSessionService(accessToken)
 	params := game_session.NewCreateGameSessionParams()
 	params.Namespace = agsconfig.Namespace()
@@ -94,6 +96,9 @@ func CreateInviteSession(accessToken, inviterUserID, inviteeUserID string) (*Pvp
 		ConfigurationName: &configName,
 		Joinability:       &joinability,
 		Teams:             []*sessionclientmodels.ModelsTeam{{UserIDs: []string{inviterUserID, inviteeUserID}}},
+	}
+	if settings != nil {
+		params.Body.Attributes = settings.sessionAttributes()
 	}
 
 	resp, err := service.CreateGameSessionShort(params)

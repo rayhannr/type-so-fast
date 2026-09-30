@@ -1,6 +1,8 @@
 package ags
 
 import (
+	"strconv"
+
 	match2 "github.com/AccelByte/accelbyte-go-modular-sdk/match2-sdk/pkg"
 	"github.com/AccelByte/accelbyte-go-modular-sdk/match2-sdk/pkg/match2client/match_tickets"
 	"github.com/AccelByte/accelbyte-go-modular-sdk/match2-sdk/pkg/match2clientmodels"
@@ -9,6 +11,31 @@ import (
 )
 
 const matchPool = "pvp-quick-match"
+
+// PvpSettings is what a race is played with. The ruleset's match_options partition on these as
+// ticket attributes, so two tickets only match when all three are identical.
+type PvpSettings struct {
+	Mode     string `json:"mode"`
+	Duration int    `json:"duration"`
+	Language string `json:"language"`
+}
+
+func (s *PvpSettings) Valid() bool {
+	return s != nil && s.Mode != "" && s.Language != "" && s.Duration > 0
+}
+
+// Match options compare values as strings, so duration is sent as one rather than a number.
+func (s PvpSettings) ticketAttributes() map[string]interface{} {
+	return map[string]interface{}{
+		"mode":     s.Mode,
+		"duration": strconv.Itoa(s.Duration),
+		"language": s.Language,
+	}
+}
+
+func (s PvpSettings) sessionAttributes() map[string]interface{} {
+	return map[string]interface{}{"mode": s.Mode, "duration": s.Duration, "language": s.Language}
+}
 
 type MatchTicket struct {
 	MatchTicketID string `json:"matchTicketID"`
@@ -30,14 +57,19 @@ func newMatchTicketsService(accessToken string) *match2.MatchTicketsService {
 	}
 }
 
-func CreateMatchTicket(accessToken string) (*MatchTicket, error) {
+// Nil settings create a ticket with no attributes, which only matches other attribute-less tickets.
+func CreateMatchTicket(accessToken string, settings *PvpSettings) (*MatchTicket, error) {
 	service := newMatchTicketsService(accessToken)
 	pool := matchPool
+	attributes := map[string]interface{}{}
+	if settings != nil {
+		attributes = settings.ticketAttributes()
+	}
 	params := match_tickets.NewCreateMatchTicketParams()
 	params.Namespace = agsconfig.Namespace()
 	params.Body = &match2clientmodels.APIMatchTicketRequest{
 		MatchPool:  &pool,
-		Attributes: map[string]interface{}{},
+		Attributes: attributes,
 		Latencies:  map[string]int64{},
 	}
 

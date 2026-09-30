@@ -15,7 +15,16 @@ func CreateMatchTicket(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
-	ticket, err := ags.CreateMatchTicket(auth.AccessToken)
+	var body struct {
+		Settings *ags.PvpSettings `json:"settings"`
+	}
+	// A missing or unparseable body is treated as a settings-less ticket rather than rejected.
+	_ = c.ShouldBindJSON(&body)
+	if body.Settings != nil && !body.Settings.Valid() {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "settings needs mode, duration and language"})
+		return
+	}
+	ticket, err := ags.CreateMatchTicket(auth.AccessToken, body.Settings)
 	if err != nil {
 		respondError(c, err, "matchmaking POST")
 		return

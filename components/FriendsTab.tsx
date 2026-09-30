@@ -1,9 +1,10 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { FormEvent, ReactNode } from 'react'
 import { useFriendsPresence } from '@/hooks/useFriendsPresence'
 import { useAgsSessionContext } from '@/lib/ags/AgsSessionContext'
+import { DEFAULT_PVP_SETTINGS, describePvpSettings, readPvpSettings } from '@/lib/pvpSettings'
 import { updateDisplayNameErrorMessage, useUpdateDisplayNameMutation } from '@/lib/queries/displayName'
 import { useSendInviteMutation } from '@/lib/queries/matchInvites'
 import {
@@ -66,6 +67,9 @@ export const FriendsTab = () => {
   const confirmTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [editingName, setEditingName] = useState(false)
   const [nameInput, setNameInput] = useState('')
+  // read after mount so the server render and the first client render agree
+  const [pvpSettings, setPvpSettings] = useState(DEFAULT_PVP_SETTINGS)
+  useEffect(() => setPvpSettings(readPvpSettings()), [])
 
   const startEditingName = () => {
     setNameInput(displayName ?? '')
@@ -306,10 +310,11 @@ export const FriendsTab = () => {
           </div>
         )}
 
+        {friendCount > 0 && <p className="text-xs text-muted mb-2">Invites use your PvP settings: {describePvpSettings(pvpSettings)}</p>}
         <ul className="flex flex-col gap-2">
           {(friends.data ?? []).map(friend => {
             const online = onlineUserIds.has(friend.userId)
-            const invited = sendInvite.isSuccess && sendInvite.variables === friend.userId
+            const invited = sendInvite.isSuccess && sendInvite.variables.inviteeUserId === friend.userId
             return (
               <li key={friend.userId} className={rowClass}>
                 <span className={`w-2 h-2 rounded-full shrink-0 ${online ? 'bg-correct' : 'bg-edge'}`} aria-hidden="true" />
@@ -320,7 +325,7 @@ export const FriendsTab = () => {
                 <div className="ml-auto flex flex-row items-center gap-1">
                   <button
                     type="button"
-                    onClick={() => sendInvite.mutate(friend.userId)}
+                    onClick={() => sendInvite.mutate({ inviteeUserId: friend.userId, settings: pvpSettings })}
                     disabled={sendInvite.isPending || invited}
                     className={invited ? invitedButtonClass : accentButtonClass}
                   >

@@ -20,14 +20,25 @@ func CreateMatchInvite(c *gin.Context) {
 	}
 
 	var body struct {
-		InviteeUserID string `json:"inviteeUserId"`
+		InviteeUserID string           `json:"inviteeUserId"`
+		Settings      *ags.PvpSettings `json:"settings"`
 	}
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "inviteeUserId is required"})
 		return
 	}
+	if body.Settings != nil && !body.Settings.Valid() {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "settings needs mode, duration and language"})
+		return
+	}
 
-	if err := ags.NotifyUser(body.InviteeUserID, "invite:new", map[string]any{"inviterUserId": auth.UserID}); err != nil {
+	// The settings ride the notification and come back on accept, since there is no invite record
+	// to hold them in between.
+	payload := map[string]any{"inviterUserId": auth.UserID}
+	if body.Settings != nil {
+		payload["settings"] = body.Settings
+	}
+	if err := ags.NotifyUser(body.InviteeUserID, "invite:new", payload); err != nil {
 		respondError(c, err, "match-invites POST")
 		return
 	}
@@ -42,14 +53,19 @@ func AcceptMatchInvite(c *gin.Context) {
 	}
 
 	var body struct {
-		InviterUserID string `json:"inviterUserId"`
+		InviterUserID string           `json:"inviterUserId"`
+		Settings      *ags.PvpSettings `json:"settings"`
 	}
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "inviterUserId is required"})
 		return
 	}
+	if body.Settings != nil && !body.Settings.Valid() {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "settings needs mode, duration and language"})
+		return
+	}
 
-	session, err := ags.CreateInviteSession(auth.AccessToken, body.InviterUserID, auth.UserID)
+	session, err := ags.CreateInviteSession(auth.AccessToken, body.InviterUserID, auth.UserID, body.Settings)
 	if err != nil {
 		respondError(c, err, "match-invites/accept POST")
 		return
