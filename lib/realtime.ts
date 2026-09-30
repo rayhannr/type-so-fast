@@ -5,7 +5,7 @@ import { AgsSession } from '@/lib/queries/shared'
 
 // Lobby delivers one opaque string per notification, so the event name rides inside the payload
 // rather than arriving as a separate channel/event pair.
-interface RealtimeEvent {
+export interface RealtimeEvent {
   event: string
   [key: string]: unknown
 }

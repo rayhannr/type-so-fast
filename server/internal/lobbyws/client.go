@@ -73,17 +73,32 @@ func Bridge(browser *websocket.Conn, accessToken string) error {
 	}
 }
 
-// browserMessage converts a Lobby frame into the JSON the browser expects. A freeform
-// notification carries the app's own JSON verbatim in `payload`, so that is forwarded as-is and
-// the client never has to know Lobby's text protocol. Frames the client has no use for are
-// dropped rather than forwarded as noise.
+// browserMessage converts a Lobby frame into the JSON the browser expects, so the client never
+// has to know Lobby's text protocol. Frames the client has no use for are dropped rather than
+// forwarded as noise.
 func browserMessage(f frame) ([]byte, bool) {
-	if f["type"] != "messageNotif" {
-		return nil, false
+	switch f["type"] {
+	case "messageNotif":
+		// A freeform notification carries the app's own JSON verbatim, so it passes through
+		// untouched and arrives at the client exactly as the sender wrote it.
+		payload := f["payload"]
+		if !json.Valid([]byte(payload)) {
+			return nil, false
+		}
+		return []byte(payload), true
+
+	case "userStatusNotif":
+		// AGS emits this only for the recipient's own friends, and drives it off whether their
+		// Lobby socket is held open, which for this game means whether the relay holds one.
+		encoded, err := json.Marshal(map[string]string{
+			"event":        "presence:changed",
+			"userId":       f["userID"],
+			"availability": f["availability"],
+		})
+		if err != nil {
+			return nil, false
+		}
+		return encoded, true
 	}
-	payload := f["payload"]
-	if !json.Valid([]byte(payload)) {
-		return nil, false
-	}
-	return []byte(payload), true
+	return nil, false
 }

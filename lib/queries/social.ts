@@ -6,6 +6,8 @@ import { agsErrorMessage, authHeaders, AgsSession } from './shared'
 const friendsKey = (userId: string) => ['friends', userId] as const
 export const incomingFriendRequestsKey = (userId: string) => ['incomingFriendRequests', userId] as const
 const blockedUsersKey = (userId: string) => ['blockedUsers', userId] as const
+export const friendsPresenceKey = (userId: string, friendIds: string) =>
+  ['friendsPresence', userId, friendIds] as const
 
 export const useFriendsQuery = (session: AgsSession | null) =>
   useQuery({
@@ -18,6 +20,23 @@ export const useIncomingFriendRequestsQuery = (session: AgsSession | null) =>
   useQuery({
     queryKey: incomingFriendRequestsKey(session?.userId ?? ''),
     queryFn: () => axios.get<UserSummary[]>('/api/friends/incoming', { headers: authHeaders(session!) }).then(res => res.data),
+    enabled: !!session
+  })
+
+// The snapshot of who is online right now. Live changes after this arrive over the player's own
+// realtime connection as presence:changed, so this never needs polling.
+//
+// friendIds is a cache key, not a request parameter: the server resolves the caller's friends
+// itself so a client can't probe strangers' presence. Keying on it refetches the snapshot
+// whenever the friend list changes, which matters because AGS only pushes a status notification
+// on a *change* — befriending someone who is already online produces no notification at all.
+export const useFriendsPresenceQuery = (session: AgsSession | null, friendIds: string) =>
+  useQuery({
+    queryKey: friendsPresenceKey(session?.userId ?? '', friendIds),
+    queryFn: () =>
+      axios
+        .get<{ online: string[] }>('/api/presence', { headers: authHeaders(session!) })
+        .then(res => res.data.online),
     enabled: !!session
   })
 

@@ -45,6 +45,7 @@ func main() {
 
 	router.POST("/api/pusher/auth", handlers.PusherAuth)
 	router.GET("/api/realtime", handlers.Realtime)
+	router.GET("/api/presence", handlers.Presence)
 
 	router.GET("/api/records", handlers.GetBestRecords)
 	router.PUT("/api/records", handlers.PutBestRecords)
