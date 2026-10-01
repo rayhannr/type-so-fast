@@ -1,7 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { PvpSession, PvpSessionAttributes } from '@/lib/ags/session'
-import { authHeaders, AgsSession } from './shared'
+import { agsErrorMessage, authHeaders, AgsSession } from './shared'
+
+const pvpSessionErrorMessages: Record<number, string> = {
+  20042: 'This match no longer exists.' // SessionIDNotFound
+}
+
+export const pvpSessionErrorMessage = (error: unknown): string =>
+  agsErrorMessage(error, pvpSessionErrorMessages, "Couldn't set up the match. Try again.")
 
 // pollIntervalMs defaults to 1500 for steady-state polling (room lobby waits, race setup), but
 // the WebRTC handshake is latency-sensitive enough to warrant a tighter interval while it's live —

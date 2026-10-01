@@ -30,6 +30,7 @@ interface Params {
 
 interface RemotePlayer {
   connected: boolean
+  failed: boolean
   remote: RemotePlayerSnapshot | null
   sendSnapshot: (snapshot: RemotePlayerSnapshot) => void
 }
@@ -43,6 +44,7 @@ interface RemotePlayer {
 // candidates rather than sitting idle for the whole gathering round trip.
 export const useRemotePlayer = ({ isOfferer, active, turnServers, offer, answer, onOffer, onAnswer }: Params): RemotePlayer => {
   const [connected, setConnected] = useState(false)
+  const [failed, setFailed] = useState(false)
   const [remote, setRemote] = useState<RemotePlayerSnapshot | null>(null)
   const channelRef = useRef<RTCDataChannel | null>(null)
   const pcRef = useRef<RTCPeerConnection | null>(null)
@@ -56,6 +58,13 @@ export const useRemotePlayer = ({ isOfferer, active, turnServers, offer, answer,
     const pc = new RTCPeerConnection({ iceServers: [...STUN_SERVERS, ...turnServers] })
     pcRef.current = pc
     const candidates: RTCIceCandidateInit[] = []
+    // a closed connection is this effect's own cleanup, not a failure
+    const fail = () => {
+      if (pc.connectionState !== 'closed') setFailed(true)
+    }
+    pc.addEventListener('connectionstatechange', () => {
+      if (pc.connectionState === 'failed') fail()
+    })
     let flushTimeout: ReturnType<typeof setTimeout> | null = null
 
     const publish = () => {
@@ -98,7 +107,7 @@ export const useRemotePlayer = ({ isOfferer, active, turnServers, offer, answer,
       pc.createOffer()
         .then(offerDescription => pc.setLocalDescription(offerDescription))
         .then(publish)
-        .catch(() => {})
+        .catch(fail)
     } else {
       pc.addEventListener('datachannel', event => attachChannel(event.channel))
     }
@@ -112,6 +121,7 @@ export const useRemotePlayer = ({ isOfferer, active, turnServers, offer, answer,
       remoteDescriptionSetRef.current = false
       appliedCandidatesRef.current = new Set()
       setConnected(false)
+      setFailed(false)
     }
   }, [active, isOfferer])
 
@@ -125,7 +135,9 @@ export const useRemotePlayer = ({ isOfferer, active, turnServers, offer, answer,
       .then(() => pc.createAnswer())
       .then(answerDescription => pc.setLocalDescription(answerDescription))
       .then(() => publishRef.current?.())
-      .catch(() => {})
+      .catch(() => {
+        if (pc.connectionState !== 'closed') setFailed(true)
+      })
   }, [isOfferer, offer])
 
   // offerer: apply the answer's sdp as soon as it lands
@@ -133,7 +145,9 @@ export const useRemotePlayer = ({ isOfferer, active, turnServers, offer, answer,
     const pc = pcRef.current
     if (!isOfferer || !pc || !answer || remoteDescriptionSetRef.current) return
     remoteDescriptionSetRef.current = true
-    pc.setRemoteDescription(new RTCSessionDescription(answer.sdp)).catch(() => {})
+    pc.setRemoteDescription(new RTCSessionDescription(answer.sdp)).catch(() => {
+      if (pc.connectionState !== 'closed') setFailed(true)
+    })
   }, [isOfferer, answer])
 
   // apply newly-arrived candidates from whichever side we're not. Writes can land out of order, so
@@ -155,5 +169,5 @@ export const useRemotePlayer = ({ isOfferer, active, turnServers, offer, answer,
     if (channelRef.current?.readyState === 'open') channelRef.current.send(JSON.stringify(snapshot))
   }
 
-  return { connected, remote, sendSnapshot }
+  return { connected, failed, remote, sendSnapshot }
 }

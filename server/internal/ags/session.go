@@ -201,6 +201,32 @@ func JoinRoomByCode(accessToken, code string) (*RoomSession, error) {
 	return &room, nil
 }
 
+// sessionErrorDetail passes AGS's own error code through for the session failures the PvP
+// connecting screen tells apart; anything else is returned unchanged.
+func sessionErrorDetail(err error) error {
+	var getNotFound *game_session.GetGameSessionNotFound
+	if errors.As(err, &getNotFound) {
+		return responseErrorDetail(404, getNotFound.Payload)
+	}
+	var patchNotFound *game_session.PatchUpdateGameSessionNotFound
+	if errors.As(err, &patchNotFound) {
+		return responseErrorDetail(404, patchNotFound.Payload)
+	}
+	var joinBadRequest *game_session.JoinGameSessionBadRequest
+	if errors.As(err, &joinBadRequest) {
+		return responseErrorDetail(400, joinBadRequest.Payload)
+	}
+	var joinForbidden *game_session.JoinGameSessionForbidden
+	if errors.As(err, &joinForbidden) {
+		return responseErrorDetail(403, joinForbidden.Payload)
+	}
+	var joinNotFound *game_session.JoinGameSessionNotFound
+	if errors.As(err, &joinNotFound) {
+		return responseErrorDetail(404, joinNotFound.Payload)
+	}
+	return err
+}
+
 func responseErrorDetail(status int, payload *sessionclientmodels.ResponseError) *agserror.Detail {
 	detail := &agserror.Detail{Status: status}
 	if payload == nil {
@@ -299,7 +325,7 @@ func GetSession(accessToken, sessionID string) (*PvpSession, error) {
 
 	resp, err := service.GetGameSessionShort(params)
 	if err != nil {
-		return nil, err
+		return nil, sessionErrorDetail(err)
 	}
 	return &PvpSession{ID: sessionID, Members: toMembers(resp.Data.Members), Attributes: resp.Data.Attributes}, nil
 }
@@ -311,7 +337,7 @@ func GetSession(accessToken, sessionID string) (*PvpSession, error) {
 // stale cached copy of the other's write and clobber it.
 func SetSessionAttributes(accessToken, sessionID string, attributes map[string]interface{}) error {
 	service := newGameSessionService(accessToken)
-	return patchSessionWithRetry(service, sessionID, func(current *sessionclientmodels.ApimodelsGameSessionResponse) *sessionclientmodels.ApimodelsUpdateGameSessionRequest {
+	err := patchSessionWithRetry(service, sessionID, func(current *sessionclientmodels.ApimodelsGameSessionResponse) *sessionclientmodels.ApimodelsUpdateGameSessionRequest {
 		merged := map[string]interface{}{}
 		if existing, ok := current.Attributes.(map[string]interface{}); ok {
 			for k, v := range existing {
@@ -326,6 +352,7 @@ func SetSessionAttributes(accessToken, sessionID string, attributes map[string]i
 			Version:    current.Version,
 		}
 	})
+	return sessionErrorDetail(err)
 }
 
 // JoinSession accepts the caller's pending invite. A session created with explicit `teams` only
@@ -337,7 +364,7 @@ func JoinSession(accessToken, sessionID string) error {
 	params.Namespace = agsconfig.Namespace()
 	params.SessionID = sessionID
 	_, err := service.JoinGameSessionShort(params)
-	return err
+	return sessionErrorDetail(err)
 }
 
 // LeaveSession removes the caller from the session (used when a player exits a PvP match or room).

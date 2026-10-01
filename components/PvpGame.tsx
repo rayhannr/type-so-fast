@@ -24,10 +24,19 @@ import { PvpSessionAttributes } from '@/lib/ags/session'
 import { gameReducer, createInitialState } from '@/lib/gameReducer'
 import { DEFAULT_PVP_SETTINGS, describePvpSettings, PvpSettings, readPvpSettings, writePvpSettings } from '@/lib/pvpSettings'
 import { useCreateMatchTicketMutation, useMatchTicketStatusQuery, useCancelMatchTicketMutation } from '@/lib/queries/matchmaking'
-import { useSessionQuery, useSetSessionAttributesMutation, useJoinSessionMutation, useLeaveSessionMutation } from '@/lib/queries/session'
+import {
+  pvpSessionErrorMessage,
+  useSessionQuery,
+  useSetSessionAttributesMutation,
+  useJoinSessionMutation,
+  useLeaveSessionMutation
+} from '@/lib/queries/session'
 import { useTurnServersQuery } from '@/lib/queries/turn'
 
 const numberOfWords = 400
+
+// backstop for a handshake that stalls without any request or connection reporting an error
+const CONNECT_TIMEOUT_MS = 20_000
 
 type Outcome = 'win' | 'lose' | 'tie'
 type Phase = 'idle' | 'queueing' | 'connecting' | 'countdown' | 'racing'
@@ -83,6 +92,9 @@ export const PvpGame = () => {
   const [ticketId, setTicketId] = useState<string | null>(null)
   const [sessionId, setSessionId] = useState(joinSessionId ?? '')
   const [timedOut, setTimedOut] = useState(false)
+  const [connectError, setConnectError] = useState<string | null>(null)
+  const phaseRef = useRef(phase)
+  phaseRef.current = phase
   const [countdown, setCountdown] = useState(3)
 
   const [state, dispatch] = useReducer(gameReducer, [], () => createInitialState([]))
@@ -107,7 +119,9 @@ export const PvpGame = () => {
   const myStatus = pvpSession.data?.members.find(m => m.userID === session?.userId)?.status
   const joined = !!myStatus && myStatus !== 'INVITED'
   useEffect(() => {
-    if (myStatus === 'INVITED' && joinSession.isIdle) joinSession.mutate(sessionId)
+    if (myStatus === 'INVITED' && joinSession.isIdle) {
+      joinSession.mutate(sessionId, { onError: error => failConnecting(pvpSessionErrorMessage(error)) })
+    }
   }, [myStatus])
 
   const peerUserId = useMemo(
@@ -129,8 +143,8 @@ export const PvpGame = () => {
     turnServers: turnServers.data ?? [],
     offer: attributes?.offer,
     answer: attributes?.answer,
-    onOffer: offer => setSessionAttributes.mutate({ sessionId, attributes: { offer } }),
-    onAnswer: answer => setSessionAttributes.mutate({ sessionId, attributes: { answer } })
+    onOffer: offer => writeSessionAttributes({ offer }),
+    onAnswer: answer => writeSessionAttributes({ answer })
   })
 
   const playerWpm = Math.round((state.correctKeystroke * 12) / state.duration)
@@ -171,10 +185,7 @@ export const PvpGame = () => {
     setRace(next)
     const words = generateWords(next.mode, numberOfWords, next.language)
     dispatch({ type: 'RESTART', words, duration: next.duration })
-    setSessionAttributes.mutate({
-      sessionId,
-      attributes: { ...next, words, authorityUserId: session!.userId }
-    })
+    writeSessionAttributes({ ...next, words, authorityUserId: session!.userId })
   }, [phase, joined, isAuthority, attributes?.words])
 
   // non-authority: seed the local reducer once the authority's word list lands via poll
@@ -223,6 +234,7 @@ export const PvpGame = () => {
 
   const startQuickMatch = () => {
     setTimedOut(false)
+    setConnectError(null)
     setPhase('queueing')
     createTicket.mutate(settings, {
       onSuccess: ticket => setTicketId(ticket.matchTicketID),
@@ -263,6 +275,31 @@ export const PvpGame = () => {
     dispatch({ type: 'RESTART', words: [], duration: settings.duration })
   }, [settings.duration, sessionId])
 
+  // back to the Quick Match screen with the reason shown there; only a match still connecting can
+  // fail this way, so a late error from an abandoned match is ignored
+  const failConnecting = (message: string) => {
+    if (phaseRef.current !== 'connecting') return
+    restartHandler()
+    setConnectError(message)
+  }
+
+  const writeSessionAttributes = (attributes: Partial<PvpSessionAttributes>) =>
+    setSessionAttributes.mutate({ sessionId, attributes }, { onError: error => failConnecting(pvpSessionErrorMessage(error)) })
+
+  useEffect(() => {
+    if (phase === 'connecting' && pvpSession.isError) failConnecting(pvpSessionErrorMessage(pvpSession.error))
+  }, [phase, pvpSession.isError])
+
+  useEffect(() => {
+    if (phase === 'connecting' && remote.failed) failConnecting("Couldn't connect to your opponent. Try again.")
+  }, [phase, remote.failed])
+
+  useEffect(() => {
+    if (phase !== 'connecting') return
+    const timeout = setTimeout(() => failConnecting('Connecting to your opponent took too long. Try again.'), CONNECT_TIMEOUT_MS)
+    return () => clearTimeout(timeout)
+  }, [phase])
+
   const { keystrokeRef, capsLockOn, changeHandler, inputHandler, keyDownHandler } = useTypingInput(state, dispatch)
 
   const elapsed = state.duration - state.timer
@@ -278,6 +315,7 @@ export const PvpGame = () => {
           <LanguageSelector active={settings.language} disabled={false} onChange={language => changeSettings({ language })} />
         </div>
         {timedOut && <p className="text-error text-sm mb-4">No opponent found within 60s. Try again?</p>}
+        {connectError && <p className="text-error text-sm mb-4">{connectError}</p>}
         <button
           type="button"
           onClick={startQuickMatch}
