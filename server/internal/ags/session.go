@@ -328,6 +328,18 @@ func SetSessionAttributes(accessToken, sessionID string, attributes map[string]i
 	})
 }
 
+// JoinSession accepts the caller's pending invite. A session created with explicit `teams` only
+// joins its creator; everyone else in the roster stays INVITED, and AGS 404s their attribute
+// writes until they join.
+func JoinSession(accessToken, sessionID string) error {
+	service := newGameSessionService(accessToken)
+	params := game_session.NewJoinGameSessionParams()
+	params.Namespace = agsconfig.Namespace()
+	params.SessionID = sessionID
+	_, err := service.JoinGameSessionShort(params)
+	return err
+}
+
 // LeaveSession removes the caller from the session (used when a player exits a PvP match or room).
 func LeaveSession(accessToken, sessionID string) error {
 	service := newGameSessionService(accessToken)

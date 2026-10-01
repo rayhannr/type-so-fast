@@ -46,6 +46,20 @@ func SetSessionAttributes(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"ok": true})
 }
 
+func JoinSession(c *gin.Context) {
+	auth := apiauth.FromHeaders(c.GetHeader("Authorization"), c.GetHeader("X-User-Id"))
+	if auth == nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	if err := ags.JoinSession(auth.AccessToken, c.Param("id")); err != nil {
+		respondError(c, err, "session/:id/join POST")
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"ok": true})
+}
+
 func LeaveSession(c *gin.Context) {
 	auth := apiauth.FromHeaders(c.GetHeader("Authorization"), c.GetHeader("X-User-Id"))
 	if auth == nil {

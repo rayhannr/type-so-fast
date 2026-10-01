@@ -24,7 +24,7 @@ import { PvpSessionAttributes } from '@/lib/ags/session'
 import { gameReducer, createInitialState } from '@/lib/gameReducer'
 import { DEFAULT_PVP_SETTINGS, describePvpSettings, PvpSettings, readPvpSettings, writePvpSettings } from '@/lib/pvpSettings'
 import { useCreateMatchTicketMutation, useMatchTicketStatusQuery, useCancelMatchTicketMutation } from '@/lib/queries/matchmaking'
-import { useSessionQuery, useSetSessionAttributesMutation, useLeaveSessionMutation } from '@/lib/queries/session'
+import { useSessionQuery, useSetSessionAttributesMutation, useJoinSessionMutation, useLeaveSessionMutation } from '@/lib/queries/session'
 import { useTurnServersQuery } from '@/lib/queries/turn'
 
 const numberOfWords = 400
@@ -96,10 +96,19 @@ export const PvpGame = () => {
   // continuing to hit AGS every 1.5s through to the results screen.
   const pvpSession = useSessionQuery(session, sessionId, POLL_INTERVAL_MS_BY_PHASE[phase])
   const setSessionAttributes = useSetSessionAttributesMutation(session)
+  const joinSession = useJoinSessionMutation(session)
   const leaveSession = useLeaveSessionMutation(session)
   const turnServers = useTurnServersQuery(session, sessionId)
 
   const attributes = pvpSession.data?.attributes
+
+  // the inviter of a direct match stays INVITED until it joins, and AGS rejects an INVITED
+  // member's attribute writes, so nothing is written to the session before this flips
+  const myStatus = pvpSession.data?.members.find(m => m.userID === session?.userId)?.status
+  const joined = !!myStatus && myStatus !== 'INVITED'
+  useEffect(() => {
+    if (myStatus === 'INVITED' && joinSession.isIdle) joinSession.mutate(sessionId)
+  }, [myStatus])
 
   const peerUserId = useMemo(
     () => pvpSession.data?.members.find(m => m.userID !== session?.userId)?.userID ?? null,
@@ -116,7 +125,7 @@ export const PvpGame = () => {
     isOfferer: isAuthority,
     // wait for the TURN lookup to settle either way, since the peer connection's ICE servers are
     // fixed at creation
-    active: (phase === 'connecting' && turnServers.isFetched) || phase === 'countdown' || phase === 'racing',
+    active: (phase === 'connecting' && joined && turnServers.isFetched) || phase === 'countdown' || phase === 'racing',
     turnServers: turnServers.data ?? [],
     offer: attributes?.offer,
     answer: attributes?.answer,
@@ -156,7 +165,7 @@ export const PvpGame = () => {
   // The other player has no such race: it only ever reads the words via poll, never writes them.
   const hasSeededWordsRef = useRef(false)
   useEffect(() => {
-    if (phase !== 'connecting' || !pvpSession.data || !isAuthority || attributes?.words || hasSeededWordsRef.current) return
+    if (phase !== 'connecting' || !joined || !isAuthority || attributes?.words || hasSeededWordsRef.current) return
     hasSeededWordsRef.current = true
     const next = sessionSettings(attributes) ?? settings
     setRace(next)
@@ -166,7 +175,7 @@ export const PvpGame = () => {
       sessionId,
       attributes: { ...next, words, authorityUserId: session!.userId }
     })
-  }, [phase, pvpSession.data, isAuthority, attributes?.words])
+  }, [phase, joined, isAuthority, attributes?.words])
 
   // non-authority: seed the local reducer once the authority's word list lands via poll
   useEffect(() => {
@@ -250,6 +259,7 @@ export const PvpGame = () => {
     setCountdown(3)
     setRace(null)
     hasSeededWordsRef.current = false
+    joinSession.reset()
     dispatch({ type: 'RESTART', words: [], duration: settings.duration })
   }, [settings.duration, sessionId])
 

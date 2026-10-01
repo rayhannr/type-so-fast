@@ -32,6 +32,14 @@ export const useSetSessionAttributesMutation = (session: AgsSession | null) => {
   })
 }
 
+export const useJoinSessionMutation = (session: AgsSession | null) => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (sessionId: string) => axios.post(`/api/session/${sessionId}/join`, {}, { headers: authHeaders(session!) }),
+    onSuccess: (_, sessionId) => queryClient.invalidateQueries({ queryKey: ['pvpSession', sessionId] })
+  })
+}
+
 export const useLeaveSessionMutation = (session: AgsSession | null) =>
   useMutation({
     mutationFn: (sessionId: string) => axios.delete(`/api/session/${sessionId}`, { headers: authHeaders(session!) })

@@ -74,6 +74,7 @@ func main() {
 	router.GET("/api/session/:id", handlers.GetSession)
 	router.PATCH("/api/session/:id", handlers.SetSessionAttributes)
 	router.DELETE("/api/session/:id", handlers.LeaveSession)
+	router.POST("/api/session/:id/join", handlers.JoinSession)
 
 	router.GET("/api/turn", handlers.TurnServers)
 
