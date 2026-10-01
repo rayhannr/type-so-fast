@@ -75,6 +75,8 @@ func main() {
 	router.PATCH("/api/session/:id", handlers.SetSessionAttributes)
 	router.DELETE("/api/session/:id", handlers.LeaveSession)
 
+	router.GET("/api/turn", handlers.TurnServers)
+
 	router.GET("/api/stats", handlers.GetPersonalStats)
 	router.POST("/api/stats", handlers.SubmitGameStats)
 

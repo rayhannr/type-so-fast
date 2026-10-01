@@ -25,6 +25,7 @@ import { gameReducer, createInitialState } from '@/lib/gameReducer'
 import { DEFAULT_PVP_SETTINGS, describePvpSettings, PvpSettings, readPvpSettings, writePvpSettings } from '@/lib/pvpSettings'
 import { useCreateMatchTicketMutation, useMatchTicketStatusQuery, useCancelMatchTicketMutation } from '@/lib/queries/matchmaking'
 import { useSessionQuery, useSetSessionAttributesMutation, useLeaveSessionMutation } from '@/lib/queries/session'
+import { useTurnServersQuery } from '@/lib/queries/turn'
 
 const numberOfWords = 400
 
@@ -96,6 +97,7 @@ export const PvpGame = () => {
   const pvpSession = useSessionQuery(session, sessionId, POLL_INTERVAL_MS_BY_PHASE[phase])
   const setSessionAttributes = useSetSessionAttributesMutation(session)
   const leaveSession = useLeaveSessionMutation(session)
+  const turnServers = useTurnServersQuery(session, sessionId)
 
   const attributes = pvpSession.data?.attributes
 
@@ -112,7 +114,10 @@ export const PvpGame = () => {
   const isGameOver = state.timer === 0
   const remote = useRemotePlayer({
     isOfferer: isAuthority,
-    active: phase === 'connecting' || phase === 'countdown' || phase === 'racing',
+    // wait for the TURN lookup to settle either way, since the peer connection's ICE servers are
+    // fixed at creation
+    active: (phase === 'connecting' && turnServers.isFetched) || phase === 'countdown' || phase === 'racing',
+    turnServers: turnServers.data ?? [],
     offer: attributes?.offer,
     answer: attributes?.answer,
     onOffer: offer => setSessionAttributes.mutate({ sessionId, attributes: { offer } }),

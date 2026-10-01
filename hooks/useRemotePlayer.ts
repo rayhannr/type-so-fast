@@ -3,10 +3,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { SignalPayload } from '@/lib/ags/session'
 
-// TODO: swap for AGS's TURN relay credentials once the exact fetch endpoint is confirmed
-// (see docs/ags-plans/2026-07-07-pvp-quick-match.md Risks) — public STUN is enough for direct
-// connections but has no fallback when both peers are behind restrictive NATs.
-const ICE_SERVERS: RTCIceServer[] = [{ urls: 'stun:stun.l.google.com:19302' }]
+// STUN covers direct connections; the AGS TURN servers passed in as `turnServers` relay traffic
+// when both peers are behind NATs that STUN can't punch through
+const STUN_SERVERS: RTCIceServer[] = [{ urls: 'stun:stun.l.google.com:19302' }]
 
 // how long to batch newly-gathered candidates before writing them out, so a burst of candidates
 // (STUN typically returns several close together) becomes one signal write instead of many
@@ -22,6 +21,7 @@ export interface RemotePlayerSnapshot {
 interface Params {
   isOfferer: boolean
   active: boolean
+  turnServers: RTCIceServer[]
   offer?: SignalPayload
   answer?: SignalPayload
   onOffer: (signal: SignalPayload) => void
@@ -41,28 +41,30 @@ interface RemotePlayer {
 // soon as it's created, then writes the growing candidate list as candidates arrive, instead
 // of waiting for gathering to fully finish — the other side can start connecting on partial
 // candidates rather than sitting idle for the whole gathering round trip.
-export const useRemotePlayer = ({ isOfferer, active, offer, answer, onOffer, onAnswer }: Params): RemotePlayer => {
+export const useRemotePlayer = ({ isOfferer, active, turnServers, offer, answer, onOffer, onAnswer }: Params): RemotePlayer => {
   const [connected, setConnected] = useState(false)
   const [remote, setRemote] = useState<RemotePlayerSnapshot | null>(null)
   const channelRef = useRef<RTCDataChannel | null>(null)
   const pcRef = useRef<RTCPeerConnection | null>(null)
   const remoteDescriptionSetRef = useRef(false)
-  const appliedCandidateCountRef = useRef(0)
+  const appliedCandidatesRef = useRef(new Set<string>())
+  const publishRef = useRef<(() => void) | null>(null)
 
   useEffect(() => {
     if (!active) return
 
-    const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS })
+    const pc = new RTCPeerConnection({ iceServers: [...STUN_SERVERS, ...turnServers] })
     pcRef.current = pc
     const candidates: RTCIceCandidateInit[] = []
-    let localDescription: RTCSessionDescription | null = null
     let flushTimeout: ReturnType<typeof setTimeout> | null = null
 
     const publish = () => {
-      if (!localDescription) return
-      if (isOfferer) onOffer({ sdp: localDescription, candidates: [...candidates] })
-      else onAnswer({ sdp: localDescription, candidates: [...candidates] })
+      const sdp = pc.localDescription
+      if (!sdp) return
+      if (isOfferer) onOffer({ sdp, candidates: [...candidates] })
+      else onAnswer({ sdp, candidates: [...candidates] })
     }
+    publishRef.current = publish
 
     const scheduleFlush = () => {
       if (flushTimeout) return
@@ -95,10 +97,7 @@ export const useRemotePlayer = ({ isOfferer, active, offer, answer, onOffer, onA
       attachChannel(pc.createDataChannel('race-progress'))
       pc.createOffer()
         .then(offerDescription => pc.setLocalDescription(offerDescription))
-        .then(() => {
-          localDescription = pc.localDescription
-          publish()
-        })
+        .then(publish)
         .catch(() => {})
     } else {
       pc.addEventListener('datachannel', event => attachChannel(event.channel))
@@ -108,15 +107,16 @@ export const useRemotePlayer = ({ isOfferer, active, offer, answer, onOffer, onA
       if (flushTimeout) clearTimeout(flushTimeout)
       pc.close()
       pcRef.current = null
+      publishRef.current = null
       channelRef.current = null
       remoteDescriptionSetRef.current = false
-      appliedCandidateCountRef.current = 0
+      appliedCandidatesRef.current = new Set()
       setConnected(false)
     }
   }, [active, isOfferer])
 
-  // non-offerer: apply the offer's sdp as soon as it lands, then apply the answer's own local
-  // description once created — same trickle-publish shape as the offerer side
+  // non-offerer: apply the offer's sdp as soon as it lands, then publish the answer through the
+  // same trickle path as the offerer, so candidates gathered afterwards keep being written out
   useEffect(() => {
     const pc = pcRef.current
     if (isOfferer || !pc || !offer || remoteDescriptionSetRef.current) return
@@ -124,9 +124,7 @@ export const useRemotePlayer = ({ isOfferer, active, offer, answer, onOffer, onA
     pc.setRemoteDescription(new RTCSessionDescription(offer.sdp))
       .then(() => pc.createAnswer())
       .then(answerDescription => pc.setLocalDescription(answerDescription))
-      .then(() => {
-        if (pc.localDescription) onAnswer({ sdp: pc.localDescription, candidates: [] })
-      })
+      .then(() => publishRef.current?.())
       .catch(() => {})
   }, [isOfferer, offer])
 
@@ -138,16 +136,17 @@ export const useRemotePlayer = ({ isOfferer, active, offer, answer, onOffer, onA
     pc.setRemoteDescription(new RTCSessionDescription(answer.sdp)).catch(() => {})
   }, [isOfferer, answer])
 
-  // apply newly-arrived candidates from whichever side we're not — the signal's candidate list
-  // only grows, so track how many we've already added and add just the new tail each update
+  // apply newly-arrived candidates from whichever side we're not. Writes can land out of order, so
+  // a poll may briefly show a shorter list than an earlier one; dedupe by candidate string rather
+  // than trusting the list to only grow
   useEffect(() => {
     const pc = pcRef.current
     const signal = isOfferer ? answer : offer
     if (!pc || !signal || !remoteDescriptionSetRef.current) return
-    const newCandidates = signal.candidates.slice(appliedCandidateCountRef.current)
-    if (newCandidates.length === 0) return
-    appliedCandidateCountRef.current = signal.candidates.length
-    newCandidates.forEach(candidate => {
+    signal.candidates.forEach(candidate => {
+      const key = candidate.candidate ?? ''
+      if (appliedCandidatesRef.current.has(key)) return
+      appliedCandidatesRef.current.add(key)
       pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(() => {})
     })
   }, [isOfferer, offer, answer])
