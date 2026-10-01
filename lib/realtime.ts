@@ -14,26 +14,54 @@ type Listener = (payload: RealtimeEvent) => void
 
 const RECONNECT_BASE_MS = 500
 const RECONNECT_MAX_MS = 15_000
+const HIDDEN_DISCONNECT_MS = 60_000
 
-// Cloud Run counts a websocket as an in-flight request and cuts it at its 60 minute ceiling, so
-// dropping and reconnecting is routine here rather than an error path.
+// Cloud Run counts a websocket as an in-flight request and bills the instance for as long as it
+// stays open, so a tab nobody is looking at drops its socket and reconnects once visible again.
+// Reconnecting is also routine because Cloud Run cuts a websocket at its request timeout.
 class RealtimeConnection {
   private socket: WebSocket | null = null
   private listeners = new Map<string, Set<Listener>>()
   private connectionListeners = new Set<(connected: boolean) => void>()
   private reconnectAttempt = 0
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null
+  private hiddenTimer: ReturnType<typeof setTimeout> | null = null
   private closed = false
+  private paused = false
   private holders = 0
 
   connected = false
 
   constructor(private session: AgsSession) {
     this.open()
+    document.addEventListener('visibilitychange', this.onVisibilityChange)
+  }
+
+  private onVisibilityChange = () => {
+    if (document.visibilityState === 'hidden') {
+      this.hiddenTimer = setTimeout(() => this.pause(), HIDDEN_DISCONNECT_MS)
+      return
+    }
+
+    if (this.hiddenTimer) clearTimeout(this.hiddenTimer)
+    this.hiddenTimer = null
+    if (!this.paused) return
+
+    this.paused = false
+    this.reconnectAttempt = 0
+    this.open()
+  }
+
+  private pause() {
+    this.paused = true
+    this.hiddenTimer = null
+    if (this.reconnectTimer) clearTimeout(this.reconnectTimer)
+    this.reconnectTimer = null
+    this.socket?.close()
   }
 
   private open() {
-    if (this.closed) return
+    if (this.closed || this.paused) return
 
     const base = process.env.NEXT_PUBLIC_GO_BACKEND_URL!
     this.socket = new WebSocket(`${base.replace(/^http/, 'ws')}/api/realtime`)
@@ -65,7 +93,7 @@ class RealtimeConnection {
   }
 
   private scheduleReconnect() {
-    if (this.closed || this.reconnectTimer) return
+    if (this.closed || this.paused || this.reconnectTimer) return
 
     const delay = Math.min(RECONNECT_BASE_MS * 2 ** this.reconnectAttempt, RECONNECT_MAX_MS)
     this.reconnectAttempt += 1
@@ -106,6 +134,8 @@ class RealtimeConnection {
     if (this.holders > 0) return
 
     this.closed = true
+    document.removeEventListener('visibilitychange', this.onVisibilityChange)
+    if (this.hiddenTimer) clearTimeout(this.hiddenTimer)
     if (this.reconnectTimer) clearTimeout(this.reconnectTimer)
     this.socket?.close()
     if (shared?.connection === this) shared = null

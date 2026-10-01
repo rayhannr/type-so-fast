@@ -33,7 +33,7 @@ jobs:
           service: ${{ env.SERVICE }}
           region: ${{ env.REGION }}
           source: ./server
-          flags: --allow-unauthenticated
+          flags: --allow-unauthenticated --max-instances=1 --cpu=1 --memory=256Mi --timeout=900
           env_vars: |
             ALLOWED_ORIGINS=https://typesofast.rayhannr.dev,https://typesofast.vercel.app,http://localhost:3000,http://localhost:3123
             ACCELBYTE_BASE_URL=${{ secrets.ACCELBYTE_BASE_URL }}
