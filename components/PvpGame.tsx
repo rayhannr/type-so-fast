@@ -1,6 +1,6 @@
 'use client'
 
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useMemo, useReducer, useRef, useState, useCallback } from 'react'
 import { Language } from '@/constants/words'
 import { generateWords, WordMode } from '@/lib/word-generators'
@@ -66,6 +66,7 @@ const sessionSettings = (attributes: Partial<PvpSessionAttributes> | undefined):
 
 export const PvpGame = () => {
   const { session, displayName } = useAgsSessionContext()
+  const router = useRouter()
 
   // a match-invite accept lands here via `/pvp?session=<id>` — the session already has both
   // players named in its roster (see lib/ags/session.ts's createInviteSession), so this joins
@@ -262,7 +263,7 @@ export const PvpGame = () => {
     }
   }, [phase, ticketStatus.data])
 
-  const restartHandler = useCallback(() => {
+  const resetMatch = useCallback(() => {
     if (sessionId) leaveSession.mutate(sessionId)
     clearInterval(intervalRef.current!)
     setPhase('idle')
@@ -274,6 +275,26 @@ export const PvpGame = () => {
     joinSession.reset()
     dispatch({ type: 'RESTART', words: [], duration: settings.duration })
   }, [settings.duration, sessionId])
+
+  // clearing `?session=` keeps a reload from dropping straight back into a match that's over
+  const restartHandler = useCallback(() => {
+    resetMatch()
+    if (joinSessionId) router.replace('/pvp')
+  }, [resetMatch, joinSessionId])
+
+  // accepting an invite while already on /pvp only changes the search param, which doesn't
+  // remount this component, so switch to the new match here
+  const handledJoinSessionIdRef = useRef(joinSessionId)
+  useEffect(() => {
+    if (!joinSessionId || joinSessionId === handledJoinSessionIdRef.current) return
+    handledJoinSessionIdRef.current = joinSessionId
+    if (ticketId) cancelTicket.mutate(ticketId)
+    resetMatch()
+    setTimedOut(false)
+    setConnectError(null)
+    setSessionId(joinSessionId)
+    setPhase('connecting')
+  }, [joinSessionId])
 
   // back to the Quick Match screen with the reason shown there; only a match still connecting can
   // fail this way, so a late error from an abandoned match is ignored
