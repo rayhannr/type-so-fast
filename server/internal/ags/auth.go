@@ -11,6 +11,7 @@ import (
 type Session struct {
 	UserID      string `json:"userId"`
 	AccessToken string `json:"accessToken"`
+	LobbyURL    string `json:"lobbyUrl"`
 }
 
 type LinkedAccount struct {
@@ -35,7 +36,7 @@ func loginWithPlatformToken(platformID string, configure func(*o_auth2_0.Platfor
 	if err != nil {
 		return nil, err
 	}
-	return &Session{UserID: *resp.Data.UserID, AccessToken: *resp.Data.AccessToken}, nil
+	return &Session{UserID: *resp.Data.UserID, AccessToken: *resp.Data.AccessToken, LobbyURL: agsconfig.LobbyURL()}, nil
 }
 
 func LoginWithDeviceID(deviceID string) (*Session, error) {

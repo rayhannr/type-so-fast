@@ -22,14 +22,14 @@ export default defineConfig({
       url: `${goBackendUrl}/api/health`,
       reuseExistingServer: true,
       timeout: 120_000,
-      env: { PORT: String(GO_PORT), ALLOWED_ORIGINS: origin }
+      env: { PORT: String(GO_PORT) }
     },
     {
       command: `npm run dev -- --port ${NEXT_PORT}`,
       url: origin,
       reuseExistingServer: true,
       timeout: 30_000,
-      env: { GO_BACKEND_URL: goBackendUrl, NEXT_PUBLIC_GO_BACKEND_URL: goBackendUrl }
+      env: { GO_BACKEND_URL: goBackendUrl }
     }
   ]
 })

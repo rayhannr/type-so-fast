@@ -9,8 +9,8 @@ import (
 	"type-so-fast-server/internal/agsconfig"
 )
 
-// A player is online in AGS exactly while their Lobby websocket is held open, which the realtime
-// relay does on their behalf. Nothing publishes presence explicitly.
+// A player is online in AGS exactly while their Lobby websocket is held open, which the browser
+// does itself. Nothing publishes presence explicitly.
 const availabilityOnline = "online"
 
 // The generated lobby-sdk presence client posts to an admin path this deployment rejects for a

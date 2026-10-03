@@ -1,9 +1,7 @@
 // Runs the Next dev server against a locally-built Go backend instead of the deployed one.
 //
-// Two things make this more than `npm run dev`: the Go server reads real environment variables
-// rather than .env.local, and the browser needs NEXT_PUBLIC_GO_BACKEND_URL pointed at the local
-// server or its websocket dial goes to Cloud Run. Vercel rewrites cannot proxy a websocket
-// upgrade, so /api/realtime is reached directly rather than through Next's /api/* rewrite.
+// More than `npm run dev` because the Go server reads real environment variables rather than
+// .env.local, and Next's /api/* rewrite has to point at the local server instead of Cloud Run.
 
 import { spawn } from 'node:child_process'
 import { readFileSync } from 'node:fs'
@@ -36,17 +34,10 @@ const env = {
   ...process.env,
   ...readEnvFile(),
   PORT: GO_PORT,
-  GO_BACKEND_URL: backendUrl,
-  NEXT_PUBLIC_GO_BACKEND_URL: backendUrl
+  GO_BACKEND_URL: backendUrl
 }
 
-// The Go server rejects websocket upgrades from any origin not listed here, and browsers send no
-// CORS preflight for a websocket, so a missing entry surfaces as a bare 403 on connect.
 const origin = `http://localhost:${NEXT_PORT}`
-if (!(env.ALLOWED_ORIGINS ?? '').split(',').some(allowed => allowed.trim() === origin)) {
-  env.ALLOWED_ORIGINS = [env.ALLOWED_ORIGINS, origin].filter(Boolean).join(',')
-  console.log(`dev-local: added ${origin} to ALLOWED_ORIGINS for this run`)
-}
 
 const children = []
 

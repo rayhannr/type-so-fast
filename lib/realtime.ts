@@ -16,9 +16,43 @@ const RECONNECT_BASE_MS = 500
 const RECONNECT_MAX_MS = 15_000
 const HIDDEN_DISCONNECT_MS = 60_000
 
-// Cloud Run counts a websocket as an in-flight request and bills the instance for as long as it
-// stays open, so a tab nobody is looking at drops its socket and reconnects once visible again.
-// Reconnecting is also routine because Cloud Run cuts a websocket at its request timeout.
+// Lobby frames are newline-delimited `key: value` text. Only the first colon on a line separates
+// key from value, since a freeform payload is JSON and carries colons of its own.
+const parseLobbyFrame = (raw: string) => {
+  const frame: Record<string, string> = {}
+  for (const line of raw.split('\n')) {
+    const separator = line.indexOf(':')
+    if (separator === -1) continue
+    frame[line.slice(0, separator).trim()] = line.slice(separator + 1).trim()
+  }
+  return frame
+}
+
+// Turns a raw Lobby frame into the event the app listens for, or null for frames it has no use for.
+// A freeform notification carries the sender's own JSON, and AGS pushes userStatusNotif to a
+// player's friends whenever someone's Lobby socket opens or closes.
+export const parseLobbyMessage = (raw: string): RealtimeEvent | null => {
+  const frame = parseLobbyFrame(raw)
+
+  if (frame.type === 'messageNotif') {
+    try {
+      const payload = JSON.parse(frame.payload)
+      return typeof payload?.event === 'string' ? payload : null
+    } catch {
+      return null
+    }
+  }
+
+  if (frame.type === 'userStatusNotif') {
+    return { event: 'presence:changed', userId: frame.userID, availability: frame.availability }
+  }
+
+  return null
+}
+
+// The player's own Lobby socket is held open for as long as they are on the site, which is also
+// what AGS counts as them being online. A tab nobody is looking at drops it and reconnects once
+// visible again, so a forgotten tab neither holds a connection nor shows as online indefinitely.
 class RealtimeConnection {
   private socket: WebSocket | null = null
   private listeners = new Map<string, Set<Listener>>()
@@ -61,27 +95,20 @@ class RealtimeConnection {
   }
 
   private open() {
-    if (this.closed || this.paused) return
+    if (this.closed || this.paused || !this.session.lobbyUrl) return
 
-    const base = process.env.NEXT_PUBLIC_GO_BACKEND_URL!
-    this.socket = new WebSocket(`${base.replace(/^http/, 'ws')}/api/realtime`)
+    // A browser WebSocket cannot set an Authorization header, so Lobby also accepts the access
+    // token as the one requested subprotocol.
+    this.socket = new WebSocket(this.session.lobbyUrl, this.session.accessToken)
 
     this.socket.onopen = () => {
-      // A browser WebSocket cannot set an Authorization header, so the server takes credentials
-      // in the first frame instead of the query string, which would land in access logs.
-      this.socket?.send(JSON.stringify({ token: this.session.accessToken, userId: this.session.userId }))
       this.reconnectAttempt = 0
       this.setConnected(true)
     }
 
     this.socket.onmessage = event => {
-      let payload: RealtimeEvent
-      try {
-        payload = JSON.parse(event.data)
-      } catch {
-        return
-      }
-      this.listeners.get(payload.event)?.forEach(listener => listener(payload))
+      const payload = parseLobbyMessage(String(event.data))
+      if (payload) this.listeners.get(payload.event)?.forEach(listener => listener(payload))
     }
 
     this.socket.onclose = () => {

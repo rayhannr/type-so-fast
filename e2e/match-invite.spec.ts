@@ -5,7 +5,8 @@ import { Browser, Page } from '@playwright/test'
 // independent Device ID sessions become friends via friend code, one invites the other to a
 // match over the live Lobby socket (see hooks/usePendingInvite.ts), the invitee accepts and
 // both players land in the same PvP session via the `/pvp?session=<id>` join path added in
-// components/PvpGame.tsx. A second pass covers the decline path.
+// components/PvpGame.tsx. A second pass covers the decline path, and a third covers a friend's
+// presence flipping offline and back as their Lobby socket closes and reopens.
 
 const becomeFriends = async (pageA: Page, pageB: Page) => {
   await pageA.goto('/friends', { waitUntil: 'networkidle' })
@@ -82,5 +83,34 @@ test.describe('match invites between friends', () => {
 
     await ctxA.close()
     await ctxB.close()
+  })
+})
+
+test.describe('friend presence', () => {
+  test("a friend's presence follows their Lobby socket closing and reopening", async ({ browser }: { browser: Browser }) => {
+    const ctxA = await browser.newContext()
+    const ctxB = await browser.newContext()
+    const pageA = await ctxA.newPage()
+    const pageB = await ctxB.newPage()
+
+    await pageA.goto('/pvp', { waitUntil: 'networkidle' })
+    await pageB.goto('/pvp', { waitUntil: 'networkidle' })
+    await pageA.waitForTimeout(1500)
+    await pageB.waitForTimeout(1500)
+
+    await becomeFriends(pageA, pageB)
+
+    // B keeps the same Device ID across the reopen through its saved localStorage
+    const storageStateB = await ctxB.storageState()
+    await ctxB.close()
+    await expect.poll(async () => (await pageA.locator('body').innerText()).includes('Offline'), { timeout: 30_000 }).toBe(true)
+
+    const ctxB2 = await browser.newContext({ storageState: storageStateB })
+    const pageB2 = await ctxB2.newPage()
+    await pageB2.goto('/friends', { waitUntil: 'networkidle' })
+    await expect.poll(async () => (await pageA.locator('body').innerText()).includes('Online'), { timeout: 30_000 }).toBe(true)
+
+    await ctxA.close()
+    await ctxB2.close()
   })
 })

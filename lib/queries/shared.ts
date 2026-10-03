@@ -3,6 +3,7 @@ import axios from 'axios'
 export interface AgsSession {
   userId: string
   accessToken: string
+  lobbyUrl: string
 }
 
 // Maps an AGS error response's errorCode to a specific user-facing message, falling back to a

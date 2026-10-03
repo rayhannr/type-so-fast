@@ -43,7 +43,6 @@ func main() {
 	router.POST("/api/blocks", handlers.BlockUser)
 	router.DELETE("/api/blocks/:userId", handlers.UnblockUser)
 
-	router.GET("/api/realtime", handlers.Realtime)
 	router.GET("/api/presence", handlers.Presence)
 
 	router.GET("/api/records", handlers.GetBestRecords)

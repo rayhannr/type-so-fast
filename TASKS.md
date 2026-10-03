@@ -270,3 +270,17 @@ Three findings worth carrying forward. **Presence needed almost nothing** — AG
 Removed: `pusher` and `pusher-js` packages, `pusher-http-go` from `go.mod`, `internal/pusherx`, `/api/pusher/auth` and its handler, and all six `PUSHER_*` variables from `.env.local` and `.env.test`. Still to do outside the repo: drop the same six from the Vercel project and close the Pusher account.
 
 Verified with the full Playwright suite (8/8) against live AGS with Pusher entirely absent — solo, pvc, pvp, match invites (accept and decline) and a three-browser room race including late-join rejection — plus 57 unit tests, `tsc --noEmit`, `go build`/`vet`/`test`. New `npm run dev:local` (`scripts/dev-local.mjs`) starts the Go server and Next together with the env wiring this needs, since testing realtime against the deployed backend tests the old build.
+
+---
+
+## Phase 21 — Browser Connects to AGS Lobby Directly ✓ Done
+
+**T55 — Drop the Go websocket relay; the browser dials AGS Lobby itself**
+
+T54 concluded a browser cannot authenticate to Lobby, after trying a header, `?token=`, `?access_token=` and `Sec-WebSocket-Protocol: Bearer, <token>`. It never tried the token as the *only* requested subprotocol, which is what `@accelbyte/sdk-lobby` does (`new WebSocket(url, accessToken)`) and which Lobby accepts. Verified in Chromium against the live namespace from the real site origin, and an idle socket held 5 minutes without any client ping.
+
+The login response now carries `lobbyUrl` (derived from `ACCELBYTE_BASE_URL`), `lib/realtime.ts` opens that socket and parses Lobby's `key: value` frames itself (`parseLobbyMessage`, unit-tested), and `/api/realtime`, `internal/lobbyws`, `ALLOWED_ORIGINS`, the 15 minute Cloud Run request timeout and `NEXT_PUBLIC_GO_BACKEND_URL` are gone. Cloud Run no longer holds a connection per open tab, and the browser never talks to it directly, so it serves only short REST calls. Senders are unchanged: notifications still go out through the admin client.
+
+`LockRoom` no longer revokes the join code before closing joinability. The revoke bumps the session version asynchronously, so the PATCH after it kept losing the version race and rooms started unlocked. Closing joinability alone is enforced by AGS for direct joins and join-by-code, and `StartRoom` now fails instead of starting a room it could not lock. New e2e: a friend's presence follows their Lobby socket closing and reopening.
+
+The `.env.test` namespace's admin client lacks `ADMIN:NAMESPACE:{namespace}:NOTIFICATION [CREATE]`, so every freeform notify there returns 403 `20013` and the realtime specs fail against it regardless of this change; they pass against the main namespace. Still to do outside the repo: drop `NEXT_PUBLIC_GO_BACKEND_URL` from the Vercel project.

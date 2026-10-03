@@ -2,6 +2,7 @@ package agsconfig
 
 import (
 	"os"
+	"strings"
 	"time"
 
 	"github.com/AccelByte/accelbyte-go-modular-sdk/services-api/pkg/repository"
@@ -35,6 +36,13 @@ func Admin() *Repository {
 		ClientSecret: os.Getenv("ACCELBYTE_ADMIN_CLIENT_SECRET"),
 		BaseURL:      os.Getenv("ACCELBYTE_BASE_URL"),
 	}
+}
+
+// LobbyURL is the websocket endpoint browsers dial directly, handed to them at login so the
+// frontend needs no AGS host configuration of its own.
+func LobbyURL() string {
+	host := strings.TrimPrefix(strings.TrimSuffix(os.Getenv("ACCELBYTE_BASE_URL"), "/"), "https://")
+	return "wss://" + host + "/lobby/"
 }
 
 func Namespace() string {
