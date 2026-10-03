@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"log"
 	"net/http"
 	"time"
 
@@ -93,9 +92,8 @@ func GetRoom(c *gin.Context) {
 }
 
 // StartRoom has no host check: AGS itself rejects a non-leader LockRoom call with 403
-// LeadershipRequired, so respondError surfaces that as-is. Locking is best-effort — a room left
-// joinable mid-race beats a match that never starts, since every client (host included) starts on
-// the room:start broadcast.
+// LeadershipRequired, so respondError surfaces that as-is. The room is locked before anyone is
+// told to start, so a failed lock aborts the start rather than leaving a running race joinable.
 func StartRoom(c *gin.Context) {
 	auth := apiauth.FromHeaders(c.GetHeader("Authorization"), c.GetHeader("X-User-Id"))
 	if auth == nil {
@@ -116,7 +114,8 @@ func StartRoom(c *gin.Context) {
 	}
 
 	if err := ags.LockRoom(auth.AccessToken, sessionID); err != nil {
-		log.Printf("[rooms/%s/start] lockRoom failed — starting unlocked: %v", sessionID, err)
+		respondError(c, err, "rooms/:sessionId/start POST")
+		return
 	}
 
 	// single shared origin for every client's wpm wall-clock math (see RoomSessionAttributes.startedAt)

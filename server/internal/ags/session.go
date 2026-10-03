@@ -376,18 +376,11 @@ func LeaveSession(accessToken, sessionID string) error {
 	return service.LeaveGameSessionShort(params)
 }
 
-// LockRoom revokes the join code (leader-only, like GenerateRoomCode) and flips joinability to
-// CLOSED so AGS itself refuses any further joins — the code becoming invalid alone wouldn't stop
-// a direct join against a still-OPEN session.
+// LockRoom flips joinability to CLOSED (leader-only), which AGS enforces for direct joins and
+// join-by-code alike. The code is deliberately not revoked as well: revoking bumps the session
+// version asynchronously, so the PATCH that follows keeps losing the version race.
 func LockRoom(accessToken, sessionID string) error {
 	service := newGameSessionService(accessToken)
-
-	revokeParams := game_session.NewPublicRevokeGameSessionCodeParams()
-	revokeParams.Namespace = agsconfig.Namespace()
-	revokeParams.SessionID = sessionID
-	if err := service.PublicRevokeGameSessionCodeShort(revokeParams); err != nil {
-		return err
-	}
 
 	closed := sessionclientmodels.ApimodelsUpdateGameSessionRequestJoinabilityCLOSED
 	return patchSessionWithRetry(service, sessionID, func(current *sessionclientmodels.ApimodelsGameSessionResponse) *sessionclientmodels.ApimodelsUpdateGameSessionRequest {
