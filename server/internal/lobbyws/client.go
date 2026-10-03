@@ -10,7 +10,10 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-const lobbyPingInterval = 30 * time.Second
+const (
+	lobbyPingInterval = 30 * time.Second
+	browserPongWait   = 75 * time.Second
+)
 
 // AGS Lobby authenticates only via an Authorization header on the handshake: no query parameter,
 // no subprotocol, no post-connect auth frame. A browser WebSocket cannot set request headers, so
@@ -37,6 +40,13 @@ func Bridge(browser *websocket.Conn, accessToken string) error {
 	// The downstream pump blocks on Lobby reads, so a browser that goes away is only noticed on
 	// the next write, which may never come. Draining the browser side closes Lobby as soon as it
 	// disconnects rather than leaking the upstream connection until the next event.
+	// A browser that vanishes without a close frame (crash, lost network) never fails a read on its
+	// own, so each pong pushes the read deadline out and a missed one ends the drain loop.
+	browser.SetReadDeadline(time.Now().Add(browserPongWait))
+	browser.SetPongHandler(func(string) error {
+		return browser.SetReadDeadline(time.Now().Add(browserPongWait))
+	})
+
 	go func() {
 		defer lobby.Close()
 		for {
@@ -50,7 +60,12 @@ func Bridge(browser *websocket.Conn, accessToken string) error {
 		ticker := time.NewTicker(lobbyPingInterval)
 		defer ticker.Stop()
 		for range ticker.C {
-			if err := lobby.WriteControl(websocket.PingMessage, nil, time.Now().Add(5*time.Second)); err != nil {
+			deadline := time.Now().Add(5 * time.Second)
+			if err := lobby.WriteControl(websocket.PingMessage, nil, deadline); err != nil {
+				return
+			}
+			if err := browser.WriteControl(websocket.PingMessage, nil, deadline); err != nil {
+				lobby.Close()
 				return
 			}
 		}
