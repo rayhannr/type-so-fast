@@ -255,5 +255,5 @@ export const TypingHands = ({ keystrokeRef, gameOver }: Props) => {
     }
   }, [])
 
-  return <div ref={containerRef} className="fixed inset-0 pointer-events-none" aria-hidden="true" />
+  return <div ref={containerRef} className="fixed inset-0 -z-10 pointer-events-none" aria-hidden="true" />
 }

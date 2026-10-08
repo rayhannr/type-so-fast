@@ -406,6 +406,9 @@ export const PvpGame = () => {
         </div>
       ) : (
         <div className="mt-10">
+          <div className="flex justify-center items-center gap-2 mb-6">
+            <RestartButton onClick={restartHandler} />
+          </div>
           <div className="text-center mb-8">
             <p className={`text-3xl font-bold ${outcome ? OUTCOME_CLASS[outcome] : ''}`}>{outcome && OUTCOME_LABEL[outcome]}</p>
             <p className="text-muted text-sm mt-1">
@@ -413,9 +416,6 @@ export const PvpGame = () => {
             </p>
           </div>
           <Result state={state} session={session} displayName={displayName} xpGain={xpGain} />
-          <div className="flex justify-center items-center gap-2 mt-8">
-            <RestartButton onClick={restartHandler} />
-          </div>
         </div>
       )}
 

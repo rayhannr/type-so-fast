@@ -150,11 +150,11 @@ export const SoloGame = () => {
         </div>
       ) : (
         <div className="mt-10">
-          <Result state={state} session={session} displayName={displayName} xpGain={xpGain} />
-          <div className="flex justify-center items-center gap-2 mt-8">
+          <div className="flex justify-center items-center gap-2 mb-6">
             <span className="text-[10px] text-muted border border-solid border-edge rounded px-1 py-0.5">Tab</span>
             <RestartButton onClick={restartHandler} />
           </div>
+          <Result state={state} session={session} displayName={displayName} xpGain={xpGain} />
         </div>
       )}
 

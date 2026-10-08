@@ -375,6 +375,9 @@ export const RoomGame = () => {
         </div>
       ) : (
         <div className="mt-10">
+          <div className="flex justify-center items-center gap-2 mb-6">
+            <RestartButton onClick={restartHandler} />
+          </div>
           {opponentIds.length > 0 && (
             <div className="text-center mb-8">
               {resultsReady ? (
@@ -390,9 +393,6 @@ export const RoomGame = () => {
             </div>
           )}
           <Result state={state} session={session} displayName={displayName} xpGain={xpGain} />
-          <div className="flex justify-center items-center gap-2 mt-8">
-            <RestartButton onClick={restartHandler} />
-          </div>
         </div>
       )}
 
