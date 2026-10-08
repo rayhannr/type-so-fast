@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sync"
 
 	"type-so-fast-server/internal/agsconfig"
 )
@@ -60,18 +61,31 @@ func TurnServers(accessToken string) ([]IceServer, error) {
 		return nil, err
 	}
 
-	out := make([]IceServer, 0, len(list.Servers))
-	for _, server := range list.Servers {
-		var credential turnCredential
-		path := fmt.Sprintf("turn/secret/%s/%s/%d", server.Region, server.IP, server.Port)
-		if err := getTurnManager(accessToken, path, &credential); err != nil {
-			continue
+	fetched := make([]*IceServer, len(list.Servers))
+	var wg sync.WaitGroup
+	for i, server := range list.Servers {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			var credential turnCredential
+			path := fmt.Sprintf("turn/secret/%s/%s/%d", server.Region, server.IP, server.Port)
+			if err := getTurnManager(accessToken, path, &credential); err != nil {
+				return
+			}
+			fetched[i] = &IceServer{
+				URLs:       fmt.Sprintf("turn:%s:%d", server.IP, server.Port),
+				Username:   credential.Username,
+				Credential: credential.Password,
+			}
+		}()
+	}
+	wg.Wait()
+
+	out := make([]IceServer, 0, len(fetched))
+	for _, server := range fetched {
+		if server != nil {
+			out = append(out, *server)
 		}
-		out = append(out, IceServer{
-			URLs:       fmt.Sprintf("turn:%s:%d", server.IP, server.Port),
-			Username:   credential.Username,
-			Credential: credential.Password,
-		})
 	}
 	return out, nil
 }

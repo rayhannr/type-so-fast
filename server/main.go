@@ -71,9 +71,9 @@ func main() {
 	router.GET("/api/achievements/list", handlers.AchievementsCatalog)
 
 	router.GET("/api/session/:id", handlers.GetSession)
-	router.PATCH("/api/session/:id", handlers.SetSessionAttributes)
 	router.DELETE("/api/session/:id", handlers.LeaveSession)
 	router.POST("/api/session/:id/join", handlers.JoinSession)
+	router.POST("/api/session/:id/signal", handlers.SignalSession)
 
 	router.GET("/api/turn", handlers.TurnServers)
 

@@ -17,17 +17,18 @@ import { TypingHands } from './TypingHands'
 import { WordContainer } from './WordContainer'
 
 import { useGameEndSync } from '@/hooks/useGameEndSync'
+import { usePvpSignaling } from '@/hooks/usePvpSignaling'
 import { useRemotePlayer } from '@/hooks/useRemotePlayer'
 import { useTypingInput } from '@/hooks/useTypingInput'
 import { useAgsSessionContext } from '@/lib/ags/AgsSessionContext'
-import { PvpSessionAttributes } from '@/lib/ags/session'
+import { PvpRaceSetup, PvpSessionAttributes, PvpSignalMessage } from '@/lib/ags/session'
 import { gameReducer, createInitialState } from '@/lib/gameReducer'
 import { DEFAULT_PVP_SETTINGS, describePvpSettings, PvpSettings, readPvpSettings, writePvpSettings } from '@/lib/pvpSettings'
 import { useCreateMatchTicketMutation, useMatchTicketStatusQuery, useCancelMatchTicketMutation } from '@/lib/queries/matchmaking'
 import {
   pvpSessionErrorMessage,
   useSessionQuery,
-  useSetSessionAttributesMutation,
+  useSignalSessionMutation,
   useJoinSessionMutation,
   useLeaveSessionMutation
 } from '@/lib/queries/session'
@@ -44,21 +45,8 @@ type Phase = 'idle' | 'queueing' | 'connecting' | 'countdown' | 'racing'
 const OUTCOME_LABEL: Record<Outcome, string> = { win: 'You Win!', lose: 'Opponent Wins', tie: "It's a Tie" }
 const OUTCOME_CLASS: Record<Outcome, string> = { win: 'text-correct', lose: 'text-error', tie: 'text-active' }
 
-// the WebRTC handshake happens during 'connecting', poll tighter there so offer/answer/ICE
-// candidates propagate faster. Nothing in `attributes` changes once the race has actually started
-// (words/offer/answer are already resolved by then, and progress rides the data channel, not this
-// poll), so 'countdown'/'racing' disable polling entirely instead of continuing to hit AGS every
-// 1.5s through to the results screen.
-const POLL_INTERVAL_MS_BY_PHASE: Record<Phase, number | false> = {
-  idle: 1500,
-  queueing: 1500,
-  connecting: 400,
-  countdown: false,
-  racing: false
-}
-
 // An invite session carries the inviter's settings from creation, while a matchmade one starts
-// empty; either way the authority's write fills all three in alongside the words.
+// empty and races the authority's own settings.
 const sessionSettings = (attributes: Partial<PvpSessionAttributes> | undefined): PvpSettings | null => {
   if (!attributes?.mode || !attributes.duration || !attributes.language) return null
   return { mode: attributes.mode as WordMode, duration: attributes.duration, language: attributes.language as Language }
@@ -102,33 +90,24 @@ export const PvpGame = () => {
   const createTicket = useCreateMatchTicketMutation(session)
   const cancelTicket = useCancelMatchTicketMutation(session)
   const ticketStatus = useMatchTicketStatusQuery(session, phase === 'queueing' ? ticketId : null)
-  // the WebRTC handshake happens during 'connecting', poll tighter there so offer/answer/ICE
-  // candidates propagate faster. Nothing in `attributes` changes once the race has actually
-  // started (words/offer/answer are already resolved by then, and progress rides the data
-  // channel, not this poll), so stop polling entirely for 'countdown'/'racing' instead of
-  // continuing to hit AGS every 1.5s through to the results screen.
-  const pvpSession = useSessionQuery(session, sessionId, POLL_INTERVAL_MS_BY_PHASE[phase])
-  const setSessionAttributes = useSetSessionAttributesMutation(session)
+  const pvpSession = useSessionQuery(session, sessionId)
+  const signalSession = useSignalSessionMutation(session)
+  const signaling = usePvpSignaling(session, sessionId)
   const joinSession = useJoinSessionMutation(session)
   const leaveSession = useLeaveSessionMutation(session)
   const turnServers = useTurnServersQuery(session, sessionId)
 
   const attributes = pvpSession.data?.attributes
 
-  // the inviter of a direct match stays INVITED until it joins, and AGS rejects an INVITED
-  // member's attribute writes, so nothing is written to the session before this flips
+  // the inviter of a direct match stays INVITED until it joins; signaling doesn't need the join,
+  // so the handshake runs alongside it
   const myStatus = pvpSession.data?.members.find(m => m.userID === session?.userId)?.status
-  const joined = !!myStatus && myStatus !== 'INVITED'
   useEffect(() => {
     if (myStatus === 'INVITED' && joinSession.isIdle) {
       joinSession.mutate(sessionId, { onError: error => failConnecting(pvpSessionErrorMessage(error)) })
     }
   }, [myStatus])
 
-  const peerUserId = useMemo(
-    () => pvpSession.data?.members.find(m => m.userID !== session?.userId)?.userID ?? null,
-    [pvpSession.data, session?.userId]
-  )
   const isAuthority = useMemo(() => {
     if (!pvpSession.data || !session) return false
     const ids = pvpSession.data.members.map(m => m.userID).sort()
@@ -140,12 +119,13 @@ export const PvpGame = () => {
     isOfferer: isAuthority,
     // wait for the TURN lookup to settle either way, since the peer connection's ICE servers are
     // fixed at creation
-    active: (phase === 'connecting' && joined && turnServers.isFetched) || phase === 'countdown' || phase === 'racing',
+    active: (phase === 'connecting' && !!pvpSession.data && turnServers.isFetched) || phase === 'countdown' || phase === 'racing',
     turnServers: turnServers.data ?? [],
-    offer: attributes?.offer,
-    answer: attributes?.answer,
-    onOffer: offer => writeSessionAttributes({ offer }),
-    onAnswer: answer => writeSessionAttributes({ answer })
+    remoteSignal: signaling.remoteSignal,
+    peerReady: signaling.peerReady,
+    onSignal: signal =>
+      sendSignal(isAuthority ? { kind: 'offer', ...signal, race: raceSetupRef.current ?? undefined } : { kind: 'answer', ...signal }),
+    onReady: () => sendSignal({ kind: 'ready' })
   })
 
   const playerWpm = Math.round((state.correctKeystroke * 12) / state.duration)
@@ -173,28 +153,27 @@ export const PvpGame = () => {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const inputRef = useRef<HTMLInputElement | null>(null)
 
-  // authority generates the shared word list once both players are in the session and seeds
-  // its own reducer immediately, deliberately not routed through the polled attributes cache,
-  // since that poll races with this mutation's own cache write and can clobber it right before
-  // the WebRTC handshake (independent of this poll) flips the game into 'racing' with no words.
-  // The other player has no such race: it only ever reads the words via poll, never writes them.
+  // authority generates the shared word list as soon as the session is known and seeds its own
+  // reducer; the other player receives it with the authority's offer
   const hasSeededWordsRef = useRef(false)
+  const raceSetupRef = useRef<PvpRaceSetup | null>(null)
   useEffect(() => {
-    if (phase !== 'connecting' || !joined || !isAuthority || attributes?.words || hasSeededWordsRef.current) return
+    if (phase !== 'connecting' || !pvpSession.data || !isAuthority || hasSeededWordsRef.current) return
     hasSeededWordsRef.current = true
     const next = sessionSettings(attributes) ?? settings
     setRace(next)
     const words = generateWords(next.mode, numberOfWords, next.language)
+    raceSetupRef.current = { ...next, words }
     dispatch({ type: 'RESTART', words, duration: next.duration })
-    writeSessionAttributes({ ...next, words, authorityUserId: session!.userId })
-  }, [phase, joined, isAuthority, attributes?.words])
+  }, [phase, pvpSession.data, isAuthority])
 
-  // non-authority: seed the local reducer once the authority's word list lands via poll
   useEffect(() => {
-    if (phase !== 'connecting' || isAuthority || !attributes?.words || !peerUserId) return
-    setRace(sessionSettings(attributes))
-    dispatch({ type: 'RESTART', words: attributes.words, duration: attributes.duration! })
-  }, [phase, isAuthority, attributes?.words, peerUserId])
+    const authorityRace = signaling.race
+    if (phase !== 'connecting' || isAuthority || !authorityRace || hasSeededWordsRef.current) return
+    hasSeededWordsRef.current = true
+    setRace(sessionSettings(authorityRace))
+    dispatch({ type: 'RESTART', words: authorityRace.words, duration: authorityRace.duration })
+  }, [phase, isAuthority, signaling.race])
 
   useEffect(() => {
     if (phase === 'connecting' && remote.connected) setPhase('countdown')
@@ -272,6 +251,7 @@ export const PvpGame = () => {
     setCountdown(3)
     setRace(null)
     hasSeededWordsRef.current = false
+    raceSetupRef.current = null
     joinSession.reset()
     dispatch({ type: 'RESTART', words: [], duration: settings.duration })
   }, [settings.duration, sessionId])
@@ -304,8 +284,8 @@ export const PvpGame = () => {
     setConnectError(message)
   }
 
-  const writeSessionAttributes = (attributes: Partial<PvpSessionAttributes>) =>
-    setSessionAttributes.mutate({ sessionId, attributes }, { onError: error => failConnecting(pvpSessionErrorMessage(error)) })
+  const sendSignal = (message: PvpSignalMessage) =>
+    signalSession.mutate({ sessionId, message }, { onError: error => failConnecting(pvpSessionErrorMessage(error)) })
 
   useEffect(() => {
     if (phase === 'connecting' && pvpSession.isError) failConnecting(pvpSessionErrorMessage(pvpSession.error))

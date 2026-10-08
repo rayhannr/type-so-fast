@@ -3,18 +3,18 @@ export interface SignalPayload {
   candidates: RTCIceCandidateInit[]
 }
 
+// set from the inviter's settings when an invite session is created; a matchmade one starts empty
 export interface PvpSessionAttributes {
   mode: string
   duration: number
   language: string
-  words: string[]
-  authorityUserId: string
-  // WebRTC signaling relayed through session attributes: AGS Lobby's websocket requires an
-  // Authorization header at handshake time, which a browser WebSocket client can't send, so
-  // there's no lower-latency channel available to us here, see docs/ags-plans/2026-07-07-pvp-quick-match.md.
-  offer?: SignalPayload
-  answer?: SignalPayload
 }
+
+// `ready` asks the peer to resend its latest offer/answer, which covers a signal sent before this
+// side was listening. The authority's offer also carries the race setup.
+export type PvpRaceSetup = PvpSessionAttributes & { words: string[] }
+
+export type PvpSignalMessage = { kind: 'ready' } | ({ kind: 'offer' | 'answer'; race?: PvpRaceSetup } & SignalPayload)
 
 export interface PvpSession {
   id: string
@@ -23,9 +23,6 @@ export interface PvpSession {
 }
 
 // The host (session leader) is the sole author of mode/duration/words, joiners only read them.
-// Unlike PvpSessionAttributes there are no WebRTC signaling fields: room progress sync runs over
-// each player's realtime connection, not peer connections, so session attributes only carry the
-// shared race setup.
 export interface RoomSessionAttributes {
   mode: string
   duration: number

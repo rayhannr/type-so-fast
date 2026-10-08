@@ -3,7 +3,7 @@ import { Browser, Page } from '@playwright/test'
 
 // Covers the PvP quick-match flow end to end against the real AGS dev namespace: two
 // independent Device ID sessions queue, get matched, complete the WebRTC handshake (signaled
-// through session attributes, see docs/ags-plans/2026-07-07-pvp-quick-match.md), and sync
+// over each player's Lobby socket), and sync
 // live typing progress over the data channel. This is the flow that was manually verified with
 // a two-browser Playwright script during T50 implementation; codified here so regressions in
 // matchmaking/session/signaling surface automatically instead of needing another manual pass.

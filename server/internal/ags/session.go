@@ -330,31 +330,6 @@ func GetSession(accessToken, sessionID string) (*PvpSession, error) {
 	return &PvpSession{ID: sessionID, Members: toMembers(resp.Data.Members), Attributes: resp.Data.Attributes}, nil
 }
 
-// SetSessionAttributes merges the given attributes into whatever's already on the session.
-// AGS's PATCH replaces the whole `attributes` object rather than deep-merging it, so the merge
-// has to happen here against the freshest possible read, not on the client, where two concurrent
-// writers (e.g. one seeding the word list, the other writing its WebRTC offer) can each hold a
-// stale cached copy of the other's write and clobber it.
-func SetSessionAttributes(accessToken, sessionID string, attributes map[string]interface{}) error {
-	service := newGameSessionService(accessToken)
-	err := patchSessionWithRetry(service, sessionID, func(current *sessionclientmodels.ApimodelsGameSessionResponse) *sessionclientmodels.ApimodelsUpdateGameSessionRequest {
-		merged := map[string]interface{}{}
-		if existing, ok := current.Attributes.(map[string]interface{}); ok {
-			for k, v := range existing {
-				merged[k] = v
-			}
-		}
-		for k, v := range attributes {
-			merged[k] = v
-		}
-		return &sessionclientmodels.ApimodelsUpdateGameSessionRequest{
-			Attributes: merged,
-			Version:    current.Version,
-		}
-	})
-	return sessionErrorDetail(err)
-}
-
 // JoinSession accepts the caller's pending invite. A session created with explicit `teams` only
 // joins its creator; everyone else in the roster stays INVITED, and AGS 404s their attribute
 // writes until they join.

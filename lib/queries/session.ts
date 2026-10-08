@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
-import { PvpSession, PvpSessionAttributes } from '@/lib/ags/session'
+import { PvpSession, PvpSignalMessage } from '@/lib/ags/session'
 import { agsErrorMessage, authHeaders, AgsSession } from './shared'
 
 const pvpSessionErrorMessages: Record<number, string> = {
@@ -10,34 +10,18 @@ const pvpSessionErrorMessages: Record<number, string> = {
 export const pvpSessionErrorMessage = (error: unknown): string =>
   agsErrorMessage(error, pvpSessionErrorMessages, "Couldn't set up the match. Try again.")
 
-// pollIntervalMs defaults to 1500 for steady-state polling (room lobby waits, race setup), but
-// the WebRTC handshake is latency-sensitive enough to warrant a tighter interval while it's live,
-// callers pass a shorter value only for the 'connecting' phase so we're not hammering AGS the rest
-// of the time. Pass `false` once nothing in `attributes` can change anymore (race underway/over) so
-// the query stops refetching instead of polling forever off the back of a still-set sessionId.
-export const useSessionQuery = (session: AgsSession | null, sessionId: string | null, pollIntervalMs: number | false = 1500) =>
+export const useSessionQuery = (session: AgsSession | null, sessionId: string | null) =>
   useQuery({
     queryKey: ['pvpSession', sessionId],
     queryFn: () => axios.get<PvpSession>(`/api/session/${sessionId}`, { headers: authHeaders(session!) }).then(res => res.data),
-    enabled: !!session && !!sessionId,
-    refetchInterval: pollIntervalMs
+    enabled: !!session && !!sessionId
   })
 
-// the writer already knows the exact resulting attributes (it just built them), so update the
-// cache immediately rather than waiting on the next poll tick, otherwise the writer's own view
-// of `attributes` can lag behind actions (e.g. the WebRTC handshake) that don't wait on that poll
-export const useSetSessionAttributesMutation = (session: AgsSession | null) => {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: ({ sessionId, attributes }: { sessionId: string; attributes: Partial<PvpSessionAttributes> }) =>
-      axios.patch(`/api/session/${sessionId}`, { attributes }, { headers: authHeaders(session!) }),
-    onSuccess: (_, { sessionId, attributes }) => {
-      queryClient.setQueryData(['pvpSession', sessionId], (current: PvpSession | undefined) =>
-        current ? { ...current, attributes: { ...current.attributes, ...attributes } } : current
-      )
-    }
+export const useSignalSessionMutation = (session: AgsSession | null) =>
+  useMutation({
+    mutationFn: ({ sessionId, message }: { sessionId: string; message: PvpSignalMessage }) =>
+      axios.post(`/api/session/${sessionId}/signal`, message, { headers: authHeaders(session!) })
   })
-}
 
 export const useJoinSessionMutation = (session: AgsSession | null) => {
   const queryClient = useQueryClient()

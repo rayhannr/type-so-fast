@@ -35,9 +35,7 @@ interface RoomChannelState {
 
 // Room matches sync live progress over the player's AGS Lobby socket instead of WebRTC, see
 // docs/ags-plans/2026-07-08-room-code-match.md: at up to 5 players a full WebRTC mesh (10 peer
-// connections) multiplies the no-TURN NAT-failure risk already present at 2 players, and the
-// attributes-based signaling relay used for PvP hits a race-condition complexity cliff well
-// before 10 concurrent signaling writers.
+// connections) multiplies the NAT-failure risk already present at 2 players.
 //
 // Lobby has no channel to subscribe to, so these events arrive on the same per-player connection
 // as invites and presence; the server addresses them to the room's members explicitly.
