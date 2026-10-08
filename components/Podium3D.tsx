@@ -165,7 +165,7 @@ export const Podium3D = ({ records, labels }: Props) => {
       style={{ width: CANVAS_WIDTH, height: CANVAS_HEIGHT }}
       role="img"
       aria-label={`Top records podium: ${records
-        .map((record, i) => `${i + 1}. ${labels?.[i] ? `${labels[i]} — ` : ''}${record} WPM`)
+        .map((record, i) => `${i + 1}. ${labels?.[i] ? `${labels[i]}: ` : ''}${record} WPM`)
         .join(', ')}`}
     />
   )

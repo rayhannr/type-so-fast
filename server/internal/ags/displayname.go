@@ -76,7 +76,7 @@ type UserSummary struct {
 }
 
 // GetUserSummaries is a bulk lookup that needs an admin-scoped token, not the requesting
-// player's — the public bulk/basic endpoint 404s in this AGS deployment (endpoint not found),
+// player's, the public bulk/basic endpoint 404s in this AGS deployment (endpoint not found),
 // so this uses the admin bulk-by-userIds endpoint instead, matching the TS SDK's
 // UsersAdminApi.createUserBulk_v3.
 func GetUserSummaries(userIDs []string) ([]UserSummary, error) {

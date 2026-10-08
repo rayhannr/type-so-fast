@@ -11,9 +11,9 @@ export const AchievementsTab = ({ session }: Props) => {
 
   return (
     <div className="w-full max-w-2xl mx-auto mt-10">
-      {!isLoggedIn && <p className="text-center text-xs text-muted mb-6">Offline — progress is tracked once the game connects.</p>}
+      {!isLoggedIn && <p className="text-center text-xs text-muted mb-6">Offline: progress is tracked once the game connects.</p>}
       {achievements.isFetching && <p className="text-center text-xs text-muted mb-6">Loading achievements…</p>}
-      {achievements.isError && <p className="text-center text-xs text-muted mb-6">Couldn&apos;t load achievements — try again later.</p>}
+      {achievements.isError && <p className="text-center text-xs text-muted mb-6">Couldn&apos;t load achievements. Try again later.</p>}
       <ul className="flex flex-col gap-3">
         {[...(achievements.data ?? [])]
           .sort((a, b) => Number(b.unlocked) - Number(a.unlocked))

@@ -10,7 +10,7 @@ import (
 )
 
 // toFloat64 handles the fact that the cloudsave SDK decodes each record's Value using
-// json.Number (via UseNumber), not float64 — the JSON on the wire is a genuine number either way.
+// json.Number (via UseNumber), not float64, the JSON on the wire is a genuine number either way.
 func toFloat64(v interface{}) (float64, bool) {
 	switch n := v.(type) {
 	case float64:

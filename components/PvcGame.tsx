@@ -176,7 +176,7 @@ export const PvcGame = () => {
 
           <div className="mt-6 pt-4 border-t border-solid border-edge">
             <p className="text-xs text-muted mb-1">
-              Bot ({difficulty}) — {Math.round(botLiveWpm)} WPM
+              Bot ({difficulty}): {Math.round(botLiveWpm)} WPM
             </p>
             <WordContainer
               words={bot.state.words}

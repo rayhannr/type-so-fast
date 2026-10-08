@@ -29,7 +29,7 @@ export const useIncomingFriendRequestsQuery = (session: AgsSession | null) =>
 // friendIds is a cache key, not a request parameter: the server resolves the caller's friends
 // itself so a client can't probe strangers' presence. Keying on it refetches the snapshot
 // whenever the friend list changes, which matters because AGS only pushes a status notification
-// on a *change* — befriending someone who is already online produces no notification at all.
+// on a *change*, befriending someone who is already online produces no notification at all.
 export const useFriendsPresenceQuery = (session: AgsSession | null, friendIds: string) =>
   useQuery({
     queryKey: friendsPresenceKey(session?.userId ?? '', friendIds),
@@ -48,16 +48,16 @@ export const useAddFriendMutation = (session: AgsSession | null) =>
 // AGS Lobby friend-request error codes:
 // https://docs.accelbyte.io/gaming-services/knowledge-base/lobby-error-codes/
 const addFriendErrorMessages: Record<number, string> = {
-  11970: "That's your own code — share it with a friend instead.",
-  11973: "You've already sent this player a request — waiting for them to accept.",
-  11974: 'This player already sent you a request — accept it under Requests.',
+  11970: "That's your own code. Share it with a friend instead.",
+  11973: "You've already sent this player a request. Waiting for them to accept.",
+  11974: 'This player already sent you a request. Accept it under Requests.',
   11703: "You're already friends with this player.",
   11590: 'Your friend list is full.',
   11591: 'Their friend list is full.'
 }
 
 export const addFriendErrorMessage = (error: unknown): string =>
-  agsErrorMessage(error, addFriendErrorMessages, "Couldn't send the request — check the code and try again.")
+  agsErrorMessage(error, addFriendErrorMessages, "Couldn't send the request. Check the code and try again.")
 
 export const useAcceptFriendRequestMutation = (session: AgsSession | null) => {
   const queryClient = useQueryClient()

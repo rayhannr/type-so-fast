@@ -11,7 +11,7 @@ import (
 
 // CreateMatchInvite has no server-side invite record: delivery is purely the live notification on
 // the invitee's Lobby socket. If the invitee isn't connected when this fires, the invite is
-// simply missed — there is no fallback poll.
+// simply missed, there is no fallback poll.
 func CreateMatchInvite(c *gin.Context) {
 	auth := apiauth.FromHeaders(c.GetHeader("Authorization"), c.GetHeader("X-User-Id"))
 	if auth == nil {

@@ -3,7 +3,7 @@ import { Browser, Page } from '@playwright/test'
 
 // Covers the PvP quick-match flow end to end against the real AGS dev namespace: two
 // independent Device ID sessions queue, get matched, complete the WebRTC handshake (signaled
-// through session attributes — see docs/ags-plans/2026-07-07-pvp-quick-match.md), and sync
+// through session attributes, see docs/ags-plans/2026-07-07-pvp-quick-match.md), and sync
 // live typing progress over the data channel. This is the flow that was manually verified with
 // a two-browser Playwright script during T50 implementation; codified here so regressions in
 // matchmaking/session/signaling surface automatically instead of needing another manual pass.
@@ -49,9 +49,9 @@ test("two players quick-match and see each other's live progress", async ({ brow
   expect(crashesB, `B threw: ${crashesB.join('; ')}`).toHaveLength(0)
 
   // each side should see the OPPONENT's progress synced to a non-zero WPM over the data
-  // channel — proves the snapshot broadcast/receive path works, not just each side's own typing
-  expect(textA).toMatch(/Opponent — [1-9]\d* WPM/)
-  expect(textB).toMatch(/Opponent — [1-9]\d* WPM/)
+  // channel, proves the snapshot broadcast/receive path works, not just each side's own typing
+  expect(textA).toMatch(/Opponent: [1-9]\d* WPM/)
+  expect(textB).toMatch(/Opponent: [1-9]\d* WPM/)
 
   await ctxA.close()
   await ctxB.close()

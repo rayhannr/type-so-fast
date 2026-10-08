@@ -17,7 +17,7 @@ export const PendingInviteBanner = ({ session }: Props) => {
   const acceptInvite = useAcceptInviteMutation(session)
   const declineInvite = useDeclineInviteMutation(session)
 
-  // the invite I sent was accepted elsewhere — join the same session the accepter was handed
+  // the invite I sent was accepted elsewhere, join the same session the accepter was handed
   useEffect(() => {
     if (!acceptedInvite) return
     router.push(`/pvp?session=${acceptedInvite.sessionId}`)

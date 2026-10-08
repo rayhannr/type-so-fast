@@ -28,7 +28,7 @@ export const AccuracyBreakdown = ({ wordStats }: Props) => {
             <span
               key={`${stat.word}-${index}`}
               className={`${colorFor(accuracy)} cursor-default`}
-              title={`${Math.round(accuracy * 100)}% — ${missCount} ${missCount === 1 ? 'miss' : 'misses'}`}
+              title={`${Math.round(accuracy * 100)}%: ${missCount} ${missCount === 1 ? 'miss' : 'misses'}`}
             >
               {stat.word}
             </span>

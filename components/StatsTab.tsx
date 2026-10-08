@@ -22,7 +22,7 @@ export const StatsTab = ({ session }: Props) => {
 
   return (
     <div className="w-full max-w-md mx-auto mt-10">
-      {!isLoggedIn && <p className="text-center text-xs text-muted mb-6">Offline — stats are stored on this device only.</p>}
+      {!isLoggedIn && <p className="text-center text-xs text-muted mb-6">Offline: stats are stored on this device only.</p>}
 
       <div className="flex flex-col items-center gap-2 mb-8">
         <div className="flex flex-row items-center justify-center gap-2">
@@ -33,11 +33,11 @@ export const StatsTab = ({ session }: Props) => {
           <span className="text-muted text-sm">Day Streak</span>
         </div>
         {streak.isFetching && <p className="text-xs text-muted">Loading streak…</p>}
-        {streak.isError && <p className="text-xs text-muted">Couldn&apos;t load streak — try again later.</p>}
+        {streak.isError && <p className="text-xs text-muted">Couldn&apos;t load streak. Try again later.</p>}
       </div>
 
       {stats.isFetching && <p className="text-center text-xs text-muted mb-8">Loading all-time stats…</p>}
-      {stats.isError && <p className="text-center text-xs text-muted mb-8">Couldn&apos;t load all-time stats — try again later.</p>}
+      {stats.isError && <p className="text-center text-xs text-muted mb-8">Couldn&apos;t load all-time stats. Try again later.</p>}
       {stats.data && (
         <div className="mb-8">
           <StatRow label="All-time Best">{stats.data.bestWpm} WPM</StatRow>
@@ -46,9 +46,9 @@ export const StatsTab = ({ session }: Props) => {
         </div>
       )}
 
-      <p className="text-muted text-sm mb-1">WPM history — last {history.data?.length || 0} games</p>
+      <p className="text-muted text-sm mb-1">WPM history: last {history.data?.length || 0} games</p>
       {history.isFetching && <p className="text-xs text-muted mb-2">Loading history…</p>}
-      {history.isError && <p className="text-xs text-muted mb-2">Couldn&apos;t load history — try again later.</p>}
+      {history.isError && <p className="text-xs text-muted mb-2">Couldn&apos;t load history. Try again later.</p>}
       <HistoryChart history={history.data ?? []} />
     </div>
   )

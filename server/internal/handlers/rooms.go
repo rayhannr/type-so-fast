@@ -135,7 +135,7 @@ func StartRoom(c *gin.Context) {
 
 // ProgressRoom takes userId from auth, not the request body, so a player can't spoof another
 // player's progress. sentAt (the sender's clock at publish time) rides along so receivers can drop
-// an update that arrives out of order — separate POSTs racing through the notification
+// an update that arrives out of order, separate POSTs racing through the notification
 // pipeline have no delivery-order guarantee.
 func ProgressRoom(c *gin.Context) {
 	auth := apiauth.FromHeaders(c.GetHeader("Authorization"), c.GetHeader("X-User-Id"))

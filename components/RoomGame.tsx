@@ -66,7 +66,7 @@ export const RoomGame = () => {
 
   const opponentIds = useMemo(() => [...rosterIds].filter(id => id !== session?.userId), [rosterIds, session?.userId])
 
-  // memberNames only covers whoever was in the room as of the last poll — a player whose
+  // memberNames only covers whoever was in the room as of the last poll, a player whose
   // room:joined arrived between polls has no resolved name yet, so fall back to a truncated id
   // (same fallback shape getUserSummaries itself uses when IAM has no displayName).
   const nameFor = useCallback(
@@ -83,7 +83,7 @@ export const RoomGame = () => {
   // one-time seed guard: host seeds on start, joiners via room:start (or the attributes poll)
   const hasSeededWordsRef = useRef(false)
   // /start's room:start broadcast is the shared start moment, so it must fire before the
-  // attributes carry status 'racing' — otherwise a joiner's poll can start them early. The two
+  // attributes carry status 'racing', otherwise a joiner's poll can start them early. The two
   // writes are also sequenced (not concurrent) to avoid racing on the session's version.
   const handleStart = async () => {
     if (!isHost || !sessionId) return
@@ -95,16 +95,16 @@ export const RoomGame = () => {
       const response = await startRoom.mutateAsync({ sessionId, words, duration, mode, language })
       startedAt = response.data.startedAt
     } catch {
-      // surfaced via startRoom.isError — nothing started, so the host can retry
+      // surfaced via startRoom.isError, nothing started, so the host can retry
       return
     }
-    // fallback record for clients that missed the broadcast and start via the attributes poll —
+    // fallback record for clients that missed the broadcast and start via the attributes poll,
     // carries the same startedAt the broadcast used, so late-joining clients' wpm math still
     // shares the one true race origin instead of falling back to their own Date.now()
     setRoomAttributes.mutate({ sessionId, attributes: { mode, duration, language, words, status: 'racing', startedAt } })
   }
 
-  // joiners seed from the room:start broadcast — same event that starts the race, so the words
+  // joiners seed from the room:start broadcast, same event that starts the race, so the words
   // can never lag behind the start the way the 2s attributes poll can
   useEffect(() => {
     const setup = roomChannel.raceSetup
@@ -126,7 +126,7 @@ export const RoomGame = () => {
     dispatch({ type: 'RESTART', words: attributes.words, duration: attributes.duration! })
   }, [isHost, attributes?.words])
 
-  // the host waits for its own room:start broadcast too — flipping on the local attribute
+  // the host waits for its own room:start broadcast too, flipping on the local attribute
   // write would start its clock ahead of every joiner's
   useEffect(() => {
     if (phase === 'lobby' && ((attributes?.status === 'racing' && !isHost) || roomChannel.phase === 'racing')) {
@@ -139,7 +139,7 @@ export const RoomGame = () => {
     if (phase !== 'racing') return
     // server-shared origin (room:start broadcast, falling back to the attributes poll) so every
     // client's wpm math is anchored to the same instant regardless of when it individually
-    // observed the start — a client that joins the phase late no longer gets a shifted clock
+    // observed the start, a client that joins the phase late no longer gets a shifted clock
     raceStartRef.current = roomChannel.raceSetup?.startedAt ?? attributes?.startedAt ?? Date.now()
     let timesLeft = state.timer
     intervalRef.current = setInterval(() => {
@@ -150,7 +150,7 @@ export const RoomGame = () => {
     return () => clearInterval(intervalRef.current!)
   }, [phase, roomChannel.raceSetup, attributes?.startedAt])
 
-  // wall-clock, not the once-a-second timer tick — a tick-based denominator spikes the wpm
+  // wall-clock, not the once-a-second timer tick, a tick-based denominator spikes the wpm
   // broadcast when keystrokes land right after a tick. Floored at 1s so a keystroke landing in
   // the first instant after start can't blow up the denominator into a wpm spike.
   const wallElapsed = raceStartRef.current ? (Date.now() - raceStartRef.current) / 1000 : 0
@@ -164,14 +164,14 @@ export const RoomGame = () => {
   }, [phase, state.correctKeystroke, state.wrongKeystroke])
 
   // the throttle above only guarantees a leading-edge send, so a keystroke burst right at race
-  // end can leave the true final wpm stuck unsent — force one final publish once our own race
+  // end can leave the true final wpm stuck unsent, force one final publish once our own race
   // ends so opponents don't display a stale mid-race value as our result
   useEffect(() => {
     if (phase !== 'racing' || !isGameOver) return
     roomChannel.publishProgress(Math.round(liveWpm), 100, { force: true, final: true })
   }, [phase, isGameOver])
 
-  // snapshot of who's actually racing, taken the instant the race starts — the room is locked
+  // snapshot of who's actually racing, taken the instant the race starts, the room is locked
   // against further joins at that point (see /start), so this roster can't grow, only shrink in
   // effect if someone reported final=false forever (disconnected mid-race)
   const raceOpponentsRef = useRef<Set<string>>(new Set())
@@ -180,7 +180,7 @@ export const RoomGame = () => {
     raceOpponentsRef.current = new Set(opponentIds)
   }, [phase])
 
-  // don't compare against opponents until they've all reported their true final wpm — otherwise
+  // don't compare against opponents until they've all reported their true final wpm, otherwise
   // "Best opponent" is just whatever happened to have arrived by the time our own race ended,
   // understating a still-racing (or merely late-starting) opponent's eventual result. A player who
   // never reports (disconnected/left mid-race) shouldn't block the reveal forever, hence the timeout.
@@ -203,7 +203,7 @@ export const RoomGame = () => {
   const maxOpponentWpm = Math.max(0, ...finalOpponentWpms)
   const won = resultsReady && finalOpponentWpms.length > 0 && playerWpm >= maxOpponentWpm
 
-  // useGameEndSync fires its save/XP effect exactly once, the instant timer hits 0 — holding it at
+  // useGameEndSync fires its save/XP effect exactly once, the instant timer hits 0, holding it at
   // a nonzero value until resultsReady keeps it from firing with an incomplete win/loss verdict
   const { xpGain, newAchievement, dismissAchievement } = useGameEndSync({
     timer: isGameOver && !resultsReady ? 1 : state.timer,
@@ -318,7 +318,7 @@ export const RoomGame = () => {
               {setRoomAttributes.isPending || startRoom.isPending ? 'Starting…' : 'Start Match'}
             </button>
             {(setRoomAttributes.isError || startRoom.isError) && (
-              <p className="text-error text-xs mt-2">Couldn&apos;t start the match — try again.</p>
+              <p className="text-error text-xs mt-2">Couldn&apos;t start the match. Try again.</p>
             )}
           </>
         ) : (

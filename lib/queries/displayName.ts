@@ -37,10 +37,10 @@ export const useUpdateDisplayNameMutation = (session: AgsSession | null) => {
 // https://raw.githubusercontent.com/AccelByte/accelbyte-go-sdk/refs/heads/main/spec/iam.json
 // (path /iam/v3/public/namespaces/{namespace}/users/me, patch, x-errorCodes)
 const updateDisplayNameErrorMessages: Record<number, string> = {
-  10222: 'That name is already taken — try another one.',
+  10222: 'That name is already taken. Try another one.',
   10237: "This account isn't allowed to change its display name.",
-  20002: "That name isn't valid — try a different one."
+  20002: "That name isn't valid. Try a different one."
 }
 
 export const updateDisplayNameErrorMessage = (error: unknown): string =>
-  agsErrorMessage(error, updateDisplayNameErrorMessages, "Couldn't save your name — try again.")
+  agsErrorMessage(error, updateDisplayNameErrorMessages, "Couldn't save your name. Try again.")

@@ -33,7 +33,7 @@ func newPlayerService(accessToken string) *lobby.PlayerService {
 
 // getFriendIDs calls a self-scoped /friends/.../me* endpoint directly rather than through the
 // generated GetListOfFriendsShort/GetUserIncomingFriendsShort methods: those (like
-// getFriendsMe/getFriendsMeIncoming in the TS SDK — see lib/ags/social.ts) declare the response as
+// getFriendsMe/getFriendsMeIncoming in the TS SDK, see lib/ags/social.ts) declare the response as
 // a one-element array, but AGS actually returns the plain `{friendIDs, paging}` object, so the
 // generated client fails to unmarshal it (confirmed live: "json: cannot unmarshal object into Go
 // value of type []*lobbyclientmodels.Model...Response"). GetListOfFriendsShort also turned out to

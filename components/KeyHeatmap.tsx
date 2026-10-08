@@ -31,7 +31,7 @@ export const KeyHeatmap = ({ missMap }: Props) => {
     const count = misses(key)
     return (
       <g key={key}>
-        <title>{`${key === ' ' ? 'space' : key} — ${count} ${count === 1 ? 'miss' : 'misses'}`}</title>
+        <title>{`${key === ' ' ? 'space' : key}: ${count} ${count === 1 ? 'miss' : 'misses'}`}</title>
         <rect x={x} y={y} width={width} height={KEY} rx="3" fill={heatColor(count, max)} stroke="var(--border)" strokeWidth="1" />
         <text x={x + width / 2} y={y + KEY / 2 + 3} textAnchor="middle" fontSize="8" fill={count > 0 ? '#ffffff' : 'var(--text-muted)'}>
           {key === ' ' ? '' : key}
@@ -52,7 +52,7 @@ export const KeyHeatmap = ({ missMap }: Props) => {
         {ROWS.map((row, rowIndex) => row.keys.map((key, keyIndex) => renderKey(key, row.offset + keyIndex * PITCH, rowIndex * PITCH)))}
         {renderKey(' ', (W - SPACE_W) / 2, PITCH * 4, SPACE_W)}
       </svg>
-      {Object.keys(missMap).length === 0 && <p className="text-xs text-muted mt-1">No misses this game — flawless.</p>}
+      {Object.keys(missMap).length === 0 && <p className="text-xs text-muted mt-1">No misses this game. Flawless.</p>}
     </div>
   )
 }

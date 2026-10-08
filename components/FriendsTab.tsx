@@ -132,7 +132,7 @@ export const FriendsTab = () => {
   if (!session) {
     return (
       <div className="w-full max-w-xl mx-auto mt-10">
-        <p className="text-center text-xs text-muted">Offline — friends are available once the game connects.</p>
+        <p className="text-center text-xs text-muted">Offline: friends are available once the game connects.</p>
       </div>
     )
   }
@@ -250,7 +250,7 @@ export const FriendsTab = () => {
         </button>
       </form>
       <div className="min-h-6 pt-1.5 mb-4">
-        {addFriend.isSuccess && <StatusLine tone="correct">Friend request sent — they&apos;ll see it on their Friends tab.</StatusLine>}
+        {addFriend.isSuccess && <StatusLine tone="correct">Friend request sent. They&apos;ll see it on their Friends tab.</StatusLine>}
         {addFriend.isError && <StatusLine tone="error">{addFriendErrorMessage(addFriend.error)}</StatusLine>}
       </div>
 
@@ -296,7 +296,7 @@ export const FriendsTab = () => {
       <section className="mb-8">
         <SectionHeading label="Friends" count={friendCount} />
         {friends.isFetching && <StatusLine tone="muted">Loading…</StatusLine>}
-        {friends.isError && <StatusLine tone="muted">Couldn&apos;t load your friends — try again later.</StatusLine>}
+        {friends.isError && <StatusLine tone="muted">Couldn&apos;t load your friends. Try again later.</StatusLine>}
 
         {friends.isSuccess && friendCount === 0 && (
           <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-edge px-4 py-10 text-center">
@@ -305,7 +305,7 @@ export const FriendsTab = () => {
             </svg>
             <p className="text-sm text-active">No friends yet</p>
             <p className="text-xs text-muted max-w-60">
-              Share your code above — once they add you and you accept, they&apos;ll show up here.
+              Share your code above. Once they add you and you accept, they&apos;ll show up here.
             </p>
           </div>
         )}

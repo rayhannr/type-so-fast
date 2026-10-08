@@ -4,7 +4,7 @@ import { Page } from '@playwright/test'
 // Covers the player-vs-bot mode at /pvc: a human typing fast and accurately against the most
 // forgiving ("easy") bot profile should win, and a human who barely types at all against the
 // fastest ("legend") bot profile should lose. Both are real outcomes the UI renders explicitly
-// (OUTCOME_LABEL in PvcGame.tsx), not just "the game ended" — see lib/botDifficulty.ts for the
+// (OUTCOME_LABEL in PvcGame.tsx), not just "the game ended", see lib/botDifficulty.ts for the
 // charsPerSecond gap (easy 3.8 vs legend 13) this relies on.
 
 const readCurrentWords = async (page: Page): Promise<string[]> => {

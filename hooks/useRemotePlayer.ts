@@ -37,10 +37,10 @@ interface RemotePlayer {
 
 // Signaling rides on the session's `attributes` field (polled REST, see useSessionQuery)
 // instead of AGS Lobby: Lobby's websocket requires an Authorization header at handshake
-// time, which a browser WebSocket client can't send — confirmed by three failed spikes
+// time, which a browser WebSocket client can't send, confirmed by three failed spikes
 // (docs/ags-plans/2026-07-07-pvp-quick-match.md). Trickle ICE: each side writes its SDP as
 // soon as it's created, then writes the growing candidate list as candidates arrive, instead
-// of waiting for gathering to fully finish — the other side can start connecting on partial
+// of waiting for gathering to fully finish, the other side can start connecting on partial
 // candidates rather than sitting idle for the whole gathering round trip.
 export const useRemotePlayer = ({ isOfferer, active, turnServers, offer, answer, onOffer, onAnswer }: Params): RemotePlayer => {
   const [connected, setConnected] = useState(false)

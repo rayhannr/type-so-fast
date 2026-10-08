@@ -11,7 +11,7 @@ export interface PvpSessionAttributes {
   authorityUserId: string
   // WebRTC signaling relayed through session attributes: AGS Lobby's websocket requires an
   // Authorization header at handshake time, which a browser WebSocket client can't send, so
-  // there's no lower-latency channel available to us here — see docs/ags-plans/2026-07-07-pvp-quick-match.md.
+  // there's no lower-latency channel available to us here, see docs/ags-plans/2026-07-07-pvp-quick-match.md.
   offer?: SignalPayload
   answer?: SignalPayload
 }
@@ -22,7 +22,7 @@ export interface PvpSession {
   attributes: Partial<PvpSessionAttributes>
 }
 
-// The host (session leader) is the sole author of mode/duration/words — joiners only read them.
+// The host (session leader) is the sole author of mode/duration/words, joiners only read them.
 // Unlike PvpSessionAttributes there are no WebRTC signaling fields: room progress sync runs over
 // each player's realtime connection, not peer connections, so session attributes only carry the
 // shared race setup.
@@ -35,7 +35,7 @@ export interface RoomSessionAttributes {
   status: 'waiting' | 'racing'
   // Server timestamp (ms) the race actually started, shared by every client so wpm math uses the
   // same wall-clock origin instead of each client's own Date.now() at the moment it observed the
-  // start — a client that observes the start late would otherwise compute wpm off a shifted clock.
+  // start, a client that observes the start late would otherwise compute wpm off a shifted clock.
   startedAt: number
 }
 

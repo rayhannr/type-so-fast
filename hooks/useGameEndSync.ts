@@ -105,7 +105,7 @@ export const useGameEndSync = ({
     const newStreak = advanceStreak(streak.data ?? null, new Date())
 
     const totalKeystrokes = correctKeystroke + wrongKeystroke + correction
-    // 0, not NaN, on a zero-keystroke game — NaN would poison the xp math and persisted stats
+    // 0, not NaN, on a zero-keystroke game, NaN would poison the xp math and persisted stats
     const accuracy = totalKeystrokes > 0 ? (correctKeystroke * 100) / totalKeystrokes : 0
 
     const {

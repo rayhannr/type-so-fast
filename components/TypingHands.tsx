@@ -43,7 +43,7 @@ interface FingerState {
 }
 
 // animated pair of hands typing on a keyboard: each real keystroke taps the
-// matching QWERTY key with the nearest finger — no input, no motion
+// matching QWERTY key with the nearest finger, no input, no motion
 export const TypingHands = ({ keystrokeRef, gameOver }: Props) => {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const gameOverRef = useRef(gameOver)
@@ -58,7 +58,7 @@ export const TypingHands = ({ keystrokeRef, gameOver }: Props) => {
     const camera = new PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 50)
 
     // the keyboard has a fixed world width, so on narrow (portrait-ish) viewports
-    // the horizontal FOV isn't wide enough to fit it — dolly the camera back along
+    // the horizontal FOV isn't wide enough to fit it, dolly the camera back along
     // its view direction as the aspect drops below BASE_ASPECT so it keeps fitting
     const BASE_ASPECT = 16 / 9
     const CAMERA_TARGET = { x: 0, y: 0, z: 0.3 }

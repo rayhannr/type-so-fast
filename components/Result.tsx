@@ -96,7 +96,7 @@ export const Result = ({ state, session, displayName, xpGain }: Props) => {
           </div>
         )}
         {stats.isFetching && <p className="mt-3 text-xs text-muted">Loading all-time stats…</p>}
-        {stats.isError && <p className="mt-3 text-xs text-muted">Couldn&apos;t load all-time stats — try again later.</p>}
+        {stats.isError && <p className="mt-3 text-xs text-muted">Couldn&apos;t load all-time stats. Try again later.</p>}
         {stats.data && (
           <div className="mt-3">
             <StatRow label="All-time Best">{stats.data.bestWpm} WPM</StatRow>

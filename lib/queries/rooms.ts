@@ -16,7 +16,7 @@ export const useCreateRoomMutation = (session: AgsSession | null) =>
   })
 
 // Poll fallback for the lobby roster/attributes alongside the live realtime events
-// (useRoomChannel) — a joiner who was already in the room before this client subscribed
+// (useRoomChannel), a joiner who was already in the room before this client subscribed
 // wouldn't otherwise show up, since room:joined only fires for joins that happen after
 // subscription.
 export const useRoomQuery = (session: AgsSession | null, sessionId: string | null) =>
@@ -40,18 +40,18 @@ export const useSetRoomAttributesMutation = (session: AgsSession | null) => {
   })
 }
 
-// AGS Session join-by-code error codes — confirmed live against namespace bahlil-etanol (see
+// AGS Session join-by-code error codes, confirmed live against namespace bahlil-etanol (see
 // docs/ags-plans/2026-07-08-room-code-match.md's join-by-code/joinability verification):
 // SessionCodeNotFound fires for both a made-up code and a revoked/expired one (AGS doesn't
 // distinguish the two), so both map to the same "invalid or expired" message.
 const joinRoomErrorMessages: Record<number, string> = {
-  20077: "That code isn't valid — double-check it and try again.", // JoinNotAllowedInvalidCode
-  20052: 'Invalid or expired code — check with the host and try again.', // SessionCodeNotFound
-  20032: 'Join session is not allowed — Session is full'
+  20077: "That code isn't valid. Double-check it and try again.", // JoinNotAllowedInvalidCode
+  20052: 'Invalid or expired code. Check with the host and try again.', // SessionCodeNotFound
+  20032: 'Join session is not allowed. Session is full'
 }
 
 export const joinRoomErrorMessage = (error: unknown): string =>
-  agsErrorMessage(error, joinRoomErrorMessages, 'Invalid or expired code — check with the host and try again.')
+  agsErrorMessage(error, joinRoomErrorMessages, 'Invalid or expired code. Check with the host and try again.')
 
 export const useJoinRoomMutation = (session: AgsSession | null) =>
   useMutation({

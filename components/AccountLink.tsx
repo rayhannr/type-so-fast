@@ -98,7 +98,7 @@ export const AccountLink = () => {
               setAvatarUrl(newAvatarUrl)
             }
           }
-          setStatus('Google linked — sign in with the same Google account on any device to resume this progress.')
+          setStatus('Google linked. Sign in with the same Google account on any device to resume this progress.')
         } else {
           await loginWithGoogle(idToken)
           setStatus('Signed in.')

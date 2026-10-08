@@ -29,7 +29,7 @@ export const useAchievementsQuery = (session: AgsSession | null) => {
 }
 
 // full display list (name/description/unlocked) fetched live from AGS's achievement
-// catalog merged with the user's own status — replaces the old hardcoded manifest file
+// catalog merged with the user's own status, replaces the old hardcoded manifest file
 export const useAchievementListQuery = (session: AgsSession | null) =>
   useQuery({
     queryKey: ['achievementList', session?.userId ?? ''],

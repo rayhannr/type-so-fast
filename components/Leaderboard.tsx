@@ -73,8 +73,8 @@ export const Leaderboard = ({ currentUserId }: Props) => {
       </div>
 
       {leaderboard.isFetching && <p className="text-center text-sm text-muted py-8">Loading...</p>}
-      {leaderboard.isError && <p className="text-center text-sm text-muted py-8">Couldn&apos;t load the leaderboard — try again later.</p>}
-      {isReady && entries.length === 0 && <p className="text-center text-sm text-muted py-8">No scores yet — be the first!</p>}
+      {leaderboard.isError && <p className="text-center text-sm text-muted py-8">Couldn&apos;t load the leaderboard. Try again later.</p>}
+      {isReady && entries.length === 0 && <p className="text-center text-sm text-muted py-8">No scores yet. Be the first!</p>}
 
       {isReady && entries.length > 0 && (
         <>

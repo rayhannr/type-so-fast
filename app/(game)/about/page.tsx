@@ -17,10 +17,10 @@ export default function AboutPage() {
       <section>
         <h2 className="text-lg font-semibold text-active mb-2">Ways to play</h2>
         <ul className="list-disc list-inside text-muted space-y-1">
-          <li>Solo — practice at your own pace and track personal bests.</li>
-          <li>Vs Computer — race against a computer opponent of adjustable speed.</li>
-          <li>Vs Player — get matched instantly against a random opponent.</li>
-          <li>Room — create or join a shareable room and race up to 5 players at once.</li>
+          <li>Solo: practice at your own pace and track personal bests.</li>
+          <li>Vs Computer: race against a computer opponent of adjustable speed.</li>
+          <li>Vs Player: get matched instantly against a random opponent.</li>
+          <li>Room: create or join a shareable room and race up to 5 players at once.</li>
         </ul>
       </section>
       <section>

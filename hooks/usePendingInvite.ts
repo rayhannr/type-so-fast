@@ -29,7 +29,7 @@ interface PendingInviteState {
 
 // Every invite-related event for this user arrives on their own Lobby socket: someone invited
 // them (invite:new), someone accepted an invite they sent (invite:accepted), declined one
-// (invite:declined), or sent a friend request (friend:request) — all delivered live, with no
+// (invite:declined), or sent a friend request (friend:request), all delivered live, with no
 // fallback poll
 export const usePendingInvite = (session: AgsSession | null): PendingInviteState => {
   const [invite, setInvite] = useState<PendingInvite | null>(null)

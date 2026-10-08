@@ -44,7 +44,7 @@ type Phase = 'idle' | 'queueing' | 'connecting' | 'countdown' | 'racing'
 const OUTCOME_LABEL: Record<Outcome, string> = { win: 'You Win!', lose: 'Opponent Wins', tie: "It's a Tie" }
 const OUTCOME_CLASS: Record<Outcome, string> = { win: 'text-correct', lose: 'text-error', tie: 'text-active' }
 
-// the WebRTC handshake happens during 'connecting' — poll tighter there so offer/answer/ICE
+// the WebRTC handshake happens during 'connecting', poll tighter there so offer/answer/ICE
 // candidates propagate faster. Nothing in `attributes` changes once the race has actually started
 // (words/offer/answer are already resolved by then, and progress rides the data channel, not this
 // poll), so 'countdown'/'racing' disable polling entirely instead of continuing to hit AGS every
@@ -68,7 +68,7 @@ export const PvpGame = () => {
   const { session, displayName } = useAgsSessionContext()
   const router = useRouter()
 
-  // a match-invite accept lands here via `/pvp?session=<id>` — the session already has both
+  // a match-invite accept lands here via `/pvp?session=<id>`, the session already has both
   // players named in its roster (see lib/ags/session.ts's createInviteSession), so this joins
   // it directly instead of going through Quick Match's idle/queueing ticket flow.
   const joinSessionId = useSearchParams().get('session')
@@ -102,7 +102,7 @@ export const PvpGame = () => {
   const createTicket = useCreateMatchTicketMutation(session)
   const cancelTicket = useCancelMatchTicketMutation(session)
   const ticketStatus = useMatchTicketStatusQuery(session, phase === 'queueing' ? ticketId : null)
-  // the WebRTC handshake happens during 'connecting' — poll tighter there so offer/answer/ICE
+  // the WebRTC handshake happens during 'connecting', poll tighter there so offer/answer/ICE
   // candidates propagate faster. Nothing in `attributes` changes once the race has actually
   // started (words/offer/answer are already resolved by then, and progress rides the data
   // channel, not this poll), so stop polling entirely for 'countdown'/'racing' instead of
@@ -174,7 +174,7 @@ export const PvpGame = () => {
   const inputRef = useRef<HTMLInputElement | null>(null)
 
   // authority generates the shared word list once both players are in the session and seeds
-  // its own reducer immediately — deliberately not routed through the polled attributes cache,
+  // its own reducer immediately, deliberately not routed through the polled attributes cache,
   // since that poll races with this mutation's own cache write and can clobber it right before
   // the WebRTC handshake (independent of this poll) flips the game into 'racing' with no words.
   // The other player has no such race: it only ever reads the words via poll, never writes them.
@@ -368,7 +368,7 @@ export const PvpGame = () => {
   if (phase === 'connecting') {
     return (
       <div className="max-w-3xl mx-auto mt-14 text-center">
-        <p className="text-active text-lg">Opponent found — connecting&hellip;</p>
+        <p className="text-active text-lg">Opponent found. Connecting&hellip;</p>
       </div>
     )
   }
@@ -409,7 +409,7 @@ export const PvpGame = () => {
           />
 
           <div className="mt-6 pt-4 border-t border-solid border-edge">
-            <p className="text-xs text-muted mb-1">Opponent — {Math.round(remoteLiveWpm)} WPM</p>
+            <p className="text-xs text-muted mb-1">Opponent: {Math.round(remoteLiveWpm)} WPM</p>
             {remote.remote ? (
               <WordContainer
                 words={remote.remote.words}

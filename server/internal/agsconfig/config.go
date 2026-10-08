@@ -19,7 +19,7 @@ func (r *Repository) GetClientId() string      { return r.ClientID }
 func (r *Repository) GetClientSecret() string  { return r.ClientSecret }
 func (r *Repository) GetJusticeBaseUrl() string { return r.BaseURL }
 
-// Player is the config repository used for player-scoped (bearer) calls — no client secret,
+// Player is the config repository used for player-scoped (bearer) calls, no client secret,
 // since the frontend's Device ID login flow uses a public client.
 func Player() *Repository {
 	return &Repository{
@@ -50,7 +50,7 @@ func Namespace() string {
 }
 
 // StaticTokenRepository is a repository.TokenRepository over a fixed, already-issued access
-// token — the Go service never performs its own login, it only forwards tokens the frontend
+// token, the Go service never performs its own login, it only forwards tokens the frontend
 // already obtained (or an admin token minted by adminToken.go).
 type StaticTokenRepository struct {
 	AccessToken string

@@ -1,4 +1,4 @@
-// procedural sound effects via the Web Audio API — no audio file assets.
+// procedural sound effects via the Web Audio API, no audio file assets.
 // module-level flag so the hot path (every keystroke) is a cheap boolean check.
 let audioCtx: AudioContext | null = null
 let soundOn = false

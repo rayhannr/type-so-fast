@@ -32,7 +32,7 @@ type SessionMember struct {
 	Status string `json:"status"`
 }
 
-// RoomSession mirrors lib/ags/session.ts's RoomSession — Attributes stays untyped JSON since the
+// RoomSession mirrors lib/ags/session.ts's RoomSession, Attributes stays untyped JSON since the
 // caller only ever reads/writes a Partial<RoomSessionAttributes> subset.
 type RoomSession struct {
 	ID         string          `json:"id"`
@@ -127,7 +127,7 @@ func GetRoomSession(accessToken, sessionID string) (*RoomSession, error) {
 	return &room, nil
 }
 
-// CreateRoomSession reuses the PvP quick-match template but overrides capacity/joinability — OPEN
+// CreateRoomSession reuses the PvP quick-match template but overrides capacity/joinability, OPEN
 // is required, not a preference: generate-code silently returns no code at all on a
 // CLOSED/INVITE_ONLY session, so the code-based join flow only exists for OPEN sessions. The room
 // is locked against further joins when the host starts the match (see LockRoom).
@@ -167,7 +167,7 @@ func GenerateRoomCode(accessToken, sessionID string) (string, error) {
 		return "", err
 	}
 	if resp.Data.Code == "" {
-		return "", errors.New("AGS returned no join code for session " + sessionID + " — is its joinability OPEN?")
+		return "", errors.New("AGS returned no join code for session " + sessionID + ". Is its joinability OPEN?")
 	}
 	return resp.Data.Code, nil
 }
@@ -270,7 +270,7 @@ func versionFromConflict(payload *sessionclientmodels.ResponseError) (int32, boo
 }
 
 // patchSessionWithRetry retries a PATCH against the freshest read after a VersionMismatch conflict
-// — AGS's PATCH replaces the whole `attributes` object rather than deep-merging, so callers that
+// AGS's PATCH replaces the whole `attributes` object rather than deep-merging, so callers that
 // only touch a few fields (e.g. joinability) still need the latest version, not a stale one.
 func patchSessionWithRetry(service *session.GameSessionService, sessionID string, buildPatch func(current *sessionclientmodels.ApimodelsGameSessionResponse) *sessionclientmodels.ApimodelsUpdateGameSessionRequest) error {
 	var reportedVersion int32
@@ -315,7 +315,7 @@ func patchSessionWithRetry(service *session.GameSessionService, sessionID string
 	return nil
 }
 
-// GetSession fetches a session's live state as a PvpSession — used by the generic /api/session/:id
+// GetSession fetches a session's live state as a PvpSession, used by the generic /api/session/:id
 // route (direct match-invite / PvP session polling), unlike GetRoomSession's room-specific shape.
 func GetSession(accessToken, sessionID string) (*PvpSession, error) {
 	service := newGameSessionService(accessToken)
@@ -332,7 +332,7 @@ func GetSession(accessToken, sessionID string) (*PvpSession, error) {
 
 // SetSessionAttributes merges the given attributes into whatever's already on the session.
 // AGS's PATCH replaces the whole `attributes` object rather than deep-merging it, so the merge
-// has to happen here against the freshest possible read — not on the client, where two concurrent
+// has to happen here against the freshest possible read, not on the client, where two concurrent
 // writers (e.g. one seeding the word list, the other writing its WebRTC offer) can each hold a
 // stale cached copy of the other's write and clobber it.
 func SetSessionAttributes(accessToken, sessionID string, attributes map[string]interface{}) error {
