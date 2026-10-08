@@ -15,7 +15,8 @@ type Session struct {
 }
 
 type LinkedAccount struct {
-	DisplayName *string `json:"displayName"`
+	DisplayName  *string `json:"displayName"`
+	EmailAddress *string `json:"emailAddress"`
 }
 
 func newOAuth20Service() *iam.OAuth20Service {
@@ -81,7 +82,8 @@ func GetLinkedGoogleAccount(userID, accessToken string) (*LinkedAccount, error) 
 	for _, platform := range resp.Data.Data {
 		if platform.PlatformID == "google" {
 			displayName := platform.DisplayName
-			return &LinkedAccount{DisplayName: &displayName}, nil
+			emailAddress := platform.EmailAddress
+			return &LinkedAccount{DisplayName: &displayName, EmailAddress: &emailAddress}, nil
 		}
 	}
 	return nil, nil

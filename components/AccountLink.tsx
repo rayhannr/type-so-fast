@@ -59,6 +59,7 @@ export const AccountLink = () => {
   }, [open])
 
   const linked = googleStatus.data ?? null
+  const linkedLabel = linked?.emailAddress || linked?.displayName || 'Google account'
 
   useEffect(() => {
     if (session) setAvatarUrl(readLocal<string | null>(googleAvatarKey(session.userId), null))
@@ -149,12 +150,12 @@ export const AccountLink = () => {
                   <img src={avatarUrl} alt="" className="w-8 h-8 rounded-full shrink-0 object-cover" />
                 ) : (
                   <div className="w-8 h-8 rounded-full bg-canvas border border-solid border-edge flex items-center justify-center text-sm text-active shrink-0">
-                    {(linked.displayName ?? 'G').charAt(0).toUpperCase()}
+                    {linkedLabel.charAt(0).toUpperCase()}
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs text-muted">Google linked</p>
-                  <p className="text-sm text-active truncate">{linked.displayName ?? 'Google account'}</p>
+                  <p className="text-xs text-muted">Linked Google account</p>
+                  <p className="text-sm text-active truncate">{linkedLabel}</p>
                 </div>
               </div>
               <button

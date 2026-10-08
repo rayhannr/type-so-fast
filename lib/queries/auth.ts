@@ -37,7 +37,7 @@ export const useGoogleStatusQuery = (session: AgsSession | null) =>
     queryKey: ['google-status', session?.userId ?? ''],
     queryFn: () =>
       axios
-        .get<{ displayName: string | null } | null>('/api/auth/google-status', { headers: authHeaders(session!) })
+        .get<{ displayName: string | null; emailAddress: string | null } | null>('/api/auth/google-status', { headers: authHeaders(session!) })
         .then(res => res.data),
     enabled: !!session
   })
