@@ -80,6 +80,8 @@ func main() {
 	router.GET("/api/stats", handlers.GetPersonalStats)
 	router.POST("/api/stats", handlers.SubmitGameStats)
 
+	router.POST("/api/telemetry/race-finished", handlers.SendRaceFinished)
+
 	router.POST("/api/auth", handlers.LoginWithDeviceID)
 	router.POST("/api/auth/google", handlers.LoginWithGoogle)
 	router.POST("/api/auth/link-google", handlers.LinkGoogleAccount)

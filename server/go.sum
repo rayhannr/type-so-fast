@@ -4,6 +4,8 @@ github.com/AccelByte/accelbyte-go-modular-sdk/basic-sdk v0.4.0 h1:8aL4yAqSSGwkRk
 github.com/AccelByte/accelbyte-go-modular-sdk/basic-sdk v0.4.0/go.mod h1:Yqu5MJbaNkrr/qPp7fagJQw/hD7+UtlgawKxib1xb5w=
 github.com/AccelByte/accelbyte-go-modular-sdk/cloudsave-sdk v0.3.0 h1:PH9Ze0K0L4693mQvMSQHMBOEqCPQ5VAglj4d6WuNEIg=
 github.com/AccelByte/accelbyte-go-modular-sdk/cloudsave-sdk v0.3.0/go.mod h1:UpkEil7YUDmG7R7hYXE+vOu5V1dgk4tcCgsJvxWt5Ls=
+github.com/AccelByte/accelbyte-go-modular-sdk/gametelemetry-sdk v0.1.0 h1:G9/IC42QTyLSyF+qoc4dQJ2Gvye1UnHB/sx/OtFKVLk=
+github.com/AccelByte/accelbyte-go-modular-sdk/gametelemetry-sdk v0.1.0/go.mod h1:wZyJcRK1GL66ZPjeS8omBsjSyaRVyuXPdkSETnr0xHs=
 github.com/AccelByte/accelbyte-go-modular-sdk/iam-sdk v0.10.0 h1:dGvmTlVgnld8Vt7IZ8PFPLByirNVqZPMUEKME36PNQI=
 github.com/AccelByte/accelbyte-go-modular-sdk/iam-sdk v0.10.0/go.mod h1:SlWQGmCoGGresWqVCrAv+pLNBJlnVXWBQMsKd1u/ah4=
 github.com/AccelByte/accelbyte-go-modular-sdk/leaderboard-sdk v0.5.0 h1:4m+Aqc22SMkyxJwwzd7HCcNkdxPv9ZzZN0wKRx+L08I=

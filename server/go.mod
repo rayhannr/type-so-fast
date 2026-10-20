@@ -6,6 +6,7 @@ require (
 	github.com/AccelByte/accelbyte-go-modular-sdk/achievement-sdk v0.3.0
 	github.com/AccelByte/accelbyte-go-modular-sdk/basic-sdk v0.4.0
 	github.com/AccelByte/accelbyte-go-modular-sdk/cloudsave-sdk v0.3.0
+	github.com/AccelByte/accelbyte-go-modular-sdk/gametelemetry-sdk v0.1.0
 	github.com/AccelByte/accelbyte-go-modular-sdk/iam-sdk v0.10.0
 	github.com/AccelByte/accelbyte-go-modular-sdk/leaderboard-sdk v0.5.0
 	github.com/AccelByte/accelbyte-go-modular-sdk/lobby-sdk v0.4.0

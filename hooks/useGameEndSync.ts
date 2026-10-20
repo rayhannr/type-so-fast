@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Duration } from '@/components/DurationSelector'
 import { XpGain } from '@/components/Result'
 import { UnlockedAchievement } from '@/lib/ags/achievements'
+import { RaceFinishedEvent } from '@/lib/ags/telemetry'
 import { Difficulty } from '@/lib/botDifficulty'
 import { advanceStreak, advanceProgression, advancePvc, advancePvp, advanceRoom, levelFromXp, HISTORY_LIMIT } from '@/lib/progress'
 import { useAchievementsQuery, useProcessAchievementsMutation } from '@/lib/queries/achievements'
@@ -23,6 +24,7 @@ import {
 } from '@/lib/queries/cloudsave'
 import { AgsSession } from '@/lib/queries/shared'
 import { useSubmitStatsMutation } from '@/lib/queries/statistics'
+import { useRaceFinishedMutation } from '@/lib/queries/telemetry'
 import { playFanfare } from '@/lib/sounds'
 import { WordMode } from '@/lib/word-generators'
 
@@ -39,6 +41,13 @@ interface GameEndParams {
   pvc?: { difficulty: Difficulty; won: boolean }
   pvp?: { outcome: 'win' | 'lose' | 'tie' }
   room?: { won: boolean; fullHouse: boolean }
+}
+
+const raceOutcome = ({ pvc, pvp, room }: Pick<GameEndParams, 'pvc' | 'pvp' | 'room'>): Pick<RaceFinishedEvent, 'gameType' | 'difficulty' | 'outcome'> => {
+  if (pvc) return { gameType: 'pvc', difficulty: pvc.difficulty, outcome: pvc.won ? 'win' : 'lose' }
+  if (pvp) return { gameType: 'pvp', outcome: pvp.outcome }
+  if (room) return { gameType: 'room', outcome: room.won ? 'win' : 'lose' }
+  return { gameType: 'solo' }
 }
 
 // runs once per finished round: computes the next records/history/streak/progression,
@@ -78,6 +87,7 @@ export const useGameEndSync = ({
   const savePvpProgressMutation = useSavePvpProgressMutation(session)
   const saveRoomProgressMutation = useSaveRoomProgressMutation(session)
   const submitStatsMutation = useSubmitStatsMutation(session)
+  const raceFinishedMutation = useRaceFinishedMutation(session)
   const processAchievementsMutation = useProcessAchievementsMutation(session)
 
   useEffect(() => {
@@ -135,7 +145,21 @@ export const useGameEndSync = ({
     if (newPvpProgress) savePvpProgressMutation.mutate(newPvpProgress)
     if (newRoomProgress) saveRoomProgressMutation.mutate(newRoomProgress)
 
-    if (!session || !displayName) return
+    if (!session) return
+
+    raceFinishedMutation.mutate({
+      ...raceOutcome({ pvc, pvp, room }),
+      mode,
+      duration,
+      wpm: userResult,
+      accuracy,
+      correctKeystroke,
+      wrongKeystroke,
+      correction,
+      wordsTyped: correctWords
+    })
+
+    if (!displayName) return
 
     submitStatsMutation.mutate(
       {
