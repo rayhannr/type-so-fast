@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -36,6 +37,10 @@ func LoginWithGoogle(c *gin.Context) {
 	}
 
 	session, err := ags.LoginWithGoogle(body.IDToken)
+	if errors.Is(err, ags.ErrGoogleNotLinked) {
+		c.JSON(http.StatusForbidden, gin.H{"error": ags.ErrGoogleNotLinked.Error()})
+		return
+	}
 	if err != nil {
 		respondError(c, err, "auth/google POST")
 		return

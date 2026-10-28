@@ -6,10 +6,8 @@ import (
 	iam "github.com/AccelByte/accelbyte-go-modular-sdk/iam-sdk/pkg"
 	"github.com/AccelByte/accelbyte-go-modular-sdk/iam-sdk/pkg/iamclient/o_auth2_0"
 	"github.com/AccelByte/accelbyte-go-modular-sdk/iam-sdk/pkg/iamclient/users"
-	"github.com/AccelByte/accelbyte-go-modular-sdk/iam-sdk/pkg/iamclientmodels"
 
 	"type-so-fast-server/internal/agsconfig"
-	"type-so-fast-server/internal/agserror"
 )
 
 type Session struct {
@@ -77,10 +75,20 @@ func LoginWithDeviceID(deviceID string) (*Session, error) {
 	})
 }
 
+// ErrGoogleNotLinked means no AGS user owns this Google account yet
+var ErrGoogleNotLinked = errors.New("platform_link_required")
+
 func LoginWithGoogle(googleIDToken string) (*Session, error) {
-	return loginWithPlatformToken("google", func(p *o_auth2_0.PlatformTokenGrantV3Params) {
+	createHeadless := false
+	session, err := loginWithPlatformToken("google", func(p *o_auth2_0.PlatformTokenGrantV3Params) {
 		p.PlatformToken = &googleIDToken
+		p.CreateHeadless = &createHeadless
 	})
+	var forbidden *o_auth2_0.PlatformTokenGrantV3Forbidden
+	if errors.As(err, &forbidden) && forbidden.Payload != nil && forbidden.Payload.Error != nil && *forbidden.Payload.Error == "platform_link_required" {
+		return nil, ErrGoogleNotLinked
+	}
+	return session, err
 }
 
 func LinkGoogleAccount(accessToken, googleIDToken string) error {
@@ -89,32 +97,7 @@ func LinkGoogleAccount(accessToken, googleIDToken string) error {
 	params.PlatformID = "google"
 	params.Ticket = googleIDToken
 
-	// passes AGS's errorCode through so the frontend can tell "Google already linked to another
-	// user" (10173) apart and sign in to that user instead
-	err := newUsersService(accessToken).PublicPlatformLinkV3Short(params)
-	var conflict *users.PublicPlatformLinkV3Conflict
-	if errors.As(err, &conflict) {
-		return restErrorDetail(409, conflict.Payload)
-	}
-	var badRequest *users.PublicPlatformLinkV3BadRequest
-	if errors.As(err, &badRequest) {
-		return restErrorDetail(400, badRequest.Payload)
-	}
-	return err
-}
-
-func restErrorDetail(status int, payload *iamclientmodels.RestErrorResponse) *agserror.Detail {
-	detail := &agserror.Detail{Status: status}
-	if payload == nil {
-		return detail
-	}
-	if payload.ErrorCode != nil {
-		detail.ErrorCode = *payload.ErrorCode
-	}
-	if payload.ErrorMessage != nil {
-		detail.ErrorMessage = *payload.ErrorMessage
-	}
-	return detail
+	return newUsersService(accessToken).PublicPlatformLinkV3Short(params)
 }
 
 func UnlinkGoogleAccount(accessToken string) error {

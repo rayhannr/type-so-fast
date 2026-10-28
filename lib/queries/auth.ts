@@ -28,12 +28,9 @@ export const useUnlinkGoogleMutation = () =>
     mutationFn: (session: AgsSession) => axios.post('/api/auth/unlink-google', session)
   })
 
-// AGS IAM error code for a platform account that is already linked to another user:
-// https://docs.accelbyte.io/gaming-services/knowledge-base/api-endpoints-error-codes/
-const PLATFORM_ALREADY_LINKED = 10173
-
-export const isGoogleLinkedElsewhere = (error: unknown): boolean =>
-  axios.isAxiosError(error) && (error.response?.data as { errorCode?: number } | undefined)?.errorCode === PLATFORM_ALREADY_LINKED
+// AGS IAM's platform token grant error when no user owns this Google account yet
+export const isGoogleNotLinked = (error: unknown): boolean =>
+  axios.isAxiosError(error) && (error.response?.data as { error?: string } | undefined)?.error === 'platform_link_required'
 
 export const useGoogleStatusQuery = (session: AgsSession | null) =>
   useQuery({

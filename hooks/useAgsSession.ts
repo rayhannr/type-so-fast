@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import {
-  isGoogleLinkedElsewhere,
+  isGoogleNotLinked,
   useGoogleLoginMutation,
   useLinkGoogleMutation,
   useLoginMutation,
@@ -26,8 +26,8 @@ const getDeviceId = (): string => {
 // that user instead of falling back to this device's own Device ID user
 const googleRefreshTokenKey = 'googleRefreshToken'
 
-// userId is the AGS user that owns the Google link; switched is true when Google was already
-// linked to another user and this device is now signed in as that user
+// userId is the AGS user that owns the Google link; switched is true when that user isn't this
+// device's own and this device is now signed in as it
 interface GoogleOutcome {
   userId: string
   switched: boolean
@@ -76,17 +76,19 @@ export const useAgsSession = (): AgsSessionState => {
   const profile = useMyProfileQuery(session)
 
   const continueWithGoogle = async (idToken: string): Promise<GoogleOutcome> => {
-    if (!session) throw new Error('continueWithGoogle requires an active session')
     try {
-      await linkGoogleMutation.mutateAsync({ session, idToken })
-      return { userId: session.userId, switched: false }
+      const googleSession = await googleLoginMutation.mutateAsync(idToken)
+      const switched = googleSession.userId !== session?.userId
+      if (switched) {
+        writeLocal(googleRefreshTokenKey, googleSession.refreshToken)
+        setSession(googleSession)
+      }
+      return { userId: googleSession.userId, switched }
     } catch (error) {
-      if (!isGoogleLinkedElsewhere(error)) throw error
+      if (!isGoogleNotLinked(error) || !session) throw error
     }
-    const googleSession = await googleLoginMutation.mutateAsync(idToken)
-    writeLocal(googleRefreshTokenKey, googleSession.refreshToken)
-    setSession(googleSession)
-    return { userId: googleSession.userId, switched: true }
+    await linkGoogleMutation.mutateAsync({ session, idToken })
+    return { userId: session.userId, switched: false }
   }
 
   return { session, displayName: displayName.data, publicId: profile.data?.publicId, continueWithGoogle }
