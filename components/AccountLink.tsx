@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import Script from 'next/script'
 import { useEffect, useRef, useState } from 'react'
 import { useAgsSessionContext } from '@/lib/ags/AgsSessionContext'
-import { linkGoogleErrorMessage, useGoogleStatusQuery, useUnlinkGoogleMutation } from '@/lib/queries/auth'
+import { useGoogleStatusQuery, useUnlinkGoogleMutation } from '@/lib/queries/auth'
 import { readLocal, writeLocal } from '@/lib/queries/shared'
 
 const decodeGoogleAvatarUrl = (idToken: string): string | undefined => {
@@ -32,12 +32,11 @@ declare global {
 }
 
 export const AccountLink = () => {
-  const { session, loginWithGoogle, linkGoogle } = useAgsSessionContext()
+  const { session, continueWithGoogle } = useAgsSessionContext()
   const queryClient = useQueryClient()
   const googleStatus = useGoogleStatusQuery(session)
   const unlinkGoogleMutation = useUnlinkGoogleMutation()
   const [open, setOpen] = useState(false)
-  const [mode, setMode] = useState<'link' | 'signin'>('link')
   const [status, setStatus] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isLinking, setIsLinking] = useState(false)
@@ -46,8 +45,6 @@ export const AccountLink = () => {
   const googleButtonRef = useRef<HTMLDivElement | null>(null)
   const containerRef = useRef<HTMLDivElement | null>(null)
   const initializedRef = useRef(false)
-  const modeRef = useRef(mode)
-  modeRef.current = mode
 
   useEffect(() => {
     if (!open) return
@@ -88,23 +85,20 @@ export const AccountLink = () => {
       setStatus(null)
       setIsLinking(true)
       try {
+        const outcome = await continueWithGoogle(idToken)
+        queryClient.invalidateQueries({ queryKey: ['google-status', outcome.userId] })
         const newAvatarUrl = decodeGoogleAvatarUrl(idToken)
-        if (modeRef.current === 'link') {
-          await linkGoogle(idToken)
-          if (session) {
-            queryClient.invalidateQueries({ queryKey: ['google-status', session.userId] })
-            if (newAvatarUrl) {
-              writeLocal(googleAvatarKey(session.userId), newAvatarUrl)
-              setAvatarUrl(newAvatarUrl)
-            }
-          }
-          setStatus('Google linked. Sign in with the same Google account on any device to resume this progress.')
-        } else {
-          await loginWithGoogle(idToken)
-          setStatus('Signed in.')
+        if (newAvatarUrl) {
+          writeLocal(googleAvatarKey(outcome.userId), newAvatarUrl)
+          setAvatarUrl(newAvatarUrl)
         }
-      } catch (err) {
-        setError(modeRef.current === 'link' ? linkGoogleErrorMessage(err) : 'Could not sign in with this Google account.')
+        setStatus(
+          outcome.switched
+            ? 'Signed in. Loaded the progress saved to this Google account.'
+            : 'Google linked. Sign in with the same Google account on any device to pick up this progress.'
+        )
+      } catch {
+        setError('Could not continue with this Google account.')
       } finally {
         setIsLinking(false)
       }
@@ -115,7 +109,7 @@ export const AccountLink = () => {
       callback: response => handleCredential(response.credential)
     })
     window.google.accounts.id.renderButton(googleButtonRef.current, { theme: 'outline', size: 'medium' })
-  }, [open, linked, googleReady, linkGoogle, loginWithGoogle, queryClient, session])
+  }, [open, linked, googleReady, continueWithGoogle, queryClient])
 
   return (
     <div ref={containerRef} className="relative">
@@ -170,35 +164,16 @@ export const AccountLink = () => {
             </div>
           ) : (
             <>
-              <div className="flex flex-row gap-1 text-xs">
-                <button
-                  type="button"
-                  onClick={() => setMode('link')}
-                  className={`flex-1 rounded px-2 py-1 cursor-pointer transition-colors ${mode === 'link' ? 'bg-canvas text-active border border-solid border-accent' : 'text-muted hover:text-active'}`}
-                >
-                  Save progress
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMode('signin')}
-                  className={`flex-1 rounded px-2 py-1 cursor-pointer transition-colors ${mode === 'signin' ? 'bg-canvas text-active border border-solid border-accent' : 'text-muted hover:text-active'}`}
-                >
-                  Restore on this device
-                </button>
-              </div>
-
               <p className="text-xs text-muted">
-                {mode === 'link'
-                  ? 'Link Google to this account so you can sign in and resume your progress on another device.'
-                  : 'Sign in with the Google account you linked elsewhere to bring that progress here.'}
+                Continue with Google to keep your progress. Use the same Google account on any other device to pick it up there.
               </p>
 
               <div ref={googleButtonRef} className={isLinking ? 'pointer-events-none opacity-50' : undefined} />
 
-              {isLinking && <p className="text-xs text-muted">{mode === 'link' ? 'Linking…' : 'Signing in…'}</p>}
+              {isLinking && <p className="text-xs text-muted">Connecting…</p>}
               {status && <p className="text-xs text-green-500">{status}</p>}
               {error && <p className="text-xs text-red-500">{error}</p>}
-              {mode === 'link' && !session && <p className="text-xs text-red-500">You need an active session to link Google.</p>}
+              {!session && <p className="text-xs text-red-500">Can't reach the server right now. Try again in a moment.</p>}
             </>
           )}
         </div>

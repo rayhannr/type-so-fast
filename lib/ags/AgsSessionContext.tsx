@@ -8,8 +8,7 @@ interface AgsSessionState {
   session: AgsSession | null
   displayName?: string
   publicId?: string
-  loginWithGoogle: (idToken: string) => Promise<void>
-  linkGoogle: (idToken: string) => Promise<void>
+  continueWithGoogle: (idToken: string) => Promise<{ userId: string; switched: boolean }>
 }
 
 const AgsSessionContext = createContext<AgsSessionState | null>(null)

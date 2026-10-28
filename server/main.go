@@ -84,6 +84,7 @@ func main() {
 
 	router.POST("/api/auth", handlers.LoginWithDeviceID)
 	router.POST("/api/auth/google", handlers.LoginWithGoogle)
+	router.POST("/api/auth/refresh", handlers.RefreshSession)
 	router.POST("/api/auth/link-google", handlers.LinkGoogleAccount)
 	router.POST("/api/auth/unlink-google", handlers.UnlinkGoogleAccount)
 	router.GET("/api/auth/google-status", handlers.GoogleLinkStatus)

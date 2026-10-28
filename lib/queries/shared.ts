@@ -3,6 +3,7 @@ import axios from 'axios'
 export interface AgsSession {
   userId: string
   accessToken: string
+  refreshToken: string
   lobbyUrl: string
 }
 

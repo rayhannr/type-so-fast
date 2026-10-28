@@ -43,6 +43,23 @@ func LoginWithGoogle(c *gin.Context) {
 	c.JSON(http.StatusOK, session)
 }
 
+func RefreshSession(c *gin.Context) {
+	var body struct {
+		RefreshToken string `json:"refreshToken"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil || body.RefreshToken == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "refreshToken is required"})
+		return
+	}
+
+	session, err := ags.RefreshSession(body.RefreshToken)
+	if err != nil {
+		respondError(c, err, "auth/refresh POST")
+		return
+	}
+	c.JSON(http.StatusOK, session)
+}
+
 func LinkGoogleAccount(c *gin.Context) {
 	var body struct {
 		UserID      string `json:"userId"`

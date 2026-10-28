@@ -1,17 +1,22 @@
 package ags
 
 import (
+	"errors"
+
 	iam "github.com/AccelByte/accelbyte-go-modular-sdk/iam-sdk/pkg"
 	"github.com/AccelByte/accelbyte-go-modular-sdk/iam-sdk/pkg/iamclient/o_auth2_0"
 	"github.com/AccelByte/accelbyte-go-modular-sdk/iam-sdk/pkg/iamclient/users"
+	"github.com/AccelByte/accelbyte-go-modular-sdk/iam-sdk/pkg/iamclientmodels"
 
 	"type-so-fast-server/internal/agsconfig"
+	"type-so-fast-server/internal/agserror"
 )
 
 type Session struct {
-	UserID      string `json:"userId"`
-	AccessToken string `json:"accessToken"`
-	LobbyURL    string `json:"lobbyUrl"`
+	UserID       string `json:"userId"`
+	AccessToken  string `json:"accessToken"`
+	RefreshToken string `json:"refreshToken"`
+	LobbyURL     string `json:"lobbyUrl"`
 }
 
 type LinkedAccount struct {
@@ -37,7 +42,33 @@ func loginWithPlatformToken(platformID string, configure func(*o_auth2_0.Platfor
 	if err != nil {
 		return nil, err
 	}
-	return &Session{UserID: *resp.Data.UserID, AccessToken: *resp.Data.AccessToken, LobbyURL: agsconfig.LobbyURL()}, nil
+	refreshToken := ""
+	if resp.Data.RefreshToken != nil {
+		refreshToken = *resp.Data.RefreshToken
+	}
+	return &Session{
+		UserID:       *resp.Data.UserID,
+		AccessToken:  *resp.Data.AccessToken,
+		RefreshToken: refreshToken,
+		LobbyURL:     agsconfig.LobbyURL(),
+	}, nil
+}
+
+func RefreshSession(refreshToken string) (*Session, error) {
+	params := o_auth2_0.NewTokenGrantV3Params()
+	params.GrantType = o_auth2_0.TokenGrantV3GrantTypeRefreshTokenConstant
+	params.RefreshToken = &refreshToken
+
+	resp, err := newOAuth20Service().TokenGrantV3Short(params)
+	if err != nil {
+		return nil, err
+	}
+	return &Session{
+		UserID:       resp.Data.UserID,
+		AccessToken:  *resp.Data.AccessToken,
+		RefreshToken: resp.Data.RefreshToken,
+		LobbyURL:     agsconfig.LobbyURL(),
+	}, nil
 }
 
 func LoginWithDeviceID(deviceID string) (*Session, error) {
@@ -58,7 +89,32 @@ func LinkGoogleAccount(accessToken, googleIDToken string) error {
 	params.PlatformID = "google"
 	params.Ticket = googleIDToken
 
-	return newUsersService(accessToken).PublicPlatformLinkV3Short(params)
+	// passes AGS's errorCode through so the frontend can tell "Google already linked to another
+	// user" (10173) apart and sign in to that user instead
+	err := newUsersService(accessToken).PublicPlatformLinkV3Short(params)
+	var conflict *users.PublicPlatformLinkV3Conflict
+	if errors.As(err, &conflict) {
+		return restErrorDetail(409, conflict.Payload)
+	}
+	var badRequest *users.PublicPlatformLinkV3BadRequest
+	if errors.As(err, &badRequest) {
+		return restErrorDetail(400, badRequest.Payload)
+	}
+	return err
+}
+
+func restErrorDetail(status int, payload *iamclientmodels.RestErrorResponse) *agserror.Detail {
+	detail := &agserror.Detail{Status: status}
+	if payload == nil {
+		return detail
+	}
+	if payload.ErrorCode != nil {
+		detail.ErrorCode = *payload.ErrorCode
+	}
+	if payload.ErrorMessage != nil {
+		detail.ErrorMessage = *payload.ErrorMessage
+	}
+	return detail
 }
 
 func UnlinkGoogleAccount(accessToken string) error {
