@@ -30,7 +30,7 @@ export const useUnlinkGoogleMutation = () =>
 
 // AGS IAM's platform token grant error when no user owns this Google account yet
 export const isGoogleNotLinked = (error: unknown): boolean =>
-  axios.isAxiosError(error) && (error.response?.data as { error?: string } | undefined)?.error === 'platform_link_required'
+  axios.isAxiosError(error) && (error.response?.data as { error?: string } | undefined)?.error === 'platform_not_linked'
 
 export const useGoogleStatusQuery = (session: AgsSession | null) =>
   useQuery({

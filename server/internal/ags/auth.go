@@ -76,7 +76,7 @@ func LoginWithDeviceID(deviceID string) (*Session, error) {
 }
 
 // ErrGoogleNotLinked means no AGS user owns this Google account yet
-var ErrGoogleNotLinked = errors.New("platform_link_required")
+var ErrGoogleNotLinked = errors.New("platform_not_linked")
 
 func LoginWithGoogle(googleIDToken string) (*Session, error) {
 	createHeadless := false
@@ -84,8 +84,8 @@ func LoginWithGoogle(googleIDToken string) (*Session, error) {
 		p.PlatformToken = &googleIDToken
 		p.CreateHeadless = &createHeadless
 	})
-	var forbidden *o_auth2_0.PlatformTokenGrantV3Forbidden
-	if errors.As(err, &forbidden) && forbidden.Payload != nil && forbidden.Payload.Error != nil && *forbidden.Payload.Error == "platform_link_required" {
+	var unauthorized *o_auth2_0.PlatformTokenGrantV3Unauthorized
+	if errors.As(err, &unauthorized) && unauthorized.Payload != nil && unauthorized.Payload.Error != nil && *unauthorized.Payload.Error == "platform_not_linked" {
 		return nil, ErrGoogleNotLinked
 	}
 	return session, err
