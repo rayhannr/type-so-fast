@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
-import { UnlockedAchievement, AchievementInfo } from '@/lib/ags/achievements'
+import { UnlockedAchievement, AchievementInfo, GlobalAchievement } from '@/lib/ags/achievements'
 import { Difficulty } from '@/lib/botDifficulty'
 import { PvcData, PvpData, RoomData } from '@/lib/progress'
 import { authHeaders, AgsSession } from './shared'
@@ -36,6 +36,37 @@ export const useAchievementListQuery = (session: AgsSession | null) =>
     queryFn: () => axios.get<AchievementInfo[]>('/api/achievements/list', { headers: authHeaders(session!) }).then(res => res.data),
     enabled: !!session
   })
+
+const globalAchievementsKey = (userId: string) => ['globalAchievements', userId] as const
+const badgeOwnersKey = ['communityBadgeOwners'] as const
+
+export const useGlobalAchievementsQuery = (session: AgsSession | null) =>
+  useQuery({
+    queryKey: globalAchievementsKey(session?.userId ?? ''),
+    queryFn: () => axios.get<GlobalAchievement[]>('/api/achievements/global', { headers: authHeaders(session!) }).then(res => res.data),
+    enabled: !!session
+  })
+
+// the badge is granted by AGS's reward config reacting to the claim event, not by the claim
+// call itself, so both the claimable flag and the owner list need a server refetch afterwards
+export const useClaimGlobalAchievementMutation = (session: AgsSession | null) => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (code: string) => axios.post(`/api/achievements/global/${code}/claim`, null, { headers: authHeaders(session!) }),
+    onSuccess: () => {
+      if (session) queryClient.invalidateQueries({ queryKey: globalAchievementsKey(session.userId) })
+      queryClient.invalidateQueries({ queryKey: badgeOwnersKey })
+    }
+  })
+}
+
+export const useCommunityBadgeOwnersQuery = () => {
+  const query = useQuery({
+    queryKey: badgeOwnersKey,
+    queryFn: () => axios.get<string[]>('/api/achievements/global/badge-owners').then(res => res.data)
+  })
+  return { ...query, data: new Set(query.data ?? []) }
+}
 
 export const useProcessAchievementsMutation = (session: AgsSession | null) => {
   const queryClient = useQueryClient()

@@ -14,6 +14,8 @@ github.com/AccelByte/accelbyte-go-modular-sdk/lobby-sdk v0.4.0 h1:QsSTudVaXx4oV+
 github.com/AccelByte/accelbyte-go-modular-sdk/lobby-sdk v0.4.0/go.mod h1:HjalE/x3NMYUavhHtK0a7041qsEFXfKwpVhXCohuFis=
 github.com/AccelByte/accelbyte-go-modular-sdk/match2-sdk v0.9.0 h1:2D9yj+HwTStIYbyR26vbUHqAsCjLHX3Rv76T7z6S1OY=
 github.com/AccelByte/accelbyte-go-modular-sdk/match2-sdk v0.9.0/go.mod h1:R1nnZq+IlN9JLUykcbiB72X0c2fDm2eTWNWMa48DvmE=
+github.com/AccelByte/accelbyte-go-modular-sdk/platform-sdk v0.10.0 h1:Ezk2S2kbLgn1toca2b3/d3m1PGLbLMXZjOb2vOcjpso=
+github.com/AccelByte/accelbyte-go-modular-sdk/platform-sdk v0.10.0/go.mod h1:4Tiq/zoxzxzGcoFkdhKqKPEuc707JabvV4tQ6ORT25w=
 github.com/AccelByte/accelbyte-go-modular-sdk/services-api v0.1.0 h1:Nk2jYoAxVMFpNbgh1/CaeUCzpjLO3XNyqzuyeFEEzG0=
 github.com/AccelByte/accelbyte-go-modular-sdk/services-api v0.1.0/go.mod h1:/eLGacVUuC63ecIx2mnCqRonZbiP/PYzzkUERCYBdUo=
 github.com/AccelByte/accelbyte-go-modular-sdk/session-sdk v0.10.0 h1:2tGL3BIVc6cdknBKNnTii+8U5cCvUHaihmgnStqfcdk=

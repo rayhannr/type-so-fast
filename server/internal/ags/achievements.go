@@ -300,6 +300,10 @@ func GetAchievementList(userID, accessToken string) ([]AchievementInfo, error) {
 
 	list := make([]AchievementInfo, 0, len(catalog.Data.Data))
 	for _, a := range catalog.Data.Data {
+		// global achievements are never unlocked per player, GetGlobalAchievements covers them
+		if a.Global != nil && *a.Global {
+			continue
+		}
 		code := ""
 		if a.AchievementCode != nil {
 			code = *a.AchievementCode

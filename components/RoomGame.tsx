@@ -5,6 +5,7 @@ import { Language } from '@/constants/words'
 import { generateWords, WordMode } from '@/lib/word-generators'
 
 import { AchievementToast } from './AchievementToast'
+import { CommunityBadge } from './CommunityBadge'
 import { DurationSelector, Duration } from './DurationSelector'
 import { Input } from './Input'
 import { LanguageSelector } from './LanguageSelector'
@@ -20,6 +21,7 @@ import { useRoomChannel } from '@/hooks/useRoomChannel'
 import { useTypingInput } from '@/hooks/useTypingInput'
 import { useAgsSessionContext } from '@/lib/ags/AgsSessionContext'
 import { gameReducer, createInitialState } from '@/lib/gameReducer'
+import { useCommunityBadgeOwnersQuery } from '@/lib/queries/achievements'
 import {
   useCreateRoomMutation,
   useJoinRoomMutation,
@@ -51,6 +53,7 @@ export const RoomGame = () => {
   const room = useRoomQuery(session, sessionId || null)
   const setRoomAttributes = useSetRoomAttributesMutation(session)
   const roomChannel = useRoomChannel(session, sessionId || null)
+  const badgeOwners = useCommunityBadgeOwnersQuery()
 
   const isHost = useMemo(() => !!session && room.data?.leaderId === session.userId, [session, room.data])
   const attributes = room.data?.attributes
@@ -304,7 +307,10 @@ export const RoomGame = () => {
         <p className="text-active text-sm mb-2">{rosterIds.size} / 5 players joined</p>
         <ul className="text-muted text-xs mb-8">
           {[...rosterIds].map(id => (
-            <li key={id}>{id === session?.userId ? `${displayName ?? 'You'} (you)` : nameFor(id)}</li>
+            <li key={id}>
+              {id === session?.userId ? `${displayName ?? 'You'} (you)` : nameFor(id)}
+              {badgeOwners.data.has(id) && <CommunityBadge />}
+            </li>
           ))}
         </ul>
         {isHost ? (

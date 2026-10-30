@@ -69,6 +69,9 @@ func main() {
 	router.GET("/api/achievements", handlers.ListAchievements)
 	router.POST("/api/achievements", handlers.SubmitAchievements)
 	router.GET("/api/achievements/list", handlers.AchievementsCatalog)
+	router.GET("/api/achievements/global", handlers.GlobalAchievements)
+	router.GET("/api/achievements/global/badge-owners", handlers.CommunityBadgeOwners)
+	router.POST("/api/achievements/global/:code/claim", handlers.ClaimGlobalAchievementReward)
 
 	router.GET("/api/session/:id", handlers.GetSession)
 	router.DELETE("/api/session/:id", handlers.LeaveSession)

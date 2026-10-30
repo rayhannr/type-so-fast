@@ -34,16 +34,35 @@ const KEY_COLS = 12
 const KEY_STEP = 1.05
 const FINGER_REST = -0.25
 const FINGER_PRESS = -0.7
+const FINGER_LENGTH = 1.25
 const TAP_DURATION = 0.22
+const HAND_HOME = { x: 2.1, y: 1.05, z: 2.9 }
+// hand-local depth of a fingertip at the bottom of a tap (knuckle offset + rotated finger)
+const TIP_REACH_Z = 0.6 + FINGER_LENGTH * Math.cos(FINGER_PRESS)
+// touch-typing finger per keyboard column, as an index into `fingers`:
+// left pinky, ring, middle, index x2, then right index x2, middle, ring, pinky x3
+const COLUMN_FINGER = [0, 1, 2, 3, 3, 4, 4, 5, 6, 7, 7, 7]
+const HAND_FOLLOW = 25 // exponential approach rate, per second
+const HAND_IDLE_RETURN = 0.5 // seconds without a keystroke before a hand drifts home
 
 interface FingerState {
   group: Group
-  x: number
+  hand: number
+  offsetX: number // knuckle x relative to its hand
   t: number // 0..1 tap progress, 1 = idle
 }
 
+interface HandState {
+  group: Group
+  homeX: number
+  targetX: number
+  targetZ: number
+  idle: number
+}
+
 // animated pair of hands typing on a keyboard: each real keystroke taps the
-// matching QWERTY key with the nearest finger, no input, no motion
+// matching QWERTY key with its touch-typing finger, sliding the hand so the
+// fingertip lands on that key, no input, no motion
 export const TypingHands = ({ keystrokeRef, gameOver }: Props) => {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const gameOverRef = useRef(gameOver)
@@ -92,7 +111,7 @@ export const TypingHands = ({ keystrokeRef, gameOver }: Props) => {
     // pressed key can glow and sink independently
     const keyGeometry = new BoxGeometry(0.85, 0.25, 0.85)
     const keys: { mesh: Mesh; material: MeshStandardMaterial; heat: number }[] = []
-    const charToKey = new Map<string, number>()
+    const charToKey = new Map<string, { index: number; col: number }>()
 
     const addKey = (geometry: BoxGeometry, x: number, z: number) => {
       const material = new MeshStandardMaterial({
@@ -108,7 +127,7 @@ export const TypingHands = ({ keystrokeRef, gameOver }: Props) => {
     KEY_LAYOUT.forEach((rowChars, row) => {
       for (let col = 0; col < KEY_COLS; col++) {
         const index = addKey(keyGeometry, (col - (KEY_COLS - 1) / 2) * KEY_STEP + row * 0.3, (row - 1.5) * KEY_STEP)
-        if (rowChars[col]) charToKey.set(rowChars[col], index)
+        if (rowChars[col]) charToKey.set(rowChars[col], { index, col })
       }
     })
     charToKey.set('\b', charToKey.get('=')!)
@@ -129,11 +148,12 @@ export const TypingHands = ({ keystrokeRef, gameOver }: Props) => {
 
     const fingers: FingerState[] = []
     const thumbs: FingerState[] = []
-    const hands: Group[] = []
+    const hands: HandState[] = []
 
     for (const side of [-1, 1]) {
+      const handIndex = hands.length
       const hand = new Group()
-      hand.position.set(side * 2.1, 1.05, 2.9)
+      hand.position.set(side * HAND_HOME.x, HAND_HOME.y, HAND_HOME.z)
       hand.rotation.z = side * -0.06
 
       const palm = new Mesh(palmGeometry, handMaterial)
@@ -146,7 +166,7 @@ export const TypingHands = ({ keystrokeRef, gameOver }: Props) => {
         knuckle.rotation.x = FINGER_REST
         knuckle.add(new Mesh(fingerGeometry, handMaterial))
         hand.add(knuckle)
-        fingers.push({ group: knuckle, x: hand.position.x + offsetX, t: 1 })
+        fingers.push({ group: knuckle, hand: handIndex, offsetX, t: 1 })
       }
 
       const thumb = new Group()
@@ -154,10 +174,10 @@ export const TypingHands = ({ keystrokeRef, gameOver }: Props) => {
       thumb.rotation.set(FINGER_REST, side * -0.5, 0)
       thumb.add(new Mesh(thumbGeometry, handMaterial))
       hand.add(thumb)
-      thumbs.push({ group: thumb, x: hand.position.x, t: 1 })
+      thumbs.push({ group: thumb, hand: handIndex, offsetX: 0, t: 1 })
 
       scene.add(hand)
-      hands.push(hand)
+      hands.push({ group: hand, homeX: hand.position.x, targetX: hand.position.x, targetZ: HAND_HOME.z, idle: 0 })
     }
 
     const pressKey = (char: string) => {
@@ -168,10 +188,16 @@ export const TypingHands = ({ keystrokeRef, gameOver }: Props) => {
         keyIndex = spacebarIndex
         finger = thumbs[Math.floor(Math.random() * thumbs.length)]
       } else {
-        keyIndex = charToKey.get(char.toLowerCase())
-        if (keyIndex === undefined) return
-        const keyX = keys[keyIndex].mesh.position.x
-        finger = fingers.reduce((nearest, candidate) => (Math.abs(candidate.x - keyX) < Math.abs(nearest.x - keyX) ? candidate : nearest))
+        const key = charToKey.get(char.toLowerCase())
+        if (!key) return
+        keyIndex = key.index
+        finger = fingers[COLUMN_FINGER[key.col]]
+        // move the hand so this finger's tip sits over the key at the bottom of the tap
+        const hand = hands[finger.hand]
+        const { x, z } = keys[keyIndex].mesh.position
+        hand.targetX = x - finger.offsetX
+        hand.targetZ = z + TIP_REACH_Z
+        hand.idle = 0
       }
 
       finger.t = 0
@@ -213,9 +239,17 @@ export const TypingHands = ({ keystrokeRef, gameOver }: Props) => {
         key.material.emissive.copy(GLOW_COLOR).multiplyScalar(key.heat * 0.9)
       }
 
-      // subtle hover so the hands feel alive even when idle
+      const follow = 1 - Math.exp(-HAND_FOLLOW * dt)
       hands.forEach((hand, i) => {
-        hand.position.y = 1.05 + Math.sin(elapsed * 1.4 + i * Math.PI) * 0.035
+        hand.idle += dt
+        if (hand.idle > HAND_IDLE_RETURN) {
+          hand.targetX = hand.homeX
+          hand.targetZ = HAND_HOME.z
+        }
+        hand.group.position.x += (hand.targetX - hand.group.position.x) * follow
+        hand.group.position.z += (hand.targetZ - hand.group.position.z) * follow
+        // subtle hover so the hands feel alive even when idle
+        hand.group.position.y = HAND_HOME.y + Math.sin(elapsed * 1.4 + i * Math.PI) * 0.035
       })
 
       renderer.render(scene, camera)

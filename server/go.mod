@@ -11,6 +11,7 @@ require (
 	github.com/AccelByte/accelbyte-go-modular-sdk/leaderboard-sdk v0.5.0
 	github.com/AccelByte/accelbyte-go-modular-sdk/lobby-sdk v0.4.0
 	github.com/AccelByte/accelbyte-go-modular-sdk/match2-sdk v0.9.0
+	github.com/AccelByte/accelbyte-go-modular-sdk/platform-sdk v0.10.0
 	github.com/AccelByte/accelbyte-go-modular-sdk/services-api v0.1.0
 	github.com/AccelByte/accelbyte-go-modular-sdk/session-sdk v0.10.0
 	github.com/AccelByte/accelbyte-go-modular-sdk/social-sdk v0.6.0

@@ -24,7 +24,10 @@ func GetAdminAccessToken() (string, error) {
 	adminTokenMu.Lock()
 	defer adminTokenMu.Unlock()
 
-	if cachedToken != "" && time.Now().Before(cachedExpiry) {
+	// Compare real (wall-clock) time, which is what AGS uses to expire the token. Go compares
+	// times with its monotonic clock by default, and that clock pauses while the machine sleeps,
+	// so after a sleep an expired token would still look valid. Round(0) strips the monotonic part.
+	if cachedToken != "" && time.Now().Round(0).Before(cachedExpiry) {
 		return cachedToken, nil
 	}
 
@@ -53,7 +56,7 @@ func GetAdminAccessToken() (string, error) {
 	}
 
 	cachedToken = *resp.Data.AccessToken
-	cachedExpiry = time.Now().Add(time.Duration(expiresIn-60) * time.Second)
+	cachedExpiry = time.Now().Round(0).Add(time.Duration(expiresIn-60) * time.Second)
 
 	return cachedToken, nil
 }

@@ -1,6 +1,8 @@
 package ags
 
 import (
+	"log"
+
 	social "github.com/AccelByte/accelbyte-go-modular-sdk/social-sdk/pkg"
 	"github.com/AccelByte/accelbyte-go-modular-sdk/social-sdk/pkg/socialclient/user_statistic"
 	"github.com/AccelByte/accelbyte-go-modular-sdk/social-sdk/pkg/socialclientmodels"
@@ -104,6 +106,12 @@ func SubmitGameStats(userID, accessToken string, result GameResultStats) error {
 	}()
 	go func() {
 		errCh <- updateStatItemValue(service, userID, statLevel, "MAX", result.Level, "")
+	}()
+	// the community event is a side effect, a failed event write must not fail the player's own stats
+	go func() {
+		if err := contributeToEvent(userID, accessToken, result.WordsTyped); err != nil {
+			log.Printf("[event] contribution failed: %v", err)
+		}
 	}()
 
 	total := len(updates) + 4

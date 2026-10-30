@@ -2,8 +2,10 @@
 
 import { useState } from 'react'
 import { LeaderboardMetric, LeaderboardRange } from '@/lib/ags/leaderboard'
+import { useCommunityBadgeOwnersQuery } from '@/lib/queries/achievements'
 import { useLeaderboardQuery } from '@/lib/queries/leaderboard'
 import { WordMode } from '@/lib/word-generators'
+import { CommunityBadge } from './CommunityBadge'
 import { DURATIONS, Duration } from './DurationSelector'
 import { ModeSelector } from './ModeSelector'
 import { Podium3D } from './Podium3D'
@@ -29,6 +31,7 @@ export const Leaderboard = ({ currentUserId }: Props) => {
     mode,
     range
   })
+  const badgeOwners = useCommunityBadgeOwnersQuery()
   const isReady = !leaderboard.isFetching && !leaderboard.isError
   const entries = leaderboard.data ?? []
 
@@ -78,7 +81,10 @@ export const Leaderboard = ({ currentUserId }: Props) => {
 
       {isReady && entries.length > 0 && (
         <>
-          <Podium3D records={top3.map(entry => entry.wpm)} labels={top3.map(entry => entry.displayName)} />
+          <Podium3D
+            records={top3.map(entry => entry.wpm)}
+            labels={top3.map(entry => (badgeOwners.data.has(entry.userId) ? `${entry.displayName} ★` : entry.displayName))}
+          />
 
           {rest.length > 0 && (
             <table className="w-full mt-8 text-sm border-collapse">
@@ -100,6 +106,7 @@ export const Leaderboard = ({ currentUserId }: Props) => {
                       <td className="py-2 px-3 text-muted">{entry.rank}</td>
                       <td className="py-2 px-3">
                         {entry.displayName}
+                        {badgeOwners.data.has(entry.userId) && <CommunityBadge />}
                         {isCurrentUser && <span className="text-muted font-normal text-xs ml-2">(You)</span>}
                       </td>
                       <td className="py-2 px-3 text-right tabular-nums">{entry.wpm}</td>

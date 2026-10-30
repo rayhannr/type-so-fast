@@ -10,8 +10,8 @@ export const useStatsQuery = (session: AgsSession | null) =>
     enabled: !!session
   })
 
-// stats submission also moves the leaderboard, and the server computes the real
-// aggregate (increments/max), so this one needs a genuine invalidate + refetch
+// stats submission also moves the leaderboard and the community goals, and the server computes
+// the real aggregate (increments/max), so this one needs a genuine invalidate + refetch
 export const useSubmitStatsMutation = (session: AgsSession | null) => {
   const queryClient = useQueryClient()
   return useMutation({
@@ -19,6 +19,7 @@ export const useSubmitStatsMutation = (session: AgsSession | null) => {
     onSuccess: () => {
       if (session) queryClient.invalidateQueries({ queryKey: ['stats', session.userId] })
       queryClient.invalidateQueries({ queryKey: ['leaderboard'] })
+      queryClient.invalidateQueries({ queryKey: ['globalAchievements'] })
     }
   })
 }

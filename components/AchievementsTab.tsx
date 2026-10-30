@@ -1,5 +1,6 @@
 import { useAchievementListQuery } from '@/lib/queries/achievements'
 import { AgsSession } from '@/lib/queries/shared'
+import { CommunityGoals } from './CommunityGoals'
 
 interface Props {
   session: AgsSession | null
@@ -12,6 +13,7 @@ export const AchievementsTab = ({ session }: Props) => {
   return (
     <div className="w-full max-w-2xl mx-auto mt-10">
       {!isLoggedIn && <p className="text-center text-xs text-muted mb-6">Offline: progress is tracked once the game connects.</p>}
+      {session && <CommunityGoals session={session} />}
       {achievements.isFetching && <p className="text-center text-xs text-muted mb-6">Loading achievements…</p>}
       {achievements.isError && <p className="text-center text-xs text-muted mb-6">Couldn&apos;t load achievements. Try again later.</p>}
       <ul className="flex flex-col gap-3">

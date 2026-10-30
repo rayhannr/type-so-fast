@@ -60,6 +60,44 @@ func AchievementsCatalog(c *gin.Context) {
 	c.JSON(http.StatusOK, list)
 }
 
+func GlobalAchievements(c *gin.Context) {
+	auth := apiauth.FromHeaders(c.GetHeader("Authorization"), c.GetHeader("X-User-Id"))
+	if auth == nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	list, err := ags.GetGlobalAchievements(auth.UserID, auth.AccessToken)
+	if err != nil {
+		respondError(c, err, "achievements/global GET")
+		return
+	}
+	c.JSON(http.StatusOK, list)
+}
+
+func ClaimGlobalAchievementReward(c *gin.Context) {
+	auth := apiauth.FromHeaders(c.GetHeader("Authorization"), c.GetHeader("X-User-Id"))
+	if auth == nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	if err := ags.ClaimGlobalAchievementReward(auth.UserID, auth.AccessToken, c.Param("code")); err != nil {
+		respondError(c, err, "achievements/global/:code/claim POST")
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"ok": true})
+}
+
+func CommunityBadgeOwners(c *gin.Context) {
+	owners, err := ags.GetCommunityBadgeOwners()
+	if err != nil {
+		respondError(c, err, "achievements/global/badge-owners GET")
+		return
+	}
+	c.JSON(http.StatusOK, owners)
+}
+
 func SubmitAchievements(c *gin.Context) {
 	auth := apiauth.FromHeaders(c.GetHeader("Authorization"), c.GetHeader("X-User-Id"))
 	if auth == nil {
