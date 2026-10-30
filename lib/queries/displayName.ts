@@ -29,6 +29,8 @@ export const useUpdateDisplayNameMutation = (session: AgsSession | null) => {
     onSuccess: displayName => {
       writeLocal('displayName', displayName)
       if (session) queryClient.setQueryData(displayNameKey(session.userId), displayName)
+      queryClient.invalidateQueries({ queryKey: ['globalAchievements'] })
+      queryClient.invalidateQueries({ queryKey: ['leaderboard'] })
     }
   })
 }

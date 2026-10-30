@@ -115,6 +115,10 @@ What made this hard to find:
 - **Other players' entitlements are admin-only**, so the server lists badge owners with the admin token (`QueryEntitlementsByItemIds`, active only) and caches the result for a minute.
 - **The item ID is looked up by SKU** (`PublicGetItemBySku`), which works with the admin token, so the code doesn't hard-code a namespace-specific item ID.
 
+### What the player gets (state this in the blog post)
+
+Once the community reaches the goal, every player who contributed before that moment sees a "Claim badge" button. Claiming grants the "Ten Thousand Together" badge: the AGS reward gives the player the badge store item (`badge-ten-thousand-together`, a durable in-game item in the published store), and AGS records that ownership as an entitlement on the player's account. The badge then shows as a star next to their name on the leaderboard, in room lobbies and in the contributor list. Players who join after the goal was reached don't get one.
+
 ## Code-side notes
 
 - **Admin token cache bug (existing, fixed).** Go compares `time.Time` values with the monotonic clock, which pauses while the machine sleeps. After WSL was suspended, the cached admin token looked valid but AGS answered `token is expired`. The cache now compares wall-clock time (`time.Now().Round(0)`).

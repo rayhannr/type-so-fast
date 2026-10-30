@@ -140,7 +140,6 @@ export const AccountLink = () => {
             <div>
               <div className="flex flex-row items-center gap-2">
                 {avatarUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element -- external Google-hosted URL, not a local asset
                   <img src={avatarUrl} alt="" className="w-8 h-8 rounded-full shrink-0 object-cover" />
                 ) : (
                   <div className="w-8 h-8 rounded-full bg-canvas border border-solid border-edge flex items-center justify-center text-sm text-active shrink-0">

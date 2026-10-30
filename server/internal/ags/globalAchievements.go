@@ -10,6 +10,7 @@ import (
 	achievement "github.com/AccelByte/accelbyte-go-modular-sdk/achievement-sdk/pkg"
 	"github.com/AccelByte/accelbyte-go-modular-sdk/achievement-sdk/pkg/achievementclient/achievements"
 	"github.com/AccelByte/accelbyte-go-modular-sdk/achievement-sdk/pkg/achievementclient/global_achievements"
+	"github.com/AccelByte/accelbyte-go-modular-sdk/achievement-sdk/pkg/achievementclientmodels"
 
 	"type-so-fast-server/internal/agsconfig"
 	"type-so-fast-server/internal/agserror"
@@ -27,12 +28,23 @@ type GlobalAchievement struct {
 	Code            string        `json:"code"`
 	Name            string        `json:"name"`
 	Description     string        `json:"description"`
+	LockedIconURL   string        `json:"lockedIconUrl"`
+	UnlockedIconURL string        `json:"unlockedIconUrl"`
 	GoalValue       float64       `json:"goalValue"`
 	LatestValue     float64       `json:"latestValue"`
 	Achieved        bool          `json:"achieved"`
 	MyContribution  float64       `json:"myContribution"`
 	CanClaimReward  bool          `json:"canClaimReward"`
 	TopContributors []Contributor `json:"topContributors"`
+}
+
+func firstIconURL(icons []*achievementclientmodels.ModelsIcon) string {
+	for _, icon := range icons {
+		if icon != nil && icon.URL != nil && *icon.URL != "" {
+			return *icon.URL
+		}
+	}
+	return ""
 }
 
 func newGlobalAchievementsService(accessToken string) *achievement.GlobalAchievementsService {
@@ -73,6 +85,8 @@ func GetGlobalAchievements(userID, accessToken string) ([]GlobalAchievement, err
 		if a.Description != nil {
 			item.Description = *a.Description
 		}
+		item.LockedIconURL = firstIconURL(a.LockedIcons)
+		item.UnlockedIconURL = firstIconURL(a.UnlockedIcons)
 		list = append(list, item)
 		codes = append(codes, item.Code)
 	}

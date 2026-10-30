@@ -69,10 +69,12 @@ type UnlockedAchievement struct {
 }
 
 type AchievementInfo struct {
-	Code        string `json:"code"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Unlocked    bool   `json:"unlocked"`
+	Code            string `json:"code"`
+	Name            string `json:"name"`
+	Description     string `json:"description"`
+	LockedIconURL   string `json:"lockedIconUrl"`
+	UnlockedIconURL string `json:"unlockedIconUrl"`
+	Unlocked        bool   `json:"unlocked"`
 }
 
 func newAchievementsService(accessToken string) *achievement.AchievementsService {
@@ -320,7 +322,14 @@ func GetAchievementList(userID, accessToken string) ([]AchievementInfo, error) {
 		if a.Description != nil {
 			description = *a.Description
 		}
-		list = append(list, AchievementInfo{Code: code, Name: name, Description: description, Unlocked: unlockedCodes[code]})
+		list = append(list, AchievementInfo{
+			Code:            code,
+			Name:            name,
+			Description:     description,
+			LockedIconURL:   firstIconURL(a.LockedIcons),
+			UnlockedIconURL: firstIconURL(a.UnlockedIcons),
+			Unlocked:        unlockedCodes[code],
+		})
 	}
 	return list, nil
 }

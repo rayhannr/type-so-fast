@@ -2,6 +2,7 @@ package ags
 
 import (
 	"errors"
+	"log"
 
 	leaderboard "github.com/AccelByte/accelbyte-go-modular-sdk/leaderboard-sdk/pkg"
 	"github.com/AccelByte/accelbyte-go-modular-sdk/leaderboard-sdk/pkg/leaderboardclient/leaderboard_data_v3"
@@ -119,6 +120,23 @@ func GetTopLeaderboard(limit int64, leaderboardCode string, cycleID string) ([]L
 		points = resp.Data.Data
 	}
 
+	// the displayName stored with each stat value is a copy from that player's last game, IAM has
+	// the current one, so a rename shows up without waiting for the player's next game
+	userIDs := make([]string, 0, len(points))
+	for _, p := range points {
+		if p.UserID != nil {
+			userIDs = append(userIDs, *p.UserID)
+		}
+	}
+	currentNames := map[string]string{}
+	if summaries, err := GetUserSummaries(userIDs); err != nil {
+		log.Printf("[leaderboard] display name lookup failed, using stored names: %v", err)
+	} else {
+		for _, s := range summaries {
+			currentNames[s.UserID] = s.DisplayName
+		}
+	}
+
 	entries := make([]LeaderboardEntry, 0, len(points))
 	for i, p := range points {
 		userID := ""
@@ -134,6 +152,9 @@ func GetTopLeaderboard(limit int64, leaderboardCode string, cycleID string) ([]L
 			if name, ok := additionalData["displayName"].(string); ok && name != "" {
 				displayName = name
 			}
+		}
+		if name := currentNames[userID]; name != "" && name != shortUserID(userID) {
+			displayName = name
 		}
 		entries = append(entries, LeaderboardEntry{
 			Rank:        i + 1,

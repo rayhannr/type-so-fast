@@ -19,14 +19,18 @@ export const AchievementsTab = ({ session }: Props) => {
       <ul className="flex flex-col gap-3">
         {[...(achievements.data ?? [])]
           .sort((a, b) => Number(b.unlocked) - Number(a.unlocked))
-          .map(achievement => (
+          .map(achievement => {
+          const iconUrl = achievement.unlocked ? achievement.unlockedIconUrl : achievement.lockedIconUrl
+
+          return (
           <li
             key={achievement.code}
             className={`flex flex-row items-center gap-4 rounded-lg border border-solid border-edge bg-surface px-4 py-3 ${
               achievement.unlocked ? '' : 'opacity-70'
             }`}
           >
-            {achievement.unlocked ? (
+            {iconUrl && <img src={iconUrl} alt="" width={48} height={48} className="shrink-0 w-12 h-12" />}
+            {!iconUrl && achievement.unlocked && (
               <svg
                 className="w-6 h-6 shrink-0 text-accent"
                 fill="none"
@@ -37,7 +41,8 @@ export const AchievementsTab = ({ session }: Props) => {
               >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
-            ) : (
+            )}
+            {!iconUrl && !achievement.unlocked && (
               <svg className="w-6 h-6 shrink-0 text-muted" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                 <path
                   fillRule="evenodd"
@@ -54,7 +59,8 @@ export const AchievementsTab = ({ session }: Props) => {
               {achievement.unlocked ? 'Unlocked' : 'Locked'}
             </span>
           </li>
-        ))}
+          )
+        })}
       </ul>
     </div>
   )

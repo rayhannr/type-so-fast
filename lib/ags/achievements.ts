@@ -7,6 +7,8 @@ export interface AchievementInfo {
   code: string
   name: string
   description: string
+  lockedIconUrl: string
+  unlockedIconUrl: string
   unlocked: boolean
 }
 
@@ -20,6 +22,8 @@ export interface GlobalAchievement {
   code: string
   name: string
   description: string
+  lockedIconUrl: string
+  unlockedIconUrl: string
   goalValue: number
   latestValue: number
   achieved: boolean

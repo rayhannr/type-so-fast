@@ -31,16 +31,22 @@ export const CommunityGoals = ({ session }: Props) => {
         {goals.data.map(goal => {
           const fill = goal.goalValue > 0 ? Math.min(100, (goal.latestValue / goal.goalValue) * 100) : 0
           const claimed = goal.achieved && goal.myContribution > 0 && !goal.canClaimReward
+          const iconUrl = goal.achieved ? goal.unlockedIconUrl : goal.lockedIconUrl
 
           return (
             <li key={goal.code} className="rounded-lg border border-solid border-edge bg-surface px-4 py-4">
-              <div className="flex flex-row items-baseline justify-between gap-4">
-                <p className="font-semibold text-sm text-active">{goal.name}</p>
-                <span className="text-xs text-muted tabular-nums">
-                  {formatCount(goal.latestValue)} / {formatCount(goal.goalValue)}
-                </span>
+              <div className="flex flex-row items-center gap-4">
+                {iconUrl && <img src={iconUrl} alt="" width={64} height={64} className="shrink-0 w-16 h-16" />}
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-row items-baseline justify-between gap-4">
+                    <p className="font-semibold text-sm text-active">{goal.name}</p>
+                    <span className="text-xs text-muted tabular-nums">
+                      {formatCount(goal.latestValue)} / {formatCount(goal.goalValue)}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted">{goal.description}</p>
+                </div>
               </div>
-              <p className="text-xs text-muted">{goal.description}</p>
 
               <div
                 className="mt-3 h-1.5 rounded-full bg-canvas overflow-hidden"
